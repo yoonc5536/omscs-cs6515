@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap" rel="stylesheet">
+  <title>CS 6515 Exam 2 — Practice Problem Study Guide</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f7f6;
+      --paper: #ffffff;
+      --ink: #17211f;
+      --muted: #52605d;
+      --line: #cfd9d5;
+      --line-strong: #9dafaa;
+      --accent: #006b57;
+      --accent-2: #9a4d13;
+      --accent-soft: #dff2eb;
+      --warm-soft: #f7eadc;
+      --code: #edf2f0;
+      --shadow: 0 16px 40px rgba(23,33,31,.08);
+      --focus: #f2c14e;
+      --good: #146b47;
+      --warn: #9a4d13;
+      --tocw: 248px;
+      --r-sm: 7px;
+      --r-md: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1514;
+        --paper: #151f1d;
+        --ink: #edf5f2;
+        --muted: #aab9b5;
+        --line: #32413d;
+        --line-strong: #536660;
+        --accent: #73d6ba;
+        --accent-2: #f2a66b;
+        --accent-soft: #17382f;
+        --warm-soft: #3a291c;
+        --code: #101917;
+        --shadow: 0 18px 45px rgba(0,0,0,.28);
+        --good: #73d6ba;
+        --warn: #f2a66b;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 17px/1.58 "Atkinson Hyperlegible", sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+    a:hover { text-decoration-thickness: 3px; }
+    button, input { font: inherit; }
+    .shell { max-width: 1260px; margin: 0 auto; padding: 28px 24px 80px; display: grid; grid-template-columns: var(--tocw) minmax(0, 1fr); gap: 34px; align-items: start; }
+    .toc {
+      position: sticky; top: 18px; max-height: calc(100vh - 36px); overflow: auto;
+      border-top: 4px solid var(--accent); background: var(--paper); box-shadow: var(--shadow);
+      padding: 18px 16px 16px;
+    }
+    .toc h2 { font: 700 18px/1.2 "Newsreader", serif; margin: 0 0 10px; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 5px 0; color: var(--muted); }
+    .toc a { color: inherit; text-decoration: none; display: block; line-height: 1.3; }
+    .toc a:hover, .toc a.active { color: var(--accent); font-weight: 700; }
+    .toc .minor { font-size: 14px; }
+    .mobile-toc { display: none; }
+    main { min-width: 0; }
+    .hero { border-top: 8px solid var(--accent); background: var(--paper); padding: 38px 44px 34px; box-shadow: var(--shadow); }
+    .course { margin: 0 0 5px; color: var(--accent); font-weight: 700; letter-spacing: .04em; }
+    h1, h2, h3, h4 { font-family: "Newsreader", serif; letter-spacing: -.015em; }
+    h1 { font-size: clamp(38px, 6vw, 68px); line-height: .98; margin: 0; max-width: 820px; }
+    .subtitle { color: var(--muted); font-size: 20px; max-width: 760px; margin: 19px 0 0; }
+    .hero-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+    .pill { border: 1px solid var(--line); padding: 5px 10px; font-size: 14px; font-weight: 700; background: var(--bg); border-radius: 999px; }
+    section { margin-top: 36px; }
+    .section-head { display: flex; gap: 16px; align-items: baseline; border-bottom: 2px solid var(--line-strong); padding-bottom: 10px; margin-bottom: 18px; }
+    .section-no { color: var(--accent); font: 700 18px/1 "IBM Plex Mono", monospace; }
+    h2 { font-size: clamp(29px, 4vw, 42px); line-height: 1.08; margin: 0; }
+    h3 { font-size: 28px; line-height: 1.18; margin: 0 0 10px; }
+    h4 { font-size: 21px; margin: 24px 0 7px; }
+    p { margin: 9px 0; }
+    ul, ol { padding-left: 24px; }
+    li + li { margin-top: 5px; }
+    .card { background: var(--paper); border: 1px solid var(--line); padding: 28px 30px; margin: 18px 0; box-shadow: 0 8px 24px rgba(23,33,31,.045); }
+    .problem { border-top: 5px solid var(--accent); }
+    .problem-id { font: 700 14px/1.2 "IBM Plex Mono", monospace; color: var(--accent); margin: 0 0 7px; }
+    .statement { background: var(--code); border-left: 3px solid var(--line-strong); padding: 14px 17px; margin: 14px 0 22px; }
+    .statement strong { color: var(--accent); }
+    .model-part { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 10px; align-items: start; margin: 21px 0; }
+    .tag { width: 32px; height: 32px; display: grid; place-items: center; background: var(--accent); color: #fff; border-radius: 50%; font: 700 15px/1 "IBM Plex Mono", monospace; margin-top: 1px; }
+    @media (prefers-color-scheme: dark) { .tag { color: #0e1514; } }
+    .model-part h4 { margin: 2px 0 7px; }
+    .key { background: var(--accent-soft); padding: 15px 18px; border-top: 3px solid var(--accent); margin: 16px 0; }
+    .key strong:first-child { color: var(--accent); }
+    .focus, .recap { padding: 16px 18px; margin: 18px 0; }
+    .focus { background: var(--warm-soft); border: 1px solid color-mix(in srgb, var(--accent-2) 45%, var(--line)); }
+    .recap { background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); }
+    .box-label { display: block; font: 700 13px/1.2 "IBM Plex Mono", monospace; letter-spacing: .05em; margin-bottom: 7px; }
+    .focus .box-label { color: var(--accent-2); }
+    .recap .box-label { color: var(--accent); }
+    code, .math { font-family: "IBM Plex Mono", monospace; font-size: .91em; }
+    code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+    .equation { background: var(--code); border: 1px solid var(--line); padding: 12px 15px; font-family: "IBM Plex Mono", monospace; margin: 12px 0; overflow-wrap: anywhere; }
+    .diagram { margin: 20px 0; border: 1px solid var(--line); background: var(--bg); padding: 14px; }
+    .diagram figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+    svg { width: 100%; height: auto; display: block; }
+    svg text { fill: var(--ink); font-family: "Atkinson Hyperlegible", sans-serif; }
+    svg .mono { font-family: "IBM Plex Mono", monospace; }
+    svg .box { fill: var(--paper); stroke: var(--line-strong); stroke-width: 1.5; }
+    svg .accent-fill { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+    svg .warm-fill { fill: var(--warm-soft); stroke: var(--accent-2); stroke-width: 2; }
+    svg .wire { stroke: var(--line-strong); stroke-width: 2; fill: none; }
+    svg .accent-wire { stroke: var(--accent); stroke-width: 3; fill: none; }
+    svg .muted { fill: var(--muted); }
+    .table-wrap { margin: 18px 0; }
+    table { width: 100%; border-collapse: collapse; background: var(--paper); font-size: 15px; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--accent); font-family: "IBM Plex Mono", monospace; font-size: 13px; background: var(--accent-soft); }
+    tr:last-child td { border-bottom: 0; }
+    .rank { color: var(--accent-2); font-weight: 700; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .mini { background: var(--paper); border-top: 3px solid var(--line-strong); padding: 18px; }
+    .mini h4 { margin-top: 0; }
+    .trace { display: grid; gap: 9px; margin: 16px 0; }
+    .trace-step { display: grid; grid-template-columns: 72px 1fr; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+    .trace-step strong { color: var(--accent); font-family: "IBM Plex Mono", monospace; }
+    .priority { display: inline-block; margin-left: 7px; color: var(--accent-2); font: 700 12px/1 "IBM Plex Mono", monospace; }
+    .checklist { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .checklist label { display: flex; gap: 12px; align-items: flex-start; background: var(--paper); border: 1px solid var(--line); padding: 14px 15px; cursor: pointer; }
+    .checklist input { appearance: none; width: 21px; height: 21px; border: 2px solid var(--line-strong); margin: 1px 0 0; flex: 0 0 auto; display: grid; place-content: center; background: var(--bg); }
+    .checklist input::before { content: ""; width: 11px; height: 11px; transform: scale(0); background: var(--accent); transition: transform .12s ease; }
+    .checklist input:checked::before { transform: scale(1); }
+    .checklist input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .sources { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); margin-top: 44px; padding-top: 18px; }
+    .formula-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+    .formula-row { background: var(--code); padding: 10px 12px; }
+    .formula-row b { color: var(--accent); }
+    .callout-number { font: 700 38px/1 "Newsreader", serif; color: var(--accent); float: left; margin-right: 10px; }
+    @media (max-width: 860px) {
+      html { scroll-padding-top: 84px; }
+      .shell { display: block; padding: 0 14px 56px; }
+      .toc { display: none; }
+      .mobile-toc { display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 5; background: var(--paper); border-bottom: 1px solid var(--line); margin: 0 -14px 14px; padding: 10px 14px; box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+      .mobile-toc label { font-weight: 700; color: var(--accent); flex: 0 0 auto; }
+      .mobile-toc select { min-width: 0; width: 100%; padding: 8px 32px 8px 10px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); border-radius: var(--r-sm); }
+      .mobile-toc select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      .hero { padding: 28px 22px 24px; }
+      .card { padding: 22px 18px; }
+      .two-col, .checklist, .formula-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      body { font-size: 16px; }
+      .mobile-toc nav { columns: 1; }
+      h1 { font-size: 40px; }
+      .model-part { grid-template-columns: 30px minmax(0,1fr); gap: 9px; }
+      .tag { width: 29px; height: 29px; }
+      .table-wrap table, .table-wrap tbody, .table-wrap tr, .table-wrap td { display: block; width: 100%; }
+      .table-wrap thead { display: none; }
+      .table-wrap tr { border: 1px solid var(--line); margin: 9px 0; padding: 8px 10px; background: var(--paper); }
+      .table-wrap td { border: 0; padding: 5px 0; }
+      .table-wrap td::before { content: attr(data-label); display: block; color: var(--accent); font: 700 12px/1.2 "IBM Plex Mono", monospace; margin-bottom: 2px; }
+      .trace-step { grid-template-columns: 58px 1fr; }
+      .diagram { padding: 8px; overflow: hidden; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .checklist input::before { transition: none; } }
+    @media print {
+      :root { --bg:#fff; --paper:#fff; --ink:#000; --muted:#333; --line:#aaa; --line-strong:#555; --accent:#005746; --accent-2:#7a3a0d; --accent-soft:#edf7f3; --warm-soft:#fbf2e8; --code:#f3f3f3; }
+      @page { margin: 0.55in; }
+      body { font-size: 10.5pt; background: #fff; }
+      .shell { display: block; max-width: none; padding: 0; }
+      .toc, .mobile-toc { display: none !important; }
+      .hero, .card { box-shadow: none; }
+      .hero { padding: 18px 0 20px; border-top-width: 5px; }
+      h1 { font-size: 34pt; }
+      h2 { font-size: 24pt; }
+      h3 { font-size: 18pt; }
+      section { margin-top: 22px; }
+      .card { padding: 16px; break-inside: auto; }
+      .diagram, .focus, .recap, .key, .mini, table, .checklist label { break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+      .checklist { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#rules">How to write the exam answer</a></li>
+        <li><a href="#official">Official practice problems</a>
+          <ol class="minor">
+            <li><a href="#kmerge">K Merge</a></li>
+            <li><a href="#oneunit">One Unit Apart</a></li>
+            <li><a href="#circular">Circular Maximum Subarray</a></li>
+          </ol>
+        </li>
+        <li><a href="#dpv">DPV / Ed practice set</a>
+          <ol class="minor">
+            <li><a href="#p24">2.4–2.5 Recurrences</a></li>
+            <li><a href="#p212">2.12–2.23 Core problems</a></li>
+            <li><a href="#binary-mod">Modified Binary Search</a></li>
+            <li><a href="#extensions">Brief extensions</a></li>
+          </ol>
+        </li>
+        <li><a href="#patterns">Recurring patterns</a></li>
+        <li><a href="#checklist">Pre-exam checklist</a></li>
+      </ol>
+    </aside>
+
+    <main>
+      <div class="mobile-toc">
+        <label for="mobile-nav">Contents</label>
+        <select id="mobile-nav" aria-label="Jump to a section">
+          <option value="">Jump to…</option>
+          <option value="rules">0 · Exam writing</option>
+          <option value="kmerge">1.1 · K Merge</option>
+          <option value="oneunit">1.2 · One Unit Apart</option>
+          <option value="circular">1.3 · Circular Array</option>
+          <option value="p24">2.4–2.5 · Recurrences</option>
+          <option value="p212">2.12–2.23 · Core DPV</option>
+          <option value="binary-mod">Modified Binary Search</option>
+          <option value="extensions">Extensions</option>
+          <option value="patterns">Patterns</option>
+          <option value="checklist">Checklist</option>
+        </select>
+      </div>
+
+      <header class="hero">
+        <p class="course">CS 6515 · EXAM 2</p>
+        <h1>Practice Problem Study Guide</h1>
+        <p class="subtitle">A self-contained companion built from the official practice problems, their solutions, and the Ed-announced DPV divide-and-conquer set.</p>
+        <div class="hero-strip" aria-label="Guide coverage">
+          <span class="pill">3 full model answers</span>
+          <span class="pill">Selected DPV 2.1–2.32</span>
+          <span class="pill">Proof patterns</span>
+          <span class="pill">Runtime drills</span>
+        </div>
+      </header>
+
+      <section id="rules">
+        <div class="section-head"><span class="section-no">00</span><h2>How to write the exam answer</h2></div>
+        <div class="card">
+          <p><span class="callout-number">1</span>The design question is a short essay, not a code-writing exercise. Make the grader’s job easy by using the exact three tags below and by making every claim traceable to a step in your algorithm.</p>
+          <div class="two-col" style="clear:both; padding-top:10px">
+            <div class="mini"><h4>(a) Algorithm</h4><p>State the base case, divide step, recursive call or calls, combine step, and final return. Write in prose paragraphs—not pseudocode—but make the procedure precise enough to implement.</p></div>
+            <div class="mini"><h4>(b) Justification of Correctness</h4><p>Name the invariant, induction hypothesis, or structural lemma. Cover every case in the combine step and explain why the returned object has exactly the promised property.</p></div>
+            <div class="mini"><h4>(c) Runtime Analysis</h4><p>Write a recurrence. Tie each recursive term and each nonrecursive term to real work. Solve it and compare it with the brute-force baseline.</p></div>
+            <div class="mini"><h4>Staff priority</h4><p><strong>Correct &gt; complete &gt; concise.</strong> Never omit a correctness case or runtime term to save space. The grading team reads everything.</p></div>
+          </div>
+          <div class="focus"><span class="box-label">EXAM FOCUS</span>A polished answer is not the shortest answer. It is the shortest answer that still lets a grader reconstruct the algorithm, verify every correctness case, and reproduce the runtime bound.</div>
+          <div class="recap"><span class="box-label">30-SECOND RECAP</span>Use the three tags. Prose, not pseudocode. State the base case. Name the invariant or induction hypothesis. Explain every recurrence term. Beat brute force asymptotically.</div>
+        </div>
+      </section>
+
+      <section id="official">
+        <div class="section-head"><span class="section-no">01</span><h2>Official practice problems</h2></div>
+
+        <article class="card problem" id="kmerge">
+          <p class="problem-id">1.1 · K MERGE</p>
+          <h3>Merge <em>k</em> sorted lists</h3>
+          <div class="statement"><strong>Problem.</strong> You are given <span class="math">k</span> sorted lists, each of length <span class="math">n</span>. Design a divide-and-conquer algorithm that returns the sorted union of all lists.</div>
+          <div class="key"><strong>Key idea.</strong> Merge in a balanced tournament. Every element participates in one linear merge per level, and the number of lists halves each round.</div>
+
+          <div class="model-part"><span class="tag">a</span><div><h4>Algorithm</h4><p>If there is only one list, return it. Otherwise, pair the lists: the first with the second, the third with the fourth, and so on. If the number of lists is odd, allow the unpaired list to pass unchanged to the next round. Merge every pair with the standard linear <span class="math">MERGE</span> subroutine. Recursively apply the same procedure to the resulting <span class="math">⌈k/2⌉</span> sorted lists. Return the single list remaining at the end.</p></div></div>
+          <div class="model-part"><span class="tag">b</span><div><h4>Justification of Correctness</h4><p>We prove by induction on the number of merge rounds that, after every round, each list is sorted and the multiset union of all lists is exactly the multiset union of the original input. The claim is true before the first round because every input list is sorted. During a round, <span class="math">MERGE</span> replaces two sorted lists by one sorted list containing every element of both lists and no other element. An unpaired list is left unchanged. Therefore sortedness is preserved and the overall multiset does not change. By induction, these properties hold after every round. When only one list remains, that list is sorted and contains exactly all input elements, so it is the sorted union.</p></div></div>
+          <div class="model-part"><span class="tag">c</span><div><h4>Runtime Analysis</h4><p>Sequential merging is not balanced: its work is</p><div class="equation">(2n−1) + (3n−1) + ··· + (kn−1) = Θ(k²n).</div><p>Sorting all <span class="math">kn</span> elements instead costs <span class="math">Θ(kn log(kn))</span>. In the pairwise algorithm, round <span class="math">r</span> has approximately <span class="math">k/2ʳ</span> lists, each of length <span class="math">2ʳn</span>. The next round performs <span class="math">k/2ʳ⁺¹</span> merges, so its total work is</p><div class="equation">(k / 2ʳ⁺¹) · 2(2ʳn) = kn.</div><p>There are <span class="math">⌈log₂k⌉</span> rounds, giving <span class="math">O(kn log k)</span>. Equivalently, if the input size parameter is the number of lists, <span class="math">T(k)=T(⌈k/2⌉)+O(kn)</span>, which unfolds across <span class="math">O(log k)</span> levels.</p></div></div>
+
+          <figure class="diagram">
+            <svg viewBox="0 0 760 330" role="img" aria-labelledby="merge-title merge-desc">
+              <title id="merge-title">Balanced merge tournament</title><desc id="merge-desc">Four sorted two-element arrays merge pairwise into two four-element arrays and then one eight-element array.</desc>
+              <path class="wire" d="M105 72 L190 130 M275 72 L190 130 M485 72 L570 130 M655 72 L570 130 M190 184 L380 242 M570 184 L380 242"/>
+              <rect class="box" x="30" y="28" width="150" height="44" rx="6"/><text class="mono" x="105" y="55" text-anchor="middle" font-size="17">[1, 5]</text>
+              <rect class="box" x="200" y="28" width="150" height="44" rx="6"/><text class="mono" x="275" y="55" text-anchor="middle" font-size="17">[2, 6]</text>
+              <rect class="box" x="410" y="28" width="150" height="44" rx="6"/><text class="mono" x="485" y="55" text-anchor="middle" font-size="17">[3, 7]</text>
+              <rect class="box" x="580" y="28" width="150" height="44" rx="6"/><text class="mono" x="655" y="55" text-anchor="middle" font-size="17">[4, 8]</text>
+              <rect class="accent-fill" x="90" y="130" width="200" height="54" rx="6"/><text class="mono" x="190" y="162" text-anchor="middle" font-size="17">[1, 2, 5, 6]</text>
+              <rect class="accent-fill" x="470" y="130" width="200" height="54" rx="6"/><text class="mono" x="570" y="162" text-anchor="middle" font-size="17">[3, 4, 7, 8]</text>
+              <rect class="warm-fill" x="225" y="242" width="310" height="54" rx="6"/><text class="mono" x="380" y="274" text-anchor="middle" font-size="17">[1, 2, 3, 4, 5, 6, 7, 8]</text>
+              <text class="muted" x="745" y="55" text-anchor="end" font-size="14">kn work</text><text class="muted" x="745" y="160" text-anchor="end" font-size="14">kn work</text><text class="muted" x="745" y="274" text-anchor="end" font-size="14">log k levels</text>
+            </svg>
+            <figcaption>Balanced work: <span class="math">kn</span> per level × <span class="math">log k</span> levels.</figcaption>
+          </figure>
+          <div class="focus"><span class="box-label">EXAM FOCUS</span>Do not say “there are <span class="math">k</span> merges, each linear.” The merged list grows. Either sum the sequential costs explicitly or show why balanced rounds keep each level at <span class="math">kn</span>.</div>
+          <div class="recap"><span class="box-label">30-SECOND RECAP</span>Pair lists, merge each pair, recurse on half as many lists. Correctness follows from MERGE preserving sortedness and elements. Runtime: <span class="math">kn</span> work per round for <span class="math">log k</span> rounds.</div>
+        </article>
+
+        <article class="card problem" id="oneunit">
+          <p class="problem-id">1.2 · ONE UNIT APART</p>
+          <h3>Binary search without a sorted array</h3>
+          <div class="statement"><strong>Problem.</strong> Let <span class="math">A[1..n]</span> be an integer array satisfying <span class="math">|A[i]−A[i+1]|≤1</span> for every <span class="math">1≤i&lt;n</span>. Let <span class="math">A[1]=x&lt;y=A[n]</span>. Given an integer <span class="math">z</span> with <span class="math">x≤z≤y</span>, find an index <span class="math">j</span> such that <span class="math">A[j]=z</span>.</div>
+          <div class="key"><strong>Key idea: discrete Intermediate Value Theorem.</strong> Consecutive entries differ by at most one, so a walk from a value at most <span class="math">z</span> to a value at least <span class="math">z</span> cannot skip the integer <span class="math">z</span>. Sortedness is unnecessary; the boundary invariant is enough.</div>
+
+          <div class="model-part"><span class="tag">a</span><div><h4>Algorithm</h4><p>Maintain indices <span class="math">lo</span> and <span class="math">hi</span> with <span class="math">A[lo]≤z≤A[hi]</span>, initially <span class="math">lo=1</span> and <span class="math">hi=n</span>. While <span class="math">lo&lt;hi</span>, let <span class="math">m=⌊(lo+hi)/2⌋</span>. If <span class="math">A[m]=z</span>, return <span class="math">m</span>. If <span class="math">A[m]&lt;z</span>, set <span class="math">lo=m+1</span>; this is valid because <span class="math">A[m+1]≤A[m]+1≤z</span>. If <span class="math">A[m]&gt;z</span>, set <span class="math">hi=m−1</span>; this is valid because <span class="math">A[m−1]≥A[m]−1≥z</span>. When the loop ends, <span class="math">lo=hi</span>; return that index.</p></div></div>
+          <div class="model-part"><span class="tag">b</span><div><h4>Justification of Correctness</h4><p>The invariant <span class="math">A[lo]≤z≤A[hi]</span> holds initially from <span class="math">A[1]=x≤z≤y=A[n]</span>. If the midpoint is below <span class="math">z</span>, the step-size condition gives <span class="math">A[m+1]≤z</span>, while the old upper endpoint still satisfies <span class="math">z≤A[hi]</span>; hence the invariant holds on <span class="math">[m+1,hi]</span>. The argument is symmetric when the midpoint is above <span class="math">z</span>. By the discrete IVT, every interval whose endpoint values bracket <span class="math">z</span> contains an occurrence of <span class="math">z</span>. The interval strictly shrinks, so the process terminates. At termination <span class="math">lo=hi</span>, and the invariant forces <span class="math">A[lo]=z</span>.</p></div></div>
+          <div class="model-part"><span class="tag">c</span><div><h4>Runtime Analysis</h4><p>Each iteration does constant work and discards about half the index interval. Therefore <span class="math">T(n)=T(n/2)+O(1)=O(log n)</span>. By the Master Theorem, <span class="math">a=1</span>, <span class="math">b=2</span>, and <span class="math">f(n)=Θ(1)=Θ(n^{log₂1})</span>, so this is the equal case.</p></div></div>
+
+          <div class="trace" aria-label="Worked trace">
+            <div class="trace-step"><strong>Start</strong><span><span class="math">A=[2,3,4,3,4,5,6]</span>, <span class="math">z=5</span>, <span class="math">lo=1</span>, <span class="math">hi=7</span>.</span></div>
+            <div class="trace-step"><strong>Step 1</strong><span><span class="math">m=4</span>. Since <span class="math">A[4]=3&lt;5</span>, set <span class="math">lo=5</span>.</span></div>
+            <div class="trace-step"><strong>Step 2</strong><span><span class="math">m=⌊(5+7)/2⌋=6</span>. Since <span class="math">A[6]=5</span>, return index <span class="math">6</span>.</span></div>
+          </div>
+          <figure class="diagram">
+            <svg viewBox="0 0 760 220" role="img" aria-labelledby="one-title one-desc">
+              <title id="one-title">One-unit-apart search trace</title><desc id="one-desc">The first midpoint at index four has value three, so the search moves to indices five through seven; midpoint six contains the target five.</desc>
+              <text x="20" y="35" font-size="16" font-weight="700">Round 1</text>
+              <g transform="translate(105 12)">
+                <rect class="accent-fill" x="0" y="0" width="70" height="52"/><rect class="box" x="70" y="0" width="70" height="52"/><rect class="box" x="140" y="0" width="70" height="52"/><rect class="warm-fill" x="210" y="0" width="70" height="52"/><rect class="box" x="280" y="0" width="70" height="52"/><rect class="box" x="350" y="0" width="70" height="52"/><rect class="accent-fill" x="420" y="0" width="70" height="52"/>
+                <text class="mono" x="35" y="32" text-anchor="middle">2</text><text class="mono" x="105" y="32" text-anchor="middle">3</text><text class="mono" x="175" y="32" text-anchor="middle">4</text><text class="mono" x="245" y="32" text-anchor="middle">3</text><text class="mono" x="315" y="32" text-anchor="middle">4</text><text class="mono" x="385" y="32" text-anchor="middle">5</text><text class="mono" x="455" y="32" text-anchor="middle">6</text>
+                <text class="muted" x="35" y="75" text-anchor="middle" font-size="13">lo</text><text class="muted" x="245" y="75" text-anchor="middle" font-size="13">m</text><text class="muted" x="455" y="75" text-anchor="middle" font-size="13">hi</text>
+              </g>
+              <text x="20" y="143" font-size="16" font-weight="700">Round 2</text>
+              <g transform="translate(385 120)"><rect class="accent-fill" x="0" y="0" width="70" height="52"/><rect class="warm-fill" x="70" y="0" width="70" height="52"/><rect class="accent-fill" x="140" y="0" width="70" height="52"/><text class="mono" x="35" y="32" text-anchor="middle">4</text><text class="mono" x="105" y="32" text-anchor="middle">5</text><text class="mono" x="175" y="32" text-anchor="middle">6</text><text class="muted" x="35" y="75" text-anchor="middle" font-size="13">lo</text><text class="muted" x="105" y="75" text-anchor="middle" font-size="13">m = target</text><text class="muted" x="175" y="75" text-anchor="middle" font-size="13">hi</text></g>
+            </svg>
+            <figcaption>The values may move up and down. The proof follows the bracketing endpoints, not a global sortedness claim.</figcaption>
+          </figure>
+          <div class="focus"><span class="box-label">EXAM FOCUS</span>The crucial sentence is not “binary search works.” It is why the new endpoint still brackets <span class="math">z</span>: <span class="math">A[m]&lt;z ⇒ A[m+1]≤A[m]+1≤z</span>, and symmetrically on the left.</div>
+          <div class="recap"><span class="box-label">30-SECOND RECAP</span>Maintain endpoint values on opposite sides of <span class="math">z</span>. The one-unit step bound prevents skipping <span class="math">z</span>. Halve the index interval each time: <span class="math">O(log n)</span>.</div>
+        </article>
+
+        <article class="card problem" id="circular">
+          <p class="problem-id">1.3 · CIRCULAR ARRAY</p>
+          <h3>Maximum-sum contiguous subarray with wraparound</h3>
+          <div class="statement"><strong>Problem.</strong> Given a circular array <span class="math">A</span> of integers, find the maximum sum of a contiguous subarray. A subarray may wrap from index <span class="math">n−1</span> to index <span class="math">0</span>. At least one entry is positive. For <span class="math">A=[8,−8,9,−9,10,−11,12]</span>, the answer is <span class="math">22</span>, achieved by <span class="math">[12,8,−8,9,−9,10]</span>.</div>
+          <div class="key"><strong>Key idea.</strong> Make the combine step constant-time by returning more than the final answer. Each call returns the best internal subarray, the best prefix, the best suffix, and the total sum.</div>
+
+          <div class="model-part"><span class="tag">a</span><div><h4>Algorithm</h4><p>Define a recursive routine for a contiguous window. It returns four values: <span class="math">opt</span>, the maximum subarray sum entirely inside the window; <span class="math">Si</span>, the maximum sum of a subarray starting at the window’s first entry; <span class="math">Se</span>, the maximum sum of a subarray ending at the window’s last entry; and <span class="math">total</span>, the sum of every entry in the window.</p><p>For one element <span class="math">a</span>, return <span class="math">(a,a,a,a)</span> if <span class="math">a&gt;0</span>; otherwise return <span class="math">(0,a,a,a)</span>, allowing the empty subarray only for <span class="math">opt</span>. For a larger window, split it in half, recursively obtain <span class="math">(optL,SiL,SeL,totalL)</span> and <span class="math">(optR,SiR,SeR,totalR)</span>, then compute:</p><div class="equation">Si = max(SiL, totalL + SiR)<br>Se = max(SeR, SeL + totalR)<br>total = totalL + totalR<br>opt = max(optL, optR, SeL + SiR)</div><p>Run the symmetric minimum-subarray version as well, where “max” becomes “min” and the one-element minimum is the element itself. Let its answer be <span class="math">minSub</span>. Return <span class="math">max(opt, total−minSub)</span>.</p></div></div>
+          <div class="model-part"><span class="tag">b</span><div><h4>Justification of Correctness</h4><p>We prove by induction on window length that all four returned quantities are correct. A maximum prefix of the concatenated window either ends inside the left half, giving <span class="math">SiL</span>, or uses all of the left half and a maximum prefix of the right, giving <span class="math">totalL+SiR</span>. Thus the prefix formula is complete; the suffix formula is symmetric. Every maximum non-wrapping subarray lies fully in the left half, fully in the right half, or crosses the split. Every crossing subarray is a suffix of the left followed by a prefix of the right, so the best crossing value is exactly <span class="math">SeL+SiR</span>. The induction hypothesis makes each ingredient correct, proving <span class="math">opt</span>.</p><p>For the circular case, any proper wrapping subarray consists of every entry except one contiguous, non-wrapping gap. Maximizing the wrapping sum is therefore equivalent to minimizing the excluded gap, so its value is <span class="math">total−minSub</span>. Comparing this with the best non-wrapping value covers both cases. Because at least one entry is positive, the final maximum is nonempty.</p></div></div>
+          <div class="model-part"><span class="tag">c</span><div><h4>Runtime Analysis</h4><p>Each call makes two recursive calls on halves and performs only constant-time arithmetic in the combine step. Therefore <span class="math">T(n)=2T(n/2)+O(1)=Θ(n)</span> by the Master Theorem because <span class="math">n^{log₂2}=n</span> dominates the constant combine cost. Running both max and min versions changes only the constant factor, so the total remains <span class="math">Θ(n)</span>.</p></div></div>
+
+          <h4>Worked example: <span class="math">[5,−3,4,−2]</span></h4>
+          <div class="formula-grid">
+            <div class="formula-row"><b>Left [5,−3]</b><br><span class="math">Si=max(5,5−3)=5</span><br><span class="math">Se=max(−3,5−3)=2</span><br><span class="math">total=2, opt=5</span></div>
+            <div class="formula-row"><b>Right [4,−2]</b><br><span class="math">Si=max(4,4−2)=4</span><br><span class="math">Se=max(−2,4−2)=2</span><br><span class="math">total=2, opt=4</span></div>
+            <div class="formula-row"><b>Root combine</b><br><span class="math">Si=max(5,2+4)=6</span><br><span class="math">Se=max(2,2+2)=4</span><br><span class="math">total=4, opt=max(5,4,2+4)=6</span></div>
+            <div class="formula-row"><b>Circular comparison</b><br><span class="math">minSub=−3</span><br><span class="math">wrap=4−(−3)=7</span><br>Answer <span class="math">7</span> from <span class="math">[4,−2,5]</span>.</div>
+          </div>
+          <figure class="diagram">
+            <svg viewBox="0 0 760 350" role="img" aria-labelledby="circ-title circ-desc">
+              <title id="circ-title">Tuple combination and circular complement</title><desc id="circ-desc">Left and right four-value summaries combine into the root, and the minimum gap negative three is removed to create the wrapping maximum seven.</desc>
+              <rect class="box" x="55" y="35" width="270" height="88" rx="6"/><text x="190" y="62" text-anchor="middle" font-size="17" font-weight="700">Left [5, −3]</text><text class="mono" x="190" y="91" text-anchor="middle" font-size="15">(opt, Si, Se, total)</text><text class="mono" x="190" y="113" text-anchor="middle" font-size="18">(5, 5, 2, 2)</text>
+              <rect class="box" x="435" y="35" width="270" height="88" rx="6"/><text x="570" y="62" text-anchor="middle" font-size="17" font-weight="700">Right [4, −2]</text><text class="mono" x="570" y="91" text-anchor="middle" font-size="15">(opt, Si, Se, total)</text><text class="mono" x="570" y="113" text-anchor="middle" font-size="18">(4, 4, 2, 2)</text>
+              <path class="wire" d="M190 123 L380 185 M570 123 L380 185"/>
+              <rect class="accent-fill" x="245" y="185" width="270" height="70" rx="6"/><text x="380" y="213" text-anchor="middle" font-size="17" font-weight="700">Root [5, −3, 4, −2]</text><text class="mono" x="380" y="241" text-anchor="middle" font-size="18">(6, 6, 4, 4)</text>
+              <g transform="translate(140 292)"><rect class="accent-fill" x="0" y="0" width="100" height="42"/><rect class="warm-fill" x="100" y="0" width="100" height="42"/><rect class="accent-fill" x="200" y="0" width="100" height="42"/><rect class="accent-fill" x="300" y="0" width="100" height="42"/><text class="mono" x="50" y="27" text-anchor="middle">5</text><text class="mono" x="150" y="27" text-anchor="middle">−3</text><text class="mono" x="250" y="27" text-anchor="middle">4</text><text class="mono" x="350" y="27" text-anchor="middle">−2</text><path class="accent-wire" d="M400 22 C470 22 470 -22 400 -22 L0 -22 C-70 -22 -70 22 0 22"/><text class="muted" x="450" y="3" font-size="14">wrap keeps</text><text class="muted" x="450" y="20" font-size="14">4, −2, 5</text></g>
+            </svg>
+            <figcaption>The recursive summary handles the non-wrapping optimum. The circular optimum is “everything except the minimum contiguous gap.”</figcaption>
+          </figure>
+          <div class="focus"><span class="box-label">EXAM FOCUS</span>The improvement from <span class="math">O(n log n)</span> to <span class="math">O(n)</span> comes entirely from augmentation: recursive calls return enough boundary information to avoid rescanning during combine.</div>
+          <div class="recap"><span class="box-label">30-SECOND RECAP</span>Return <span class="math">(opt, prefix, suffix, total)</span>. Crossing = left suffix + right prefix. Circular wrap = total − minimum non-wrapping gap. Two half calls and <span class="math">O(1)</span> combine give <span class="math">Θ(n)</span>.</div>
+        </article>
+      </section>
+
+      <section id="dpv">
+        <div class="section-head"><span class="section-no">02</span><h2>DPV problems from the Ed announcement</h2></div>
+        <p>The problems below are ordered by exam value. “Extra challenge” items are intentionally brief, and the closest-pair analysis is flagged because staff noted that it is above the expected class level.</p>
+
+        <article class="card problem" id="p24">
+          <p class="problem-id">2.4 · CHOOSE THE ALGORITHM</p>
+          <h3>Compare three recurrence designs</h3>
+          <div class="statement"><strong>Problem.</strong> Algorithm A creates five subproblems of half the original size and uses linear-time combine work. Algorithm B creates two subproblems of size <span class="math">n−1</span> and uses constant-time combine work. Algorithm C creates nine subproblems of size <span class="math">n/3</span> and uses <span class="math">O(n²)</span> combine work. Give the asymptotic runtime of each and choose the fastest.</div>
+          <div class="table-wrap"><table><thead><tr><th>Algorithm</th><th>Recurrence</th><th>Bound</th><th>Reason</th></tr></thead><tbody>
+            <tr><td data-label="Algorithm">A</td><td data-label="Recurrence"><span class="math">5T(n/2)+O(n)</span></td><td data-label="Bound"><span class="math">Θ(n^{log₂5})≈Θ(n²·³²)</span></td><td data-label="Reason">Recursive term dominates linear combine.</td></tr>
+            <tr><td data-label="Algorithm">B</td><td data-label="Recurrence"><span class="math">2T(n−1)+O(1)</span></td><td data-label="Bound"><span class="math">Θ(2ⁿ)</span></td><td data-label="Reason">The recursion tree doubles at nearly every decrement.</td></tr>
+            <tr><td data-label="Algorithm">C</td><td data-label="Recurrence"><span class="math">9T(n/3)+O(n²)</span></td><td data-label="Bound"><span class="math">Θ(n² log n)</span></td><td data-label="Reason"><span class="math">log₃9=2</span>, matching the combine exponent.</td></tr>
+          </tbody></table></div>
+          <p><strong class="rank">Choose A.</strong> Its exponent is about <span class="math">2.32</span>, which beats <span class="math">n²log n</span> asymptotically; B is exponential.</p>
+
+          <h3 style="margin-top:30px">2.5 · Recurrence drill</h3>
+          <div class="statement"><strong>Problem.</strong> Give a tight asymptotic bound for each recurrence below. Assume constant-size base cases.</div>
+          <div class="table-wrap"><table><thead><tr><th>Recurrence</th><th>Tight bound</th><th>One-line derivation</th></tr></thead><tbody>
+            <tr><td data-label="Recurrence">(a) <span class="math">2T(n/3)+1</span></td><td data-label="Bound"><span class="math">Θ(n^{log₃2})≈Θ(n⁰·⁶³)</span></td><td data-label="Derivation">Master: constant combine is smaller than <span class="math">n^{log₃2}</span>.</td></tr>
+            <tr><td data-label="Recurrence">(b) <span class="math">5T(n/4)+n</span></td><td data-label="Bound"><span class="math">Θ(n^{log₄5})≈Θ(n¹·¹⁶)</span></td><td data-label="Derivation">Recursive exponent exceeds 1.</td></tr>
+            <tr><td data-label="Recurrence">(c) <span class="math">7T(n/7)+n</span></td><td data-label="Bound"><span class="math">Θ(n log n)</span></td><td data-label="Derivation"><span class="math">log₇7=1</span>, exactly matching <span class="math">f(n)=n</span>.</td></tr>
+            <tr><td data-label="Recurrence">(d) <span class="math">9T(n/3)+n²</span></td><td data-label="Bound"><span class="math">Θ(n² log n)</span></td><td data-label="Derivation"><span class="math">log₃9=2</span>, exact match.</td></tr>
+            <tr><td data-label="Recurrence">(e) <span class="math">8T(n/2)+n³</span></td><td data-label="Bound"><span class="math">Θ(n³ log n)</span></td><td data-label="Derivation"><span class="math">log₂8=3</span>, exact match.</td></tr>
+            <tr><td data-label="Recurrence">(f) <span class="math">49T(n/25)+n^{3/2}log n</span></td><td data-label="Bound"><span class="math">Θ(n^{3/2}log n)</span></td><td data-label="Derivation"><span class="math">log₂₅49=log₅7≈1.21&lt;1.5</span>; combine dominates.</td></tr>
+            <tr><td data-label="Recurrence">(g) <span class="math">T(n−1)+2</span></td><td data-label="Bound"><span class="math">Θ(n)</span></td><td data-label="Derivation"><span class="math">n</span> levels, constant work per level.</td></tr>
+            <tr><td data-label="Recurrence">(h) <span class="math">T(n−1)+nᶜ</span></td><td data-label="Bound"><span class="math">Θ(n^{c+1})</span></td><td data-label="Derivation">Sum <span class="math">1ᶜ+2ᶜ+···+nᶜ</span>.</td></tr>
+            <tr><td data-label="Recurrence">(i) <span class="math">T(n−1)+cⁿ, c&gt;1</span></td><td data-label="Bound"><span class="math">Θ(cⁿ)</span></td><td data-label="Derivation">A geometric sum is dominated by its final term.</td></tr>
+            <tr><td data-label="Recurrence">(j) <span class="math">2T(n−1)+1</span></td><td data-label="Bound"><span class="math">Θ(2ⁿ)</span></td><td data-label="Derivation">Two branches survive across <span class="math">n</span> decrement levels.</td></tr>
+            <tr><td data-label="Recurrence">(k) <span class="math">T(√n)+1</span></td><td data-label="Bound"><span class="math">Θ(log log n)</span></td><td data-label="Derivation">After <span class="math">t</span> levels the size is <span class="math">n^{1/2ᵗ}</span>; constant size needs <span class="math">t=Θ(log log n)</span>.</td></tr>
+          </tbody></table></div>
+          <div class="focus"><span class="box-label">EXAM FOCUS</span>The Master Theorem does not apply to <span class="math">T(n−1)</span> recurrences. Expand them into sums or count recursion-tree levels instead.</div>
+          <div class="recap"><span class="box-label">30-SECOND RECAP</span>Compute <span class="math">n^{log_ba}</span>, compare it with <span class="math">f(n)</span>, and watch for equality, which adds a logarithm. Decrement recurrences need a different tool.</div>
+        </article>
+
+        <div id="p212">
+          <article class="card problem">
+            <p class="problem-id">2.12 · PRINT PROGRAM</p><h3>Count the lines</h3>
+            <div class="statement"><strong>Problem.</strong> A function <span class="math">f(n)</span> does the following when <span class="math">n&gt;1</span>: it prints <code>still going</code>, calls <span class="math">f(n/2)</span>, and then calls <span class="math">f(n/2)</span> again. How many lines are printed, asymptotically?</div>
+            <p>Let <span class="math">P(n)</span> be the number of print executions. Then <span class="math">P(n)=2P(n/2)+1</span>. The recursion tree has <span class="math">Θ(n)</span> nodes, or equivalently Master gives <span class="math">Θ(n)</span>. Therefore the program prints <strong><span class="math">Θ(n)</span> lines</strong>.</p>
+          </article>
+
+          <article class="card problem">
+            <p class="problem-id">2.14 · REMOVE DUPLICATES</p><h3>Sort, then scan</h3>
+            <div class="statement"><strong>Problem.</strong> Given <span class="math">n</span> elements, possibly with duplicates, remove all duplicate copies in <span class="math">O(n log n)</span> time, leaving exactly one copy of each distinct value.</div>
+            <p><strong>Solution.</strong> Sort the elements with merge sort in <span class="math">O(n log n)</span>. Then scan once from left to right, outputting the first element and thereafter outputting an element only when it differs from its immediate predecessor. After sorting, all copies of a value are adjacent; therefore the scan outputs the first copy and rejects exactly the remaining copies. The scan is <span class="math">O(n)</span>, so the total is <span class="math">O(n log n)+O(n)=O(n log n)</span>.</p>
+          </article>
+
+          <article class="card problem">
+            <p class="problem-id">2.16 · INFINITE ARRAY</p><h3>Find the finite boundary, then binary search</h3>
+            <div class="statement"><strong>Problem.</strong> An infinite array contains sorted integers in its first <span class="math">n</span> cells and <span class="math">∞</span> in every later cell. The value <span class="math">n</span> is unknown. Find a target <span class="math">x</span> in <span class="math">O(log n)</span> time, or report that it is absent.</div>
+            <p><strong>Solution.</strong> Probe indices <span class="math">1,2,4,8,…</span> until reaching an index <span class="math">2ʲ</span> whose value is at least <span class="math">x</span> (possibly <span class="math">∞</span>). If <span class="math">x</span> exists, it must lie between indices <span class="math">2ʲ⁻¹</span> and <span class="math">2ʲ</span>; binary-search that range. Exponential probing uses <span class="math">O(log n)</span> reads because the first power of two beyond the finite prefix is below <span class="math">2n</span>. The binary search covers a range of size <span class="math">O(n)</span>, so it also costs <span class="math">O(log n)</span>.</p>
+            <div class="recap"><span class="box-label">30-SECOND RECAP</span>Doubling finds a search scale without knowing <span class="math">n</span>; binary search finishes inside that scale.</div>
+          </article>
+
+          <article class="card problem">
+            <p class="problem-id">2.17 · FIXED POINT</p><h3>Find an index equal to its value</h3>
+            <div class="statement"><strong>Problem.</strong> Given a sorted array of <span class="math">n</span> distinct integers <span class="math">A[1..n]</span>, decide whether some index <span class="math">i</span> satisfies <span class="math">A[i]=i</span>, in <span class="math">O(log n)</span> time.</div>
+            <p><strong>Solution.</strong> Let <span class="math">m</span> be the midpoint. If <span class="math">A[m]=m</span>, return <span class="math">m</span>. If <span class="math">A[m]&lt;m</span>, search only to the right. Because the integer entries are sorted and distinct, moving one index left decreases the value by at least one; thus, for every <span class="math">i≤m</span>,</p><div class="equation">A[i] ≤ A[m]−(m−i) &lt; m−(m−i) = i.</div><p>So no index at or left of <span class="math">m</span> can be fixed. If <span class="math">A[m]&gt;m</span>, the symmetric argument eliminates the right half. Each step halves the range, giving <span class="math">O(log n)</span>.</p>
+            <div class="focus"><span class="box-label">EXAM FOCUS</span>Distinctness is essential: it creates the “at least one per index” growth needed to discard a whole half.</div>
+          </article>
+
+          <article class="card problem">
+            <p class="problem-id">2.19 · K-WAY MERGE</p><h3>Sequential versus balanced merging</h3>
+            <div class="statement"><strong>Problem.</strong> You are given <span class="math">k</span> sorted lists of length <span class="math">n</span>. (a) Analyze the complexity of merging them one at a time with <span class="math">MERGE</span>. (b) Give a faster divide-and-conquer method.</div>
+            <p><strong>Solution.</strong> Sequential merging costs <span class="math">(2n−1)+(3n−1)+···+(kn−1)=Θ(k²n)</span>. Pairwise tournament merging performs <span class="math">Θ(kn)</span> work per level for <span class="math">Θ(log k)</span> levels, totaling <span class="math">Θ(kn log k)</span>. See the complete model answer in <a href="#kmerge">Section 1.1</a>.</p>
+          </article>
+
+          <article class="card problem">
+            <p class="problem-id">2.22 · K-TH SMALLEST OF TWO SORTED LISTS</p><h3>Discard half of the remaining rank</h3>
+            <div class="statement"><strong>Problem.</strong> Two sorted lists have lengths <span class="math">m</span> and <span class="math">n</span>. Design an <span class="math">O(log m+log n)</span> algorithm that returns the <span class="math">k</span>-th smallest element of their multiset union.</div>
+            <p><strong>Solution.</strong> If one list is empty, return the <span class="math">k</span>-th element of the other. If <span class="math">k=1</span>, return the smaller head. Otherwise choose <span class="math">i=min(m,⌊k/2⌋)</span> elements from <span class="math">A</span> and <span class="math">j=k−i</span> from <span class="math">B</span>; if <span class="math">j&gt;n</span>, cap <span class="math">j</span> at <span class="math">n</span> and set <span class="math">i=k−j</span>. Compare <span class="math">A[i]</span> with <span class="math">B[j]</span>. If <span class="math">A[i]≤B[j]</span>, none of <span class="math">A[1..i]</span> can be the desired element: at least <span class="math">i+j=k</span> candidates are at most <span class="math">B[j]</span>, and the first <span class="math">i</span> elements of <span class="math">A</span> occupy ranks too early. Discard them and search for rank <span class="math">k−i</span>. Otherwise discard <span class="math">B[1..j]</span> and reduce the rank by <span class="math">j</span>. Each step removes about half of the relevant rank, so the time is <span class="math">O(log k)⊆O(log m+log n)</span>.</p>
+            <p><strong>Warmups staff suggested:</strong> FastSelect on the concatenation runs in <span class="math">O(m+n)</span>; a two-pointer merge also runs in <span class="math">O(m+n)</span>. They establish correctness intuition before the logarithmic discard-halves improvement.</p>
+          </article>
+
+          <article class="card problem">
+            <p class="problem-id">2.23 · MAJORITY ELEMENT</p><h3>Candidate generation plus mandatory verification</h3>
+            <div class="statement"><strong>Problem.</strong> An unordered array <span class="math">A[1..n]</span> permits only equality tests. Decide whether some value occurs more than <span class="math">n/2</span> times and, if so, return it. Give (a) an <span class="math">O(n log n)</span> divide-and-conquer algorithm and (b) a linear-time improvement.</div>
+            <h4>(a) <span class="math">O(n log n)</span></h4><p>Split the array into halves and recursively obtain a possible majority candidate from each half. Count each distinct candidate across the entire current array and return one whose count exceeds half the current length; if neither does, report none. If <span class="math">x</span> is a majority of the whole array, then it must be a majority of at least one half—otherwise its counts in both halves would sum to at most <span class="math">n/2</span>. So it appears among the at most two candidates and the full count finds it. The recurrence is <span class="math">T(n)=2T(n/2)+O(n)=O(n log n)</span>.</p>
+            <h4>(b) <span class="math">O(n)</span></h4><p>Pair elements arbitrarily. Discard every pair containing two different values; from each equal pair, keep one copy. Recurse on the at most <span class="math">n/2</span> survivors to obtain a candidate, then count that candidate in the original current array and return it only if it occurs more than half the time. If <span class="math">x</span> was a majority before pairing, then each discarded unequal pair removes at most one <span class="math">x</span> and one non-<span class="math">x</span>, while each equal <span class="math">x</span>-pair contributes one survivor. Thus <span class="math">x</span> remains a majority among survivors. This direction is enough to ensure that a real majority reaches the final candidate. The recurrence <span class="math">T(n)=T(n/2)+O(n)</span> solves to <span class="math">O(n)</span>.</p>
+            <figure class="diagram"><svg viewBox="0 0 760 180" role="img" aria-labelledby="maj-title maj-desc"><title id="maj-title">Majority pairing</title><desc id="maj-desc">The sequence a a b c a b is paired. Only the equal a a pair contributes a survivor. The candidate a is then verified against the original sequence.</desc><text x="20" y="37" font-size="16" font-weight="700">Input</text><g transform="translate(95 10)"><rect class="accent-fill" x="0" y="0" width="70" height="48"/><rect class="accent-fill" x="70" y="0" width="70" height="48"/><rect class="box" x="170" y="0" width="70" height="48"/><rect class="warm-fill" x="240" y="0" width="70" height="48"/><rect class="accent-fill" x="340" y="0" width="70" height="48"/><rect class="box" x="410" y="0" width="70" height="48"/><text class="mono" x="35" y="30" text-anchor="middle">a</text><text class="mono" x="105" y="30" text-anchor="middle">a</text><text class="mono" x="205" y="30" text-anchor="middle">b</text><text class="mono" x="275" y="30" text-anchor="middle">c</text><text class="mono" x="375" y="30" text-anchor="middle">a</text><text class="mono" x="445" y="30" text-anchor="middle">b</text><path class="accent-wire" d="M0 62 H140 M170 62 H310 M340 62 H480"/><text class="muted" x="70" y="82" text-anchor="middle" font-size="13">equal: keep a</text><text class="muted" x="240" y="82" text-anchor="middle" font-size="13">different: discard</text><text class="muted" x="410" y="82" text-anchor="middle" font-size="13">different: discard</text></g><path class="wire" d="M335 100 L335 126"/><rect class="accent-fill" x="290" y="126" width="90" height="42"/><text class="mono" x="335" y="153" text-anchor="middle">[a]</text><text class="muted" x="405" y="151" font-size="14">candidate → count in original</text></svg><figcaption>Pairing produces a candidate; it does not certify a majority.</figcaption></figure>
+            <div class="focus"><span class="box-label">EXAM FOCUS</span>Only one implication is valid: “majority before pairing ⇒ majority after pairing.” The converse is false. Example: <span class="math">[x,y,z,x,u,v]</span>, paired as <span class="math">(x,x),(y,z),(u,v)</span>, reduces to <span class="math">[x]</span>, although <span class="math">x</span> is not a majority of the original. That is exactly why the final count is mandatory.</div>
+            <div class="recap"><span class="box-label">30-SECOND RECAP</span>D&amp;C may narrow the answer to a constant-size candidate set. A linear verification pass turns a candidate into a correct answer.</div>
+          </article>
+        </div>
+
+        <article class="card problem" id="binary-mod">
+          <p class="problem-id">ED EXTRA · MODIFIED BINARY SEARCH</p><h3>Smallest missing natural number</h3>
+          <div class="statement"><strong>Problem.</strong> Given a sorted array of <span class="math">n</span> distinct natural numbers, find the smallest missing natural number in <span class="math">O(log n)</span>. For example, <span class="math">[3,4,5]</span> returns <span class="math">1</span>, and <span class="math">[1,3,4,6]</span> returns <span class="math">2</span>.</div>
+          <p><strong>Solution.</strong> Use 1-based indexing. Before the first missing value, the sorted distinct natural numbers satisfy <span class="math">A[i]=i</span>; at and after the first gap, <span class="math">A[i]&gt;i</span>. Binary-search for the first index satisfying <span class="math">A[i]&gt;i</span>. Initialize <span class="math">lo=1</span>, <span class="math">hi=n</span>, and answer <span class="math">n+1</span>. While <span class="math">lo≤hi</span>, let <span class="math">m</span> be the midpoint. If <span class="math">A[m]=m</span>, search right by setting <span class="math">lo=m+1</span>. Otherwise record <span class="math">m</span> as the current answer and search left by setting <span class="math">hi=m−1</span>. Return the recorded index; if none was recorded, return <span class="math">n+1</span>. Each step halves the range, so the time is <span class="math">O(log n)</span>.</p>
+          <div class="trace"><div class="trace-step"><strong>Trace 1</strong><span><span class="math">[1,3,4,6]</span>: <span class="math">m=2</span>, <span class="math">A[2]=3&gt;2</span> ⇒ record 2, set <span class="math">hi=1</span>.</span></div><div class="trace-step"><strong>Trace 2</strong><span><span class="math">m=1</span>, <span class="math">A[1]=1</span> ⇒ set <span class="math">lo=2</span>. The loop ends; return <span class="math">2</span>.</span></div></div>
+          <div class="focus"><span class="box-label">EXAM FOCUS</span>The monotone predicate is <span class="math">A[i]&gt;i</span>, not the array values themselves. State why the predicate switches only once.</div>
+        </article>
+
+        <article class="card problem" id="extensions">
+          <p class="problem-id">2.1 · FAST MULTIPLICATION <span class="priority">BRIEF / ROTE</span></p>
+          <h3>Three products instead of four</h3>
+          <div class="statement"><strong>Problem.</strong> Multiply the binary numbers <span class="math">10011011₂</span> and <span class="math">10111010₂</span> using the divide-and-conquer fast-multiplication algorithm.</div>
+          <p>Split each 8-bit number into 4-bit halves:</p><div class="equation">x = 1001₂·2⁴ + 1011₂ = 9·16+11<br>y = 1011₂·2⁴ + 1010₂ = 11·16+10</div>
+          <p>Compute only three products: <span class="math">p₂=9·11=99</span>, <span class="math">p₀=11·10=110</span>, and <span class="math">p₁=(9+11)(11+10)−p₂−p₀=20·21−99−110=211</span>. Each multiplication is recursively handled the same way until constant-size numbers. Recombine:</p><div class="equation">xy = p₂·2⁸ + p₁·2⁴ + p₀<br>= 99·256 + 211·16 + 110<br>= 28830₁₀ = 111000010011110₂.</div>
+
+          <div class="two-col" style="margin-top:26px">
+            <div class="mini"><h4>2.27 · Squaring vs. multiplication <span class="priority">EXTRA CHALLENGE</span></h4><div class="statement"><strong>Problem.</strong> Explore whether a symmetric <span class="math">2×2</span> matrix can be squared with five scalar multiplications, whether that gives a recursive matrix-multiplication improvement, and how matrix squaring compares in difficulty with multiplication.</div><p><strong>Solution sketch.</strong> (a) Symmetry lets a single <span class="math">2×2</span> square exploit repeated cross terms, so five scalar multiplications suffice. (b) The naive recursion is invalid: after the first split, the needed subproblems are general products of submatrices, not necessarily squares with the symmetry that saved work. (c) Squaring is as hard as multiplication. One reduction obtains <span class="math">AB+BA</span> from three matrix squarings; a block-matrix construction then isolates <span class="math">AB</span>. Therefore a truly faster general squaring algorithm would imply faster multiplication.</p></div>
+            <div class="mini"><h4>2.28 · Hadamard matrix-vector product <span class="priority">EXTRA CHALLENGE</span></h4><div class="statement"><strong>Problem.</strong> Multiply the recursively defined Hadamard matrix <span class="math">Hₖ</span> by a vector faster than ordinary dense matrix-vector multiplication.</div><p><strong>Solution.</strong> Split the vector into equal halves <span class="math">v=(u,w)</span>. The block structure of <span class="math">Hₖ</span> gives</p><div class="equation">Hₖv = ( Hₖ₋₁(u+w), Hₖ₋₁(u−w) ).</div><p>Forming <span class="math">u+w</span> and <span class="math">u−w</span> costs <span class="math">O(n)</span>, followed by two half-size transforms. Thus <span class="math">T(n)=2T(n/2)+O(n)=O(n log n)</span>.</p></div>
+          </div>
+
+          <h3 style="margin-top:30px">2.32 · Closest pair <span class="priority">HARDER; ANALYSIS ABOVE CLASS LEVEL</span></h3>
+          <div class="statement"><strong>Problem.</strong> Given <span class="math">n</span> points in the plane, find the pair with minimum Euclidean distance using divide and conquer.</div>
+          <p><strong>Solution overview.</strong> Split the points by the median <span class="math">x</span>-coordinate, recursively find the best pair on each side, and let <span class="math">d</span> be the smaller distance. Any better crossing pair must lie in the vertical strip of width <span class="math">2d</span> centered at the split. Sort strip points by <span class="math">y</span>; for each point, compare it only with the next seven points. The geometric packing fact is that a <span class="math">d×d</span> square contains at most four points from one side when all same-side distances are at least <span class="math">d</span>. If each level sorts its strip, <span class="math">T(n)=2T(n/2)+O(n log n)=O(n log²n)</span>. Presorting by <span class="math">y</span> and maintaining the order through recursion reduces combine work to <span class="math">O(n)</span>, giving <span class="math">O(n log n)</span>.</p>
+
+          <h3 style="margin-top:30px">Deprioritized problems</h3>
+          <ul>
+            <li><strong>2.15 · Split in place:</strong> an implementation exercise rather than a divide-and-conquer design pattern.</li>
+            <li><strong>2.18 · Comparison lower bound:</strong> establishes an <span class="math">Ω(log n)</span> lower bound; keep the textbook decision-tree proof as reference, but it is not a design template.</li>
+            <li><strong>2.20 · Counting sort:</strong> runs in <span class="math">O(n+M)</span> for keys in <span class="math">{0,…,M}</span>; it is not divide and conquer and avoids comparison lower bounds by indexing key values directly.</li>
+          </ul>
+          <div class="recap"><span class="box-label">30-SECOND RECAP</span>Know the punchlines: three-product integer multiplication; Hadamard’s <span class="math">u±w</span> split; closest pair’s narrow strip and seven-neighbor check. Spend most study time on the full model answers and core patterns above.</div>
+        </article>
+      </section>
+
+      <section id="patterns">
+        <div class="section-head"><span class="section-no">03</span><h2>Recurring patterns cheat sheet</h2></div>
+        <div class="two-col">
+          <div class="mini"><h3>Invariant binary search</h3><p>State exactly what remains true: <span class="math">A[lo]≤z≤A[hi]</span>, or “the first true index lies in <span class="math">[lo,hi]</span>.” Prove initialization, preservation, strict shrinking, and what termination implies.</p><p><strong>Used by:</strong> One Unit Apart, Infinite Array, Fixed Point, smallest missing natural.</p></div>
+          <div class="mini"><h3>Augment the return value</h3><p>If combine would rescan, ask what summary lets the parent combine in constant time. For maximum subarray, that summary is <span class="math">(opt,prefix,suffix,total)</span>.</p><p><strong>Used by:</strong> Circular Maximum Subarray.</p></div>
+          <div class="mini"><h3>Candidate + verify</h3><p>Recursion can safely shrink the search to one or two candidates even when it cannot certify them. Finish with a linear count or validation pass.</p><p><strong>Used by:</strong> Majority Element.</p></div>
+          <div class="mini"><h3>Balanced aggregation</h3><p>When partial results grow, combine equal-size objects. Then each element is charged once per level and the number of levels is logarithmic.</p><p><strong>Used by:</strong> K-Way Merge.</p></div>
+        </div>
+        <div class="card">
+          <h3>Recurrence quick table</h3>
+          <div class="table-wrap"><table><thead><tr><th>Pattern</th><th>Result</th><th>Recognition rule</th></tr></thead><tbody>
+            <tr><td data-label="Pattern"><span class="math">aT(n/b)+Θ(n)</span>, <span class="math">a&lt;b</span></td><td data-label="Result"><span class="math">Θ(n)</span></td><td data-label="Recognition">Linear combine dominates.</td></tr>
+            <tr><td data-label="Pattern"><span class="math">aT(n/b)+Θ(n)</span>, <span class="math">a=b</span></td><td data-label="Result"><span class="math">Θ(n log n)</span></td><td data-label="Recognition">Equal work at every level.</td></tr>
+            <tr><td data-label="Pattern"><span class="math">aT(n/b)+Θ(n)</span>, <span class="math">a&gt;b</span></td><td data-label="Result"><span class="math">Θ(n^{log_ba})</span></td><td data-label="Recognition">Leaves dominate.</td></tr>
+            <tr><td data-label="Pattern"><span class="math">T(n−1)+nᶜ</span></td><td data-label="Result"><span class="math">Θ(n^{c+1})</span></td><td data-label="Recognition">Sum powers across <span class="math">n</span> levels.</td></tr>
+            <tr><td data-label="Pattern"><span class="math">T(n−1)+cⁿ</span>, <span class="math">c&gt;1</span></td><td data-label="Result"><span class="math">Θ(cⁿ)</span></td><td data-label="Recognition">Geometric sum; last term dominates.</td></tr>
+            <tr><td data-label="Pattern"><span class="math">T(n/2)+Θ(1)</span></td><td data-label="Result"><span class="math">Θ(log n)</span></td><td data-label="Recognition">One branch, halving each level.</td></tr>
+          </tbody></table></div>
+          <div class="focus"><span class="box-label">EXAM FOCUS</span>Before applying Master, identify <span class="math">a</span>, <span class="math">b</span>, and the exact nonrecursive work. “Divide and combine are constant” is meaningful only if you explain what data makes combine constant.</div>
+        </div>
+      </section>
+
+      <section id="checklist">
+        <div class="section-head"><span class="section-no">04</span><h2>Pre-exam checklist</h2></div>
+        <p>Use this once after drafting a design answer. Checks last only while this page remains open.</p>
+        <ul class="checklist">
+          <li><label><input type="checkbox"><span>I used the three tags: <strong>(a) Algorithm</strong>, <strong>(b) Justification of Correctness</strong>, and <strong>(c) Runtime Analysis</strong>.</span></label></li>
+          <li><label><input type="checkbox"><span>I wrote implementable prose, not pseudocode.</span></label></li>
+          <li><label><input type="checkbox"><span>I stated every base case and its return value.</span></label></li>
+          <li><label><input type="checkbox"><span>Every term in my recurrence is tied to an actual step.</span></label></li>
+          <li><label><input type="checkbox"><span>My runtime beats the stated brute-force baseline asymptotically.</span></label></li>
+          <li><label><input type="checkbox"><span>My correctness proof covers every branch or combine case.</span></label></li>
+          <li><label><input type="checkbox"><span>I stated why the recursion or loop terminates.</span></label></li>
+          <li><label><input type="checkbox"><span>I checked edge cases: one element, odd counts, empty candidate set, or boundary index—whichever applies.</span></label></li>
+        </ul>
+        <div class="recap"><span class="box-label">FINAL 30-SECOND RECAP</span>Design the recursive shape. Name the property that survives it. Return enough information for a fast combine. Then write—and justify—the recurrence.</div>
+      </section>
+
+      <footer class="sources"><strong>Sources.</strong> Built from the official CS 6515 Exam 2 practice problems and solutions, plus the Ed divide-and-conquer practice-problem thread covering DPV 2.1–2.32. Problem statements are reproduced here so the guide stands on its own.</footer>
+    </main>
+  </div>
+  <script>
+    (function () {
+      var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+      var targets = links.map(function (link) { return document.querySelector(link.getAttribute('href')); }).filter(Boolean);
+      if (!('IntersectionObserver' in window)) return;
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (link) {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+          });
+        });
+      }, { rootMargin: '-15% 0px -75% 0px' });
+      targets.forEach(function (target) { observer.observe(target); });
+      var mobileNav = document.getElementById('mobile-nav');
+      if (mobileNav) {
+        mobileNav.addEventListener('change', function () {
+          if (!mobileNav.value) return;
+          var target = document.getElementById(mobileNav.value);
+          if (target) window.scrollTo({ top: target.offsetTop - 72, behavior: 'instant' });
+          mobileNav.value = '';
+        });
+      }
+    }());
+  </script>
+</body>
+</html>
