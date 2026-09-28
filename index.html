@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OMSCS CS 6515 — Exam 2 Study Guides</title>
+<title>OMSCS CS 6515 — Study Guides</title>
 <style>
   :root { color-scheme: light dark; }
   body { font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
          max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem; line-height: 1.6; }
   h1 { font-size: 1.7rem; margin-bottom: 0.2rem; }
   .sub { color: #666; margin-bottom: 2rem; }
+  h2.section { font-size: 1.15rem; margin: 2rem 0 0.9rem; }
   .cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
   a.card { display: block; border: 1px solid #d0d7e3; border-radius: 12px; padding: 1.1rem 1.25rem;
            text-decoration: none; color: inherit; }
   a.card:hover { border-color: #2563eb; }
-  a.card h2 { font-size: 1.05rem; margin: 0 0 0.35rem; }
+  a.card h3 { font-size: 1.05rem; margin: 0 0 0.35rem; }
   a.card p { margin: 0; font-size: 0.9rem; color: #666; }
   .tag { display: inline-block; font-size: 0.72rem; font-weight: 700; border-radius: 999px;
          padding: 0.1rem 0.55rem; margin-bottom: 0.5rem; }
@@ -24,30 +25,47 @@
 </style>
 </head>
 <body>
-<h1>OMSCS CS 6515 — Exam 2 Study Guides</h1>
-<p class="sub">Graduate Algorithms · Divide &amp; Conquer · English / 한국어</p>
+<h1>OMSCS CS 6515 — Study Guides</h1>
+<p class="sub">Graduate Algorithms · English / 한국어</p>
+
+<h2 class="section">Exam 3 — Greedy + DP</h2>
+<p class="sub" style="margin-bottom:1rem;">SCC · 2-SAT · MST · Shortest paths via DP (transcripts GR1, GR2, GR3, DP3)</p>
+<div class="cards">
+  <a class="card" href="exam3-lecture-en/">
+    <span class="tag en">EN</span>
+    <h3>Exam 3 Study Guide — Lecture Notes</h3>
+    <p>Kosaraju's SCC, 2-SAT via implications, cut property + Kruskal's/Prim's, Bellman–Ford + Floyd–Warshall. (a)/(b)/(c) model answers, quiz reviews, worked numeric examples, diagrams, checklist.</p>
+  </a>
+  <a class="card" href="exam3-lecture-ko/">
+    <span class="tag ko">한국어</span>
+    <h3>Exam 3 스터디 가이드 — 강의 정리</h3>
+    <p>강연결 요소(Kosaraju), 2-SAT(함의 그래프), 컷 성질+Kruskal/Prim, Bellman–Ford+Floyd–Warshall. (a)/(b)/(c) 모범답안, 퀴즈 리뷰, 숫자 예제, 다이어그램, 체크리스트.</p>
+  </a>
+</div>
+
+<h2 class="section">Exam 2 — Divide &amp; Conquer</h2>
 <div class="cards">
   <a class="card" href="exam2-lecture-en/">
     <span class="tag en">EN</span>
-    <h2>Exam 2 Study Guide — Lecture Notes</h2>
+    <h3>Exam 2 Study Guide — Lecture Notes</h3>
     <p>DC1 · DC2 · DC3 lecture summaries, (a)/(b)/(c) model answers, quiz reviews with problems + answers, worked examples, diagrams, checklist.</p>
   </a>
   <a class="card" href="exam2-lecture-ko/">
     <span class="tag ko">한국어</span>
-    <h2>Exam 2 스터디 가이드 — 강의 정리</h2>
+    <h3>Exam 2 스터디 가이드 — 강의 정리</h3>
     <p>DC1 · DC2 · DC3 강의 정리, (a)/(b)/(c) 모범답안, 퀴즈 리뷰(문제+정답+풀이), 숫자 예제, 다이어그램, 체크리스트.</p>
   </a>
   <a class="card" href="exam2-practice-en/">
     <span class="tag en">EN</span>
-    <h2>Exam 2 Practice Problem Study Guide</h2>
+    <h3>Exam 2 Practice Problem Study Guide</h3>
     <p>Full model answers for the 3 official practice problems (K merge, One unit apart, Circular array) + Ed/DPV problem solutions. Self-contained.</p>
   </a>
   <a class="card" href="exam2-practice-ko/">
     <span class="tag ko">한국어</span>
-    <h2>Exam 2 연습문제 스터디 가이드</h2>
+    <h3>Exam 2 연습문제 스터디 가이드</h3>
     <p>공식 연습문제 3개 전체 모범답안 + Ed 공지 DPV 연습문제 해설. 문제 지문 내장, 다른 파일 없이 완결.</p>
   </a>
 </div>
-<footer>Personal study notes for OMSCS CS 6515 Exam 2. Not affiliated with Georgia Tech.</footer>
+<footer>Personal study notes for OMSCS CS 6515. Not affiliated with Georgia Tech.</footer>
 </body>
 </html>
