@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s–t Path with Consecutive Red Vertices — CS 6515 Homework Background Notes</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#ea580c; --accent-soft:#fff7ed; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#fb923c; --accent-soft:#1c1005; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.problem{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);padding:16px 18px;border-radius:12px;
+  overflow-x:auto;font-size:.85rem;line-height:1.65;border:1px solid var(--line)}
+pre code{background:none;padding:0}
+svg.diagram{width:100%;height:auto;display:block;margin:10px 0}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin:0 3px}
+.dot.red{background:#f97316;border:2px solid #ea580c}
+.dot.black{background:#fff;border:2px solid #111}
+@media (prefers-color-scheme: dark){.dot.black{background:#0b0f14;border-color:#e5e7eb}}
+.pathstrip{font-family:ui-monospace,Consolas,monospace;font-size:.95rem;margin:8px 0}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+.warn{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>s–t Path with Consecutive Red Vertices</h1>
+  <p>Background knowledge and key points for the CS 6515 homework problem and Format Quiz</p>
+  <span class="tag">Undirected graph</span><span class="tag">Reachability</span>
+  <span class="tag">State augmentation</span><span class="tag">Layered graph</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#p1">1. Reading the problem</a><a href="#p2">2. Graph·Path</a><a href="#p3">3. BFS/DFS</a>
+  <a href="#p4">4. State augmentation</a><a href="#p5">5. Naive pitfalls</a><a href="#p6">6. Three layers</a>
+  <a href="#p7">7. Example trace</a><a href="#p8">8. Correctness·Runtime</a><a href="#p9">9. Pitfall checklist</a>
+  <a href="#p10">10. Extension</a><a href="#p11">11. Try by hand</a>
+  <a href="#q0">Q0. Format rules</a><a href="#q1">Q1. Avoiding x</a><a href="#q2">Q2. Solutions a–d</a>
+  <a href="#q3">Q3. Picking the answer</a><a href="#q4">Q4. Correctness matching</a><a href="#q5">Q5. Runtime matching</a>
+  <a href="#q6">Q6. Key points</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="p1">
+<h2>1. Reading the problem</h2>
+<div class="card problem">
+  <p><strong>Input.</strong> An undirected graph G = (V, E). Every vertex is colored red or black, and its color
+  can be accessed through <code>col(v)</code> in O(1) time. Two vertices s and t are given, and <strong>both s and t are black</strong>.</p>
+  <p><strong>Decision.</strong> Return TRUE if there exists a path from s to t such that all red vertices
+  traversed by the path appear <strong>consecutively</strong> on it; FALSE otherwise.</p>
+</div>
+<p>In other words, a valid path must look like <strong>black* · red+ · black*</strong>, or <strong>black*</strong> (zero reds).
+If the reds are split into two blocks, the path is invalid.</p>
+
+<svg class="diagram" viewBox="0 0 640 420" role="img" aria-label="Example graph">
+  <g stroke="#6b7280" stroke-width="2.5">
+    <line x1="70" y1="210" x2="190" y2="90"/><line x1="190" y1="90" x2="450" y2="90"/>
+    <line x1="190" y1="90" x2="260" y2="210"/><line x1="70" y1="210" x2="260" y2="210"/>
+    <line x1="260" y1="210" x2="380" y2="210"/><line x1="70" y1="210" x2="190" y2="330"/>
+    <line x1="260" y1="210" x2="190" y2="330"/><line x1="190" y1="330" x2="380" y2="210"/>
+    <line x1="190" y1="330" x2="450" y2="330"/><line x1="380" y1="210" x2="450" y2="330"/>
+    <line x1="380" y1="210" x2="450" y2="90"/><line x1="450" y1="90" x2="570" y2="210"/>
+    <line x1="450" y1="330" x2="570" y2="210"/>
+  </g>
+  <g font-family="sans-serif" font-size="20" font-weight="bold">
+    <circle cx="70" cy="210" r="11" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="190" cy="90" r="11" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="450" cy="90" r="11" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="260" cy="210" r="11" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="380" cy="210" r="11" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="190" cy="330" r="11" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="450" cy="330" r="11" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="570" cy="210" r="11" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <text x="44" y="200" fill="var(--fg)">s</text>
+    <text x="182" y="66" fill="#ea580c">A</text>
+    <text x="442" y="66" fill="#ea580c">C</text>
+    <text x="268" y="192" fill="var(--fg)">B</text>
+    <text x="372" y="186" fill="#ea580c">D</text>
+    <text x="176" y="312" fill="#ea580c">E</text>
+    <text x="442" y="310" fill="var(--fg)">F</text>
+    <text x="582" y="200" fill="var(--fg)">t</text>
+  </g>
+</svg>
+<p class="caption">The homework example graph. Orange circles = red vertices (A, C, D, E); black circles = black vertices (s, B, F, t).</p>
+
+<div class="card">
+  <p class="pathstrip"><span class="ok">Valid ✓</span> s–B–D–C–t :
+    <span class="dot black"></span><span class="dot black"></span><span class="dot red"></span><span class="dot red"></span><span class="dot black"></span>
+    → reds (D, C) form one block</p>
+  <p class="pathstrip"><span class="ok">Valid ✓</span> s–A–C–D–F–t :
+    <span class="dot black"></span><span class="dot red"></span><span class="dot red"></span><span class="dot red"></span><span class="dot black"></span><span class="dot black"></span>
+    → reds (A, C, D) form one block</p>
+  <p class="pathstrip"><span class="bad">Invalid ✗</span> s–A–B–E–D–F–t :
+    <span class="dot black"></span><span class="dot red"></span><span class="dot black"></span><span class="dot red"></span><span class="dot red"></span><span class="dot black"></span><span class="dot black"></span>
+    → reds split into A and (E, D) (the walk exists, but it violates the condition)</p>
+</div>
+</section>
+
+<section id="p2">
+<h2>2. Background A — graph, path, reachability</h2>
+<ul>
+  <li><strong>Undirected graph</strong>: edges have no direction, so a u–v edge can be traversed both ways.</li>
+  <li><strong>Walk</strong>: a sequence of moves that may repeat vertices. <strong>Path</strong>: a walk with no repeated vertices.
+  For reachability it suffices to think about walks — if a walk exists, a simple path exists too (just cut out cycles).</li>
+  <li><strong>Reachability</strong>: "can we get from s to t?" — that is the final shape of this problem's question.
+  If the condition ("reds consecutive") can somehow be <strong>translated into graph structure</strong>, what remains is a reachability problem.</li>
+</ul>
+</section>
+
+<section id="p3">
+<h2>3. Background B — BFS/DFS is the basic tool for reachability</h2>
+<ul>
+  <li>Breadth-first search (BFS) / depth-first search (DFS) finds every vertex reachable from a start vertex in <strong>O(V + E)</strong> time.</li>
+  <li>On a <strong>directed graph</strong>, BFS/DFS simply follows edge directions, still in O(V + E).
+  The layered graph we build below is directed, so keep this in mind.</li>
+  <li>Key insight: however complicated a condition looks, if we can build a <strong>new graph whose edges are exactly the moves satisfying the condition</strong>,
+  the problem becomes "is t reachable from s in the new graph?"</li>
+</ul>
+</section>
+<section id="p4">
+<h2>4. Background C — state augmentation: baking the condition into the graph</h2>
+<p>The condition "red vertices are consecutive" must be judged by looking at the <strong>whole path</strong>.
+BFS/DFS only sees the current vertex, so we need a <strong>memory</strong>: "am I inside the red block right now?"</p>
+<p><strong>State augmentation</strong> encodes this memory into the graph itself.
+Each vertex v is expanded into several copies (v, state), one per state, and only allowed moves become edges.
+Then "a path satisfying the condition" = "a path in the new graph (respecting directions)".</p>
+<div class="card">
+  <p><strong>The three states for this problem:</strong></p>
+  <ol>
+    <li><strong>Not yet entered red</strong> — only black vertices so far</li>
+    <li><strong>Inside the red block</strong> — currently traversing reds consecutively</li>
+    <li><strong>Left the red block</strong> — the red block is over, only black from here</li>
+  </ol>
+  <p>State transitions go <strong>only 0 → 1 → 2, one direction</strong>. Once you leave the red block (2), you can never
+  return to red (1), so the reds automatically form at most one consecutive block. That is the crux of baking the condition into the graph.</p>
+</div>
+</section>
+
+<section id="p5">
+<h2>5. Why naive approaches fail</h2>
+<table>
+  <tr><th>Naive approach</th><th>Why it fails</th></tr>
+  <tr><td>Keep only black vertices, check s–t connectivity</td>
+    <td>In the example there is <strong>no</strong> s–t path using black vertices only (B's only black neighbor is s).
+    This misses cases where reds are required.</td></tr>
+  <tr><td>Delete all red vertices, then check</td>
+    <td>Same reason — it discards valid paths that need a red block.</td></tr>
+  <tr><td>Enumerate all s–t paths and test each</td>
+    <td>The number of paths can be exponential, so this never finishes in polynomial time.</td></tr>
+  <tr><td>DFS to find one path, test it, backtrack on failure</td>
+    <td>Exponential in the worst case. "Reds consecutive" is a global condition: a greedily chosen path may get stuck
+    while another path is valid, so systematic search is needed.</td></tr>
+</table>
+<p>So reds can neither be excluded entirely nor allowed without restriction. We need a way to test the global condition
+"exactly one consecutive block" in polynomial time → state augmentation is the right direction.</p>
+</section>
+
+<section id="p6">
+<h2>6. Key idea — copy each vertex into 3 layers</h2>
+<p>Build a new graph H. Each vertex v gets one copy per state:</p>
+<ul>
+  <li><strong>Layer 0</strong> (v, 0): before entering red — <strong>black vertices only</strong></li>
+  <li><strong>Layer 1</strong> (v, 1): inside the red block — <strong>red vertices only</strong></li>
+  <li><strong>Layer 2</strong> (v, 2): after leaving red — <strong>black vertices only</strong></li>
+</ul>
+<p><strong>Edge rules</strong> (for each original edge u–v):</p>
+<table>
+  <tr><th>Original edge type</th><th>Edges added to H</th><th>Meaning</th></tr>
+  <tr><td>black–black</td><td>(u,0)–(v,0) undirected, (u,2)–(v,2) undirected</td><td>black moves before/after the red block</td></tr>
+  <tr><td>black(u)–red(v)</td><td><strong>(u,0) → (v,1)</strong> directed</td><td>entering the red block (no way back)</td></tr>
+  <tr><td>red–red</td><td>(u,1)–(v,1) undirected</td><td>moves inside the red block</td></tr>
+  <tr><td>red(u)–black(v)</td><td><strong>(u,1) → (v,2)</strong> directed</td><td>leaving the red block (no way back)</td></tr>
+</table>
+<div class="warn">
+  <strong>Direction is the key.</strong> Cross-layer edges must be directed so that the order "0 → 1 → 2" is forced,
+  which makes the reds (layer-1 vertices) one consecutive block on the path. Within a layer the graph is undirected, so moves are bidirectional.
+</div>
+<p><strong>Query:</strong> starting from (s, 0), is <strong>(t, 0) or (t, 2)</strong> reachable by directed BFS/DFS?
+Reaching (t, 0) = a valid path with no reds; reaching (t, 2) = a valid path containing a red block.</p>
+
+<svg class="diagram" viewBox="0 0 720 400" role="img" aria-label="Layered graph example">
+  <defs>
+    <marker id="arre" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/>
+    </marker>
+    <marker id="arrHe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/>
+    </marker>
+  </defs>
+  <g font-family="sans-serif" font-size="16" font-weight="bold" text-anchor="middle">
+    <text x="110" y="30" fill="var(--fg)">Layer 0 · before red block</text>
+    <text x="360" y="30" fill="#ea580c">Layer 1 · red block</text>
+    <text x="610" y="30" fill="var(--fg)">Layer 2 · after red block</text>
+  </g>
+  <g stroke="#9ca3af" stroke-width="2">
+    <line x1="110" y1="90" x2="110" y2="230"/>
+    <line x1="360" y1="140" x2="360" y2="280"/>
+    <line x1="610" y1="140" x2="610" y2="280"/>
+    <line x1="110" y1="230" x2="348" y2="148" marker-end="url(#arre)"/>
+    <line x1="360" y1="140" x2="598" y2="142" marker-end="url(#arre)"/>
+    <line x1="360" y1="280" x2="598" y2="278" marker-end="url(#arre)"/>
+  </g>
+  <g stroke="#ea580c" stroke-width="3.5">
+    <line x1="110" y1="90" x2="110" y2="230" marker-end="url(#arrHe)"/>
+    <line x1="110" y1="230" x2="348" y2="148" marker-end="url(#arrHe)"/>
+    <line x1="360" y1="140" x2="360" y2="280" marker-end="url(#arrHe)"/>
+    <line x1="360" y1="280" x2="598" y2="278" marker-end="url(#arrHe)"/>
+  </g>
+  <g font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">
+    <circle cx="110" cy="90" r="12" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="110" cy="230" r="12" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="360" cy="140" r="12" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="360" cy="280" r="12" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="610" cy="140" r="12" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="610" cy="280" r="12" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <text x="110" y="96" fill="var(--fg)">s</text>
+    <text x="110" y="236" fill="var(--fg)">B</text>
+    <text x="360" y="146" fill="#ea580c">D</text>
+    <text x="360" y="286" fill="#ea580c">C</text>
+    <text x="610" y="146" fill="var(--fg)">F</text>
+    <text x="610" y="286" fill="var(--fg)">t</text>
+    <text x="110" y="120" font-size="13" font-weight="normal" fill="var(--muted)">(s,0)</text>
+    <text x="110" y="260" font-size="13" font-weight="normal" fill="var(--muted)">(B,0)</text>
+    <text x="360" y="170" font-size="13" font-weight="normal" fill="var(--muted)">(D,1)</text>
+    <text x="360" y="310" font-size="13" font-weight="normal" fill="var(--muted)">(C,1)</text>
+    <text x="610" y="170" font-size="13" font-weight="normal" fill="var(--muted)">(F,2)</text>
+    <text x="610" y="310" font-size="13" font-weight="normal" fill="var(--muted)">(t,2)</text>
+  </g>
+</svg>
+<p class="caption">Part of the example graph unfolded into layers. Orange arrows = the walk corresponding to the valid path s–B–D–C–t: (s,0)→(B,0)→(D,1)→(C,1)→(t,2). Cross-layer moves are directed, so there is no way back into the red block.</p>
+</section>
+
+<section id="p7">
+<h2>7. Example trace — s–B–D–C–t</h2>
+<ol>
+  <li>Start at <strong>(s, 0)</strong>. s is black → layer 0.</li>
+  <li>s–B is a black–black edge → move within layer 0: <strong>(B, 0)</strong>.</li>
+  <li>B–D is a black–red edge → directed entry: <strong>(D, 1)</strong>. Now inside the red block.</li>
+  <li>D–C is a red–red edge → move within layer 1: <strong>(C, 1)</strong>.</li>
+  <li>C–t is a red–black edge → directed exit: <strong>(t, 2)</strong>. Reached!</li>
+</ol>
+<p>The red vertices D, C on the path correspond exactly to the consecutive segment spent in layer 1.
+In contrast, the invalid path s–A–B–E–D–F–t cannot be replayed in the layered graph: after entering (A,1),
+there is <strong>no edge back</strong> to (B,0). That is how condition-violating paths get filtered out.</p>
+<div class="card">
+  <strong>Check by hand:</strong> tracing s–A–C–D–F–t in the layered graph gives
+  (s,0)→(A,1)→(C,1)→(D,1)→(F,2)→(t,2), reaching (t,2). The reds (A, C, D) sit together in layer 1.
+</div>
+</section>
+<section id="p8">
+<h2>8. Correctness &amp; runtime — checkpoints for writing the answer</h2>
+<p>Per Ed #385, the submitted answer must be narrative <strong>(a)/(b)/(c)</strong> prose (no pseudocode).
+Here are the points each part should cover.</p>
+<h3>(a) Algorithm — what to build</h3>
+<ul>
+  <li>Input G, color function <code>col</code>, s, t (black). Build the layered graph H:
+  at most 3V vertices, and each original edge contributes at most 3 edges plus cross-layer directed edges, so H has <strong>O(V + E)</strong> size.</li>
+  <li>Run directed BFS/DFS from (s, 0); return whether (t, 0) or (t, 2) is reachable.</li>
+  <li>State clearly which step of the algorithm each part corresponds to.</li>
+</ul>
+<h3>(b) Correctness — why it works (both directions)</h3>
+<ul>
+  <li><strong>(⇒)</strong> If a valid path P = black* · red* · black* exists, lifting each vertex to its block's layer
+  yields a walk in H. At black–red boundaries the directed entry/exit edges match exactly.</li>
+  <li><strong>(⇐)</strong> If H has a walk (s,0) → (t,0) or (t,2), projecting it to G gives a walk whose red vertices
+  come only from the consecutive layer-1 segment — hence consecutive. A walk can be shortcut into a simple path by cutting cycles;
+  mention in one line that cycle-cutting preserves red-consecutiveness (a cycle inside the red block, or a repeated black vertex whose removal deletes the whole red block).</li>
+</ul>
+<h3>(c) Runtime analysis</h3>
+<ul>
+  <li>H has ≤ 3n vertices and O(m) edges → construction O(n + m).</li>
+  <li>Directed BFS/DFS costs O(V' + E') = O(n + m).</li>
+  <li><code>col(v)</code> is O(1), so color lookups don't change the total. Overall <strong>O(n + m)</strong>.</li>
+</ul>
+</section>
+
+<section id="p9">
+<h2>9. Pitfall checklist</h2>
+<ul class="check">
+  <li>Did you use the fact that <strong>s and t are black</strong>? It pins the start to (s,0) and the targets to (t,0)/(t,2).</li>
+  <li>Did you handle the <strong>zero-red</strong> case? Reachability of (t,0) must also be checked.</li>
+  <li>When copying undirected edges into layers: <strong>undirected within a layer, directed between layers</strong>?</li>
+  <li>Layer 1 holds red vertices only; layers 0/2 hold black vertices only? (No need to create opposite-color copies.)</li>
+  <li>In correctness, did you include the "walk → path" step? (One line on cycle-cutting.)</li>
+  <li>In the runtime, did you state that H is a constant factor larger than the input?</li>
+</ul>
+</section>
+
+<section id="p10">
+<h2>10. Extension (UNGRADED) hints</h2>
+<p>Even when s and t can be <strong>any color</strong>, the same layered graph works. Only the start and target layers change.</p>
+<ul>
+  <li><strong>Start:</strong> if s is black start at (s,0); if red start at <strong>(s,1)</strong>.
+  (A red s means the red block starts at the very beginning, so layer 1 is correct.)</li>
+  <li><strong>Targets:</strong> if t is black check (t,0) or (t,2).
+  If t is red also accept <strong>(t,1)</strong>. (The red block may run to the end of the path.)</li>
+  <li>If s and t are both red and the whole path is red, the walk stays in layer 1 and reaches (t,1).</li>
+</ul>
+<p>The crux is unchanged: <strong>the layer structure enforces the condition (reds consecutive); only the start/target layers adapt to the colors.</strong></p>
+</section>
+
+<section id="p11">
+<h2>11. Try by hand</h2>
+<ul class="check">
+  <li>Draw the example graph on paper and write the layer number (0/1/2) next to each vertex of s–B–D–C–t.</li>
+  <li>Pinpoint where the invalid path s–A–B–E–D–F–t stops being traceable in the layered graph.</li>
+  <li>Invent a small 4-vertex graph, draw its layered graph, and run BFS by hand.</li>
+  <li>Extension: make a tiny example with red s and repeat the process starting from layer (s,1).</li>
+</ul>
+<div class="warn"><strong>These are study notes. Per Ed #385, the submitted answer must be narrative (a)/(b)/(c) prose written by you.</strong>
+The explanations and figures here are for understanding, not the answer format.</div>
+</section>
+
+<section id="q0">
+<h2>Part II — Format Quiz: "Avoiding x"</h2>
+<p>This part covers the class Format Quiz on Graph Algorithms together with the homework.
+The quiz's real goal is not picking answers but training the <strong>answer format</strong>:
+<strong>(a) algorithm / (b) correctness justification / (c) runtime analysis</strong>.</p>
+<div class="card">
+  <p><strong>Three rules the quiz enforces:</strong></p>
+  <ol>
+    <li><strong>Do not modify black boxes.</strong> Use DFS, BFS, Dijkstra's as-is, and
+    <strong>modify the input (graph)</strong> so the black box finds the answer. Modifying a black box is penalized even if the solution works.</li>
+    <li><strong>(b) justification</strong> must explain why the algorithm works — in particular <strong>why the input was modified that way</strong>.
+    The most common reason is "the input had to be changed so the black box could find a solution", and that reason must be stated.</li>
+    <li><strong>(c) runtime</strong> must <strong>show the calculation</strong>, not just the final value.
+    A known black box's runtime may be stated, but the input-modification cost plus each black box's runtime must be summed term by term.</li>
+  </ol>
+</div>
+</section>
+
+<section id="q1">
+<h2>Q1. The problem "Avoiding x"</h2>
+<div class="card problem">
+  <p><strong>Input.</strong> An unweighted, undirected graph G = (V, E) (adjacency list). A vertex x and a value k are given.
+  Find a <strong>shortest path</strong> from s to t that <strong>avoids x and every vertex within distance ≤ k of x</strong>.
+  Assume such a path exists.</p>
+</div>
+<p><strong>Background.</strong> Running BFS from x gives <code>dist[v]</code> = the shortest-path distance from x for every vertex v.
+The vertices with <code>dist[v] ≤ k</code> are exactly the <strong>ball</strong> B(x, k) of radius k around x. Deleting them from the graph means
+every s–t path in the remaining graph G' automatically avoids the forbidden vertices — so the problem becomes "shortest path in G'".</p>
+
+<svg class="diagram" viewBox="0 0 560 320" role="img" aria-label="Ball around x">
+  <ellipse cx="140" cy="160" rx="100" ry="118" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <g stroke="#6b7280" stroke-width="2.5">
+    <line x1="70" y1="160" x2="190" y2="80"/><line x1="70" y1="160" x2="190" y2="240"/>
+    <line x1="190" y1="80" x2="320" y2="80"/><line x1="190" y1="240" x2="320" y2="240"/>
+    <line x1="320" y1="80" x2="320" y2="240"/>
+  </g>
+  <g font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">
+    <circle cx="70" cy="160" r="12" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="190" cy="80" r="12" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="190" cy="240" r="12" fill="var(--bg)" stroke="#ea580c" stroke-width="3"/>
+    <circle cx="320" cy="80" r="12" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <circle cx="320" cy="240" r="12" fill="var(--bg)" stroke="#111" stroke-width="3"/>
+    <text x="70" y="166" fill="var(--fg)">x</text>
+    <text x="190" y="86" fill="#ea580c">a</text>
+    <text x="190" y="246" fill="#ea580c">b</text>
+    <text x="320" y="86" fill="var(--fg)">c</text>
+    <text x="320" y="246" fill="var(--fg)">d</text>
+    <text x="320" y="56" font-size="15" fill="var(--fg)">s</text>
+    <text x="320" y="272" font-size="15" fill="var(--fg)">t</text>
+    <text x="140" y="300" font-size="14" font-weight="normal" fill="#ea580c">B(x, k=1): dist ≤ k → removed</text>
+    <text x="420" y="90" font-size="14" font-weight="normal" fill="var(--muted)">dist = 2 → kept</text>
+    <text x="420" y="250" font-size="14" font-weight="normal" fill="var(--muted)">dist = 2 → kept</text>
+  </g>
+</svg>
+<p class="caption">BFS from x computes dist. Deleting vertices with dist ≤ k (a, b) makes the s–t shortest path (c–d) in the remaining graph automatically valid.</p>
+</section>
+
+<section id="q2">
+<h2>Q2. The four candidate solutions a–d</h2>
+<div class="card">
+  <p><strong>(a)</strong> BFS from x to get dist → <em>modify BFS</em> to skip any vertex with dist ≤ k when it would be visited →
+  run the modified BFS from s, return the shortest path.<br>
+  → Works, but <strong>modifies the BFS black box</strong> — violates course discipline. Penalized, no full credit.</p>
+</div>
+<div class="card">
+  <p><strong>(b)</strong> BFS from x to get dist → <em>delete</em> all vertices with dist ≤ k from the graph →
+  BFS from s on G', return the shortest path.<br>
+  → Uses black boxes as-is. Correct + O(n+m). Optimal.</p>
+</div>
+<div class="card">
+  <p><strong>(c)</strong> The pseudocode version of (b):</p>
+  <pre><code>dist = BFS(G, x).dist
+G' = G
+for v in V:
+    if dist[v] ≤ k: G'.remove(v)
+prev = BFS(G', s).prev
+path_list = t; v = t
+while prev[v] not null:
+    v = prev[v]; path_list = v + path_list
+return path_list</code></pre>
+  <p>→ Correct + optimal. The most complete form, explicitly rebuilding the path by walking the <code>prev</code> array back from t.</p>
+</div>
+<div class="card">
+  <p><strong>(d)</strong> Assume all edge costs are 1 → Dijkstra's from x to get dist →
+  set the cost of edges touching vertices with dist ≤ k to infinite → Dijkstra's from s on G'.<br>
+  → Correct but <strong>O((n+m) log n)</strong>. Dijkstra's is overkill on an unweighted graph — BFS suffices. Not optimal.</p>
+</div>
+</section>
+
+<section id="q3">
+<h2>Q3. Q1 analysis — picking "correct and optimal"</h2>
+<ul>
+  <li><strong>Correctness:</strong> all four solutions work ("the above solutions are all correct in some way").</li>
+  <li><strong>Optimality:</strong> reading the input already costs Ω(n+m), so <strong>O(n+m) is optimal</strong>.
+  (d) costs O((n+m) log n) → out.</li>
+  <li><strong>Black-box discipline:</strong> (a) modifies BFS → penalized → no full credit.</li>
+  <li><strong>Conclusion: (b) and (c) are correct and optimal.</strong> The stimulus itself says "pick any that would receive full credit".
+  (c) is the most complete statement, including path reconstruction.</li>
+</ul>
+<div class="warn"><strong>Exam point.</strong> "It works" and "it receives full credit" are different.
+Modifying a black box and using an unnecessarily heavy Dijkstra's are classic point-losers.</div>
+</section>
+
+<section id="q4">
+<h2>Q4. Q2 matching — correctness justifications</h2>
+<table>
+  <tr><th>Solution</th><th>Matching justification</th><th>Why</th></tr>
+  <tr><td>(a)</td><td><strong>6.</strong> "By <em>modifying BFS</em> to avoid unwanted vertices, ... BFS will find the shortest path for s to t."</td>
+    <td>Matches (a), which modifies BFS itself.</td></tr>
+  <tr><td>(b)</td><td><strong>3.</strong> "By <em>modifying the graph</em> to remove any unwanted vertices, ..."</td>
+    <td>Matches (b), which modifies the graph. Core logic: since the vertices were deleted, every path BFS finds automatically avoids the forbidden vertices.</td></tr>
+  <tr><td>(c)</td><td><strong>1.</strong> "Our <em>code</em> removes any vertices that are ≤ k away from x after a BFS. ... follow the <em>prev array</em> from t to s ..."</td>
+    <td>Matches (c) as written in code ("Our code", "prev array").</td></tr>
+  <tr><td>(d)</td><td><strong>4.</strong> "... make edges to any unwanted vertices <em>cost infinite</em>, <em>Dijkstra's</em> will avoid them ..."</td>
+    <td>Matches (d) with infinite costs + Dijkstra's.</td></tr>
+</table>
+<p><strong>Distractors:</strong> 2. "No justification needed since it's already explained" — directly violates Ed #385 (justification is mandatory).
+5. "The TA said it would work" — not a justification.</p>
+<p><strong>Point:</strong> a good justification explains <strong>"why the input was modified"</strong>.
+The key sentence connects the modification to the black box's output: because of the modification, whatever the black box returns is exactly what we want.</p>
+</section>
+
+<section id="q5">
+<h2>Q5. Q3 matching — runtime analyses</h2>
+<table>
+  <tr><th>Solution</th><th>Matching runtime</th><th>Why</th></tr>
+  <tr><td>(a)</td><td><strong>R1.</strong> First BFS O(n+m) + modified BFS still O(n+m) → O(n+m)</td><td>Mentions both BFS runs.</td></tr>
+  <tr><td>(b)</td><td><strong>R2.</strong> First BFS O(n+m) + deleting vertices/edges O(n+m) + second BFS O(n+m) → O(n+m)</td><td>Accounts for the deletion step.</td></tr>
+  <tr><td>(c)</td><td><strong>R3.</strong> BFS(G,x) O(n+m) + for v in V O(n) + BFS(G',s) O(n+m) + prev walk O(n) = O(n+m)</td><td>Term-by-term accounting of the code.</td></tr>
+  <tr><td>(d)</td><td><strong>R4.</strong> Two rounds of Dijkstra's O((n+m) log n) + edge updates O(n+m) → O((n+m) log n)</td><td>Dijkstra's dominates.</td></tr>
+</table>
+<p><strong>Distractors:</strong> R5. "O(nm)" — wrong value. R6. Bare "O(n+m)" — no calculation shown (violates the (c) rule).
+R7. "BFS is O(n+m) so the final runtime is O(n+m)" — ignores the other steps, incomplete.</p>
+<p><strong>Point:</strong> write runtimes as a <strong>term-by-term sum</strong>. A black box's known runtime may be stated;
+the input-modification cost (deletion loop, edge updates) must be computed explicitly.</p>
+</section>
+
+<section id="q6">
+<h2>Q6. Key points + connection to Part I (homework)</h2>
+<ul>
+  <li><strong>The "modify the graph + black box" pattern.</strong> The Part I homework (build a layered graph, then BFS/DFS) and
+  this quiz (delete forbidden vertices, then BFS) are the <strong>same pattern</strong>. It is the core GR-unit technique:
+  translate the condition into graph structure, then run an unmodified black box.</li>
+  <li><strong>Don't fix the black box.</strong> Instead of opening up BFS as in (a), change the input graph.
+  Layered graphs, vertex deletion, and edge-cost changes are all "input modification".</li>
+  <li><strong>Pick the right black box.</strong> Unweighted → BFS, O(n+m). Weighted → Dijkstra's, O((n+m) log n).
+  Using Dijkstra's on an unweighted graph forfeits optimality.</li>
+  <li><strong>Justification formula:</strong> "Because the input was modified this way, what the black box returns is exactly what we want."</li>
+  <li><strong>Runtime formula:</strong> Σ(modification costs) + Σ(black-box costs), stated term by term.</li>
+</ul>
+<div class="warn"><strong>These are study notes. Per Ed #385, the submitted answer must be narrative (a)/(b)/(c) prose written by you.</strong>
+The quiz options and matchings here are for understanding, not a format to copy into an answer.</div>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  CS 6515 homework background notes · s–t path with consecutive red vertices · state augmentation / layered graph
+</div></footer>
+</body>
+</html>
