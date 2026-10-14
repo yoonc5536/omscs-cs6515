@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF2: Max-flow Min-cut — Review Notes</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+.warn{border-left:4px solid #f59e0b}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:660px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>MF2: Max-flow Min-cut — Review Notes</h1>
+  <p>Based on this week's lecture transcript</p>
+  <span class="tag">Max-flow Min-cut theorem</span><span class="tag">st-cut</span>
+  <span class="tag">Augmenting path</span><span class="tag">FF correctness</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">Goals</a><a href="#s2">Recap·Quiz</a><a href="#s3">st-cut</a>
+  <a href="#s4">Min st-cut</a><a href="#s5">Theorem</a><a href="#s6">Proof ①</a>
+  <a href="#s7">Claim proof</a><a href="#s8">Proof ②</a><a href="#s9">Cut properties</a>
+  <a href="#s10">Wrap-up</a><a href="#sum">Checklist</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. Two goals of this lecture</h2>
+<ol>
+  <li>Prove the <strong>Max-flow = Min-cut theorem</strong>.</li>
+  <li>Prove <strong>correctness of Ford-Fulkerson</strong> — correctness of Edmonds-Karp follows as a byproduct.</li>
+</ol>
+<p>In MF1 we analyzed FF's O(mC) runtime but never proved its output is really a max-flow.
+This lecture closes that gap.</p>
+</section>
+
+<section id="s2">
+<h2>2. Recap + quiz — verifying max-flow</h2>
+<h3>FF's stopping condition</h3>
+<p>FF stops when the residual graph G<sup>f*</sup> of the current flow f* has no <strong>augmenting path</strong>
+(s → t path). Key <strong>lemma</strong>: a flow with no augmenting path in its residual graph is a max-flow.
+(Proved in this lecture.)</p>
+<div class="card q">
+  <p><strong>Q.</strong> Given a flow network and a flow f, how long does it take to check whether f is a max-flow?
+  Answer in big-O in terms of n = |V|, m = |E|.</p>
+</div>
+<div class="ans">
+  <p><strong>Answer: O(n + m) — linear time.</strong></p>
+  <ul>
+    <li>By the lemma: build f's residual graph in <strong>O(n+m)</strong>,
+    run DFS from s to test t-reachability in <strong>O(n+m)</strong>.</li>
+    <li>t unreachable → no augmenting path → f is a max-flow (Yes).</li>
+    <li>t reachable → augment along that path for a larger flow → f is not a max-flow (No).</li>
+  </ul>
+</div>
+<p><strong>Exam point:</strong> "is it a max-flow?" = residual graph + DFS reachability, O(n+m) —
+the same cost as one FF round.</p>
+</section>
+
+<section id="s3">
+<h2>3. Min-cut problem — st-cut and capacity</h2>
+<ul>
+  <li>A <strong>cut</strong> partitions vertices into two sets: left L, right R.</li>
+  <li>An <strong>st-cut</strong> has s ∈ L, t ∈ R (separates s from t).</li>
+  <li><strong>Capacity of a cut</strong>: sum of capacities of edges going <strong>L → R</strong>.
+  Edges R → L are <strong>ignored</strong> (direction matters in a directed graph).</li>
+</ul>
+<div class="card">
+  <p><strong>Example:</strong> L = {s, a, b, f}, R = {c, d, e, t} (L need not be connected).
+  Six L → R edges: s→c, a→d, a→e, b→e, f→e, f→t.
+  Capacity = 8 + 2 + 2 + 5 + 7 + 3 = <strong>27</strong>.
+  Edges like c → f (R → L) don't count.</p>
+</div>
+<svg class="diagram" viewBox="0 0 620 400" role="img" aria-label="st-cut example">
+  <defs>
+    <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+  </defs>
+  <rect x="30" y="30" width="240" height="340" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2" stroke-dasharray="8,5"/>
+  <rect x="350" y="30" width="240" height="340" rx="14" fill="#f8fafc" stroke="#9ca3af" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="150" y="58" text-anchor="middle" font-size="16" font-weight="bold" fill="#2563eb">L</text>
+  <text x="470" y="58" text-anchor="middle" font-size="16" font-weight="bold" fill="#6b7280">R</text>
+  <g stroke="#9ca3af" stroke-width="1.5">
+    <line x1="102" y1="200" x2="198" y2="108" marker-end="url(#c1)"/>
+    <line x1="102" y1="200" x2="198" y2="200" marker-end="url(#c1)"/>
+    <line x1="222" y1="100" x2="428" y2="100" marker-end="url(#c1)"/>
+    <line x1="222" y1="200" x2="428" y2="200" marker-end="url(#c1)"/>
+    <line x1="222" y1="300" x2="428" y2="300" marker-end="url(#c1)"/>
+    <line x1="442" y1="108" x2="236" y2="284" marker-end="url(#c1)" stroke-dasharray="6,4"/>
+  </g>
+  <g stroke="#dc2626" stroke-width="3">
+    <line x1="102" y1="200" x2="198" y2="292" marker-end="url(#c2)"/>
+    <line x1="222" y1="108" x2="428" y2="108" marker-end="url(#c2)" transform="translate(0,-14)"/>
+    <line x1="222" y1="200" x2="428" y2="200" marker-end="url(#c2)" transform="translate(0,14)"/>
+    <line x1="222" y1="292" x2="428" y2="292" marker-end="url(#c2)" transform="translate(0,14)"/>
+    <line x1="222" y1="308" x2="428" y2="228" marker-end="url(#c2)"/>
+    <line x1="222" y1="308" x2="428" y2="212" marker-end="url(#c2)" transform="translate(0,-16)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="90" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="90" y="206" fill="var(--fg)">s</text>
+    <circle cx="210" cy="100" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="210" y="106" fill="var(--fg)">a</text>
+    <circle cx="210" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="210" y="206" fill="var(--fg)">b</text>
+    <circle cx="210" cy="300" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="210" y="306" fill="var(--fg)">f</text>
+    <circle cx="440" cy="100" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="440" y="106" fill="var(--fg)">d</text>
+    <circle cx="440" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="440" y="206" fill="var(--fg)">e</text>
+    <circle cx="440" cy="300" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="440" y="306" fill="var(--fg)">c</text>
+    <circle cx="550" cy="200" r="15" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="550" y="206" fill="var(--fg)">t</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="140" y="262" fill="#dc2626" font-weight="bold">8</text>
+    <text x="325" y="82" fill="#dc2626" font-weight="bold">2</text>
+    <text x="325" y="222" fill="#dc2626" font-weight="bold">2</text>
+    <text x="325" y="322" fill="#dc2626" font-weight="bold">7</text>
+    <text x="330" y="252" fill="#dc2626" font-weight="bold">5</text>
+    <text x="330" y="282" fill="#dc2626" font-weight="bold">3</text>
+    <text x="340" y="196" fill="#9ca3af">c→f excluded (R→L)</text>
+  </g>
+</svg>
+<p class="caption">st-cut example. Red edges (L→R) sum to 8+2+2+5+7+3 = 27. Dashed c→f is R→L, excluded.</p>
+</section>
+
+<section id="s4">
+<h2>4. Min st-cut — formulation</h2>
+<div class="card">
+  <p><strong>Input:</strong> flow network (directed graph + s, t + positive capacities).</p>
+  <p><strong>Output:</strong> the st-cut (L, R) (s ∈ L, t ∈ R) of <strong>minimum capacity</strong>.
+  Capacity = sum of L → R edge capacities (R → L ignored).</p>
+</div>
+<p><strong>Example:</strong> the cut with R = {t} and L = everything else has capacity <strong>12</strong>
+(the two edges into t). This is a min st-cut. How do we know it's minimum? → By the Max-flow = Min-cut
+theorem: a flow of size 12 exists in this graph, so flow 12 = cut 12 forces both to be optimal.</p>
+</section>
+
+<section id="s5">
+<h2>5. Theorem — Max-Flow = Min st-Cut</h2>
+<div class="ans">
+  <p><strong>Theorem.</strong> For any flow network,
+  <strong>(max-flow size) = (min st-cut capacity)</strong>.</p>
+</div>
+<p><strong>Notation note:</strong> we say "st-cut" to stress separating s from t.
+The general <strong>min-cut problem</strong> need not separate any s, t — hence "min st-cut" is distinguished.
+Likewise max-flow is really "max st-flow".</p>
+<p><strong>Proof strategy:</strong> prove both inequalities.</p>
+<ul>
+  <li>① max-flow ≤ min st-cut capacity</li>
+  <li>② max-flow ≥ min st-cut capacity</li>
+</ul>
+</section>
+
+<section id="s6">
+<h2>6. Proof ① — max-flow ≤ min-cut</h2>
+<p>Instead of ① directly, prove an easier statement:</p>
+<div class="card">
+  <p><strong>Sufficient:</strong> if for <em>any</em> flow f and <em>any</em> st-cut (L, R),
+  <strong>size(f) ≤ cap(L, R)</strong>, then ① follows.</p>
+  <p>Why? Maximizing over f (a max-flow is still a flow) turns the left side into the max-flow;
+  the right side holds for any cut, so we may take the minimum cut.</p>
+</div>
+<p>Intuition: flow from s to t must exit L at some point, and the only exits are the L → R edges.
+If those total 27, the flow can't exceed 27.</p>
+<h3>Key claim</h3>
+<div class="ans">
+  <p><strong>Claim:</strong> size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L).
+  (flow leaving L minus flow entering L)</p>
+</div>
+<p>Given the claim, ① is immediate: size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L) ≤ f<sub>out</sub>(L) ≤ cap(L,R).
+(Dropping the second term only increases; outgoing flow can't exceed per-edge capacities.)</p>
+</section>
+
+<section id="s7">
+<h2>7. Proof of claim — size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L)</h2>
+<ol>
+  <li>f<sub>out</sub>(L): sum of flows on edges with tail outside L, head inside L. f<sub>in</sub>(L): the reverse.</li>
+  <li>Add and subtract the <strong>internal edges</strong> (both ends in L) — value unchanged.</li>
+  <li>Positive terms combine into: total flow <em>out of</em> each vertex v ∈ L.
+  Negative terms combine into: total flow <em>into</em> each vertex v ∈ L.</li>
+  <li>Separate s: flow into s is 0, leaving <strong>flow out of s = size(f)</strong>.</li>
+  <li>Every other v ∈ L − {s} has out = in by <strong>flow conservation</strong> → those terms sum to 0.</li>
+</ol>
+<p>Hence size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L). ∎</p>
+<p>This claim is reused in proof ②.</p>
+</section>
+
+<section id="s8">
+<h2>8. Proof ② — max-flow ≥ min-cut (constructing the cut)</h2>
+<p>Take f*, the flow output by Ford-Fulkerson. FF stopped with no augmenting path,
+so G<sup>f*</sup> has no s → t path.</p>
+<div class="card">
+  <p><strong>Cut construction:</strong> L = vertices <strong>reachable from s</strong> in G<sup>f*</sup>,
+  R = the rest. t is unreachable, so t ∈ R; s ∈ L. Hence (L, R) is a valid st-cut.</p>
+</div>
+<p>We now show this cut's capacity equals size(f*) — then ② follows (see §10).</p>
+</section>
+
+<section id="s9">
+<h2>9. Properties of the constructed cut</h2>
+<p>Example: L = {s, a, b, d, e} (reachable from s in the residual graph), R = {c, f, t}.</p>
+<h3>L → R edges are fully saturated</h3>
+<ul>
+  <li>Example: d → t, d → c, s → c.</li>
+  <li>Why: if v → w (v ∈ L, w ∈ R) appeared in the residual graph, w would be reachable and belong to L — contradiction.
+  So no forward edge in the residual means <strong>flow = capacity</strong>.</li>
+  <li>∴ f<sub>out</sub>(L) = cap(L, R).</li>
+</ul>
+<h3>R → L edges carry zero flow</h3>
+<ul>
+  <li>Example: f → e is the only R → L edge.</li>
+  <li>Why: if z → y (z ∈ R, y ∈ L) carried positive flow, the backward edge y → z would be in the residual graph,
+  and since y ∈ L, z would be reachable → z ∈ L, contradiction. Hence zero flow.</li>
+  <li>∴ f<sub>in</sub>(L) = 0.</li>
+</ul>
+<svg class="diagram" viewBox="0 0 620 380" role="img" aria-label="Reachable set cut construction">
+  <defs>
+    <marker id="c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+    <marker id="c4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/>
+    </marker>
+  </defs>
+  <rect x="30" y="30" width="300" height="320" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2" stroke-dasharray="8,5"/>
+  <rect x="380" y="30" width="210" height="320" rx="14" fill="#f8fafc" stroke="#9ca3af" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="180" y="58" text-anchor="middle" font-size="15" font-weight="bold" fill="#2563eb">L = reachable in G^f*</text>
+  <text x="485" y="58" text-anchor="middle" font-size="15" font-weight="bold" fill="#6b7280">R</text>
+  <g stroke="#dc2626" stroke-width="3">
+    <line x1="130" y1="200" x2="400" y2="290" marker-end="url(#c3)"/>
+    <line x1="250" y1="110" x2="400" y2="110" marker-end="url(#c3)"/>
+    <line x1="250" y1="130" x2="400" y2="290" marker-end="url(#c3)"/>
+  </g>
+  <g stroke="#9ca3af" stroke-width="2" stroke-dasharray="6,4">
+    <line x1="400" y1="290" x2="250" y2="200" marker-end="url(#c4)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="115" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="115" y="206" fill="var(--fg)">s</text>
+    <circle cx="235" cy="110" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="235" y="116" fill="var(--fg)">a</text>
+    <circle cx="235" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="235" y="206" fill="var(--fg)">b</text>
+    <circle cx="235" cy="290" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="235" y="296" fill="var(--fg)">d</text>
+    <circle cx="140" cy="290" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="140" y="296" fill="var(--fg)">e</text>
+    <circle cx="415" cy="110" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="415" y="116" fill="var(--fg)">f</text>
+    <circle cx="415" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="415" y="206" fill="var(--fg)">c</text>
+    <circle cx="530" cy="200" r="15" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="530" y="206" fill="var(--fg)">t</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="270" y="252" fill="#dc2626" font-weight="bold">saturated</text>
+    <text x="330" y="252" fill="#9ca3af">f→e: flow 0</text>
+  </g>
+</svg>
+<p class="caption">L = vertices reachable from s in the residual graph. Red L→R edges are fully saturated;
+dashed f→e carries zero flow. Hence size(f*) = cap(L,R).</p>
+<p>Plugging into the claim (§7): size(f*) = f<sub>out</sub>(L) − f<sub>in</sub>(L) = cap(L,R) − 0 = <strong>cap(L,R)</strong>. ∎</p>
+</section>
+
+<section id="s10">
+<h2>10. Completing the theorem — byproducts</h2>
+<h3>Finishing ②</h3>
+<p>We proved size(f*) = cap(L,R). Then:</p>
+<ul>
+  <li>max-flow ≥ size(f*) (the max is at least this particular flow).</li>
+  <li>cap(L,R) ≥ min st-cut capacity (this particular cut is at least the min).</li>
+  <li>∴ <strong>max-flow ≥ min st-cut capacity</strong>. With ①, <strong>equality</strong>. ∎</li>
+</ul>
+<h3>Byproducts</h3>
+<ol>
+  <li><strong>Lemma proved:</strong> for f* with no augmenting path we built a cut with size(f*) = cap(L,R);
+  equality forces both optimal — so f* is a max-flow. (§2's lemma done.)</li>
+  <li><strong>Ford-Fulkerson is correct:</strong> FF stops exactly when there's no augmenting path, so its output is a max-flow.
+  <strong>Edmonds-Karp</strong> stops under the same condition → correct too.</li>
+  <li><strong>Min-cut construction:</strong> given a max-flow f*, L = {reachable from s in the residual graph}
+  yields a min st-cut. (Used in the upcoming image segmentation application.)</li>
+</ol>
+<pre># Verifying max-flow (the quiz answer, in code)
+def is_max_flow(G, s, t, f):
+    Gf = build_residual(G, f)   # O(n + m)
+    return not dfs_reaches(Gf, s, t)  # O(n + m) → O(n + m) total
+
+# Min st-cut from a max-flow f*
+def min_st_cut(G, s, f_star):
+    Gf = build_residual(G, f_star)
+    L = {v : reachable from s in Gf}  # DFS/BFS
+    R = V - L
+    return (L, R)  # cap(L, R) == size(f*)</pre>
+</section>
+
+<section id="sum">
+<h2>Checklist</h2>
+<ul class="check">
+  <li>Define st-cut and cut capacity (L→R only; R→L ignored).</li>
+  <li>Quiz: explain O(n+m) verification that a flow is a max-flow.</li>
+  <li>Explain the claim size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L) (add/subtract internal edges + conservation).</li>
+  <li>Walk through ① max-flow ≤ min-cut.</li>
+  <li>Cut construction for ②: L = reachable from s in the residual graph.</li>
+  <li>Explain why L→R edges are saturated and R→L edges carry zero flow.</li>
+  <li>Name the three byproducts (lemma, FF/EK correctness, min-cut construction).</li>
+  <li>Distinguish min st-cut from min-cut.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  MF2: Max-flow Min-cut — review notes based on the lecture transcript
+</div></footer>
+</body>
+</html>
