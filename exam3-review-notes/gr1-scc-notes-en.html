@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GR1: Strongly Connected Components — Review Notes</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>GR1: Strongly Connected Components — Review Notes</h1>
+  <p>Based on this week's lecture transcript</p>
+  <span class="tag">DFS</span><span class="tag">Topological sort</span>
+  <span class="tag">SCC</span><span class="tag">Kosaraju</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">DFS review</a><a href="#s2">Directed DFS</a><a href="#s3">Edge types</a>
+  <a href="#s4">Cycles</a><a href="#s5">Topo sort</a><a href="#s6">Quiz</a>
+  <a href="#s7">DAG structure</a><a href="#s8">SCC definition</a><a href="#s9">Metagraph</a>
+  <a href="#s10">SCC idea</a><a href="#s11">Key fact</a><a href="#s12">Kosaraju</a>
+  <a href="#s13">Proof</a><a href="#s14">BFS·Dijkstra</a><a href="#glossary">Glossary</a><a href="#sum">Checklist</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. DFS review — undirected connected components</h2>
+<pre>DFS(G):                          # G: adjacency list
+    visited[*] ← False
+    ccnum ← 0
+    for v in V (arbitrary order):
+        if not visited[v]:
+            ccnum ← ccnum + 1
+            Explore(v)
+
+Explore(z):
+    visited[z] ← True; cc[z] ← ccnum
+    for w in adj[z]:
+        if not visited[w]: Explore(w)</pre>
+<ul>
+  <li>Running time <strong>O(n + m)</strong> (linear time).</li>
+  <li><strong>Finding paths:</strong> record <code>prev[w] ← z</code> on first visit (like Dijkstra's prev array);
+  backtracking recovers a path between two vertices in the same component.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. Directed DFS — pre/postorder numbers</h2>
+<p>Directed graphs need extra info: <strong>preorder / postorder numbers</strong>.
+Add a <strong>clock</strong> starting at 1:</p>
+<ul>
+  <li><strong>pre(z)</strong>: clock value when z is first visited (then clock++).</li>
+  <li><strong>post(z)</strong>: clock value when z's exploration finishes (then clock++).</li>
+</ul>
+<p>For the SCC algorithm we effectively only use <strong>postorder</strong>.</p>
+</section>
+
+<section id="s3">
+<h2>3. Four edge types and postorder behavior</h2>
+<table>
+  <tr><th>Type</th><th>Shape</th><th>Postorder</th></tr>
+  <tr><td><strong>Tree edge</strong></td><td>Explored DFS-tree edge</td><td>decreases (head &gt; tail)</td></tr>
+  <tr><td><strong>Back edge</strong></td><td>descendant → ancestor (up)</td><td><strong>increases</strong> (only one!)</td></tr>
+  <tr><td><strong>Forward edge</strong></td><td>ancestor → descendant (down, multi-level)</td><td>decreases</td></tr>
+  <tr><td><strong>Cross edge</strong></td><td>no ancestor–descendant relation (sideways)</td><td>decreases</td></tr>
+</table>
+<div class="ans"><strong>Key:</strong> postorder increases only on back edges.
+On tree, forward, and cross edges it decreases.</div>
+</section>
+
+<section id="s4">
+<h2>4. Cycle ⟺ back edge</h2>
+<p><strong>Theorem:</strong> G has a cycle ⟺ the DFS tree has a back edge
+(regardless of start vertex and adjacency-list order).</p>
+<ul>
+  <li><strong>(⇒)</strong> Let i be the first vertex of the cycle explored.
+  All other cycle vertices land in i's subtree. The cycle edge into i (i−1 → i) is
+  descendant → ancestor, hence a back edge.</li>
+  <li><strong>(⇐)</strong> A back edge a → b plus the tree path b ⇝ a forms a cycle.</li>
+</ul>
+</section>
+
+<section id="s5">
+<h2>5. Topological sort — decreasing postorder</h2>
+<p>A <strong>DAG</strong> (directed acyclic graph) has no back edges (§4),
+so postorder decreases along every edge. Hence:</p>
+<div class="ans"><strong>Topological sort:</strong> run DFS once, order vertices by <strong>decreasing postorder</strong>.
+All edges go left → right.</div>
+<ul>
+  <li>Sorting looks like O(n log n) but is <strong>O(n)</strong>:
+  postorder numbers range over 1..2n, so bucket them into a size-2n array (counting sort).</li>
+  <li>Total: DFS O(n+m) + sorting O(n) = <strong>O(n+m)</strong>.</li>
+</ul>
+</section>
+
+<section id="s6">
+<h2>6. Quiz — topological ordering</h2>
+<div class="card q">
+  <p><strong>Q.</strong> Give a topological ordering of the 5-vertex graph, and count the valid orderings.</p>
+</div>
+<div class="ans">
+  <p><strong>Answer:</strong> e.g. X, Y, Z, U, W. <strong>3</strong> valid orderings —
+  U can go in any of the last three positions, then Z-before-W forces the rest.</p>
+</div>
+</section>
+
+<section id="s7">
+<h2>7. DAG structure — sources and sinks</h2>
+<ul>
+  <li><strong>Source</strong>: no incoming edges. <strong>Sink</strong>: no outgoing edges.</li>
+  <li>Every DAG has at least one source and at least one sink.</li>
+  <li><strong>Highest postorder vertex = source</strong>, <strong>lowest postorder vertex = sink</strong>
+  (first/last of the topological ordering).</li>
+</ul>
+<p><strong>Alternative topo sort:</strong> find a sink, place it last, delete it, repeat (fill right to left).
+This idea leads to the SCC algorithm.</p>
+</section>
+
+<section id="s8">
+<h2>8. SCC definition + quiz</h2>
+<div class="card">
+  <p><strong>Strongly connected</strong>: paths v ⇝ w and w ⇝ v both exist.</p>
+  <p><strong>SCC (strongly connected component)</strong>: a <strong>maximal</strong> set of strongly connected vertices.</p>
+</div>
+<div class="card q">
+  <p><strong>Q.</strong> How many SCCs in the 12-vertex directed graph, and what are they?</p>
+</div>
+<div class="ans">
+  <p><strong>Answer: 5</strong> — {A}, {B, E}, {C, F, G}, {D}, {H, I, J, K, L}.</p>
+  <ul>
+    <li>A: can reach others but nothing reaches A → alone.</li>
+    <li>D: reachable but reaches nothing → alone.</li>
+  </ul>
+</div>
+</section>
+
+<section id="s9">
+<h2>9. The metagraph is a DAG</h2>
+<p>Compress each SCC into a <strong>metavertex</strong> to form the <strong>metagraph</strong>
+(duplicate edges between components may be dropped).</p>
+<div class="ans"><strong>Theorem:</strong> The metagraph is always a <strong>DAG</strong>.</div>
+<p><strong>Proof (contradiction):</strong> a cycle through S and S′ gives paths S ⇝ S′ and S′ ⇝ S.
+Since each component is internally strongly connected, S ∪ S′ is strongly connected —
+contradicting maximality. ∎</p>
+<p>Every directed graph is a DAG of its SCCs, which can be topologically ordered.</p>
+<svg class="diagram" viewBox="0 0 560 220" role="img" aria-label="Metagraph DAG">
+  <defs>
+    <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2.5">
+    <line x1="105" y1="110" x2="195" y2="110" marker-end="url(#m1)"/>
+    <line x1="245" y1="110" x2="335" y2="110" marker-end="url(#m1)"/>
+    <line x1="245" y1="125" x2="335" y2="165" marker-end="url(#m1)"/>
+    <line x1="385" y1="110" x2="475" y2="110" marker-end="url(#m1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">
+    <rect x="60" y="88" width="46" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <rect x="195" y="88" width="50" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <rect x="335" y="88" width="52" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <rect x="335" y="150" width="40" height="40" rx="10" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/>
+    <rect x="475" y="88" width="70" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <text x="83" y="116" fill="var(--fg)">A</text>
+    <text x="220" y="116" fill="var(--fg)">BE</text>
+    <text x="361" y="116" fill="var(--fg)">CFG</text>
+    <text x="355" y="176" fill="var(--fg)">D</text>
+    <text x="510" y="116" fill="var(--fg)">HIJKL</text>
+  </g>
+</svg>
+<p class="caption">SCC metagraph example — a DAG; left → right is a topological ordering.</p>
+</section>
+
+<section id="s10">
+<h2>10. SCC algorithm idea — peel off sink components</h2>
+<p>Apply the DAG idea ("find a sink, place it last, delete") to SCCs:
+find a <strong>sink SCC</strong>, output it, delete it, repeat (reverse topological order).</p>
+<div class="card">
+  <p><strong>Why sinks:</strong> Explore from a vertex V inside a sink SCC visits <strong>exactly that component</strong> —
+  nothing else is reachable from a sink.</p>
+  <p><strong>Why not sources:</strong> Explore from a source vertex (e.g. A) reaches the whole graph —
+  no way to tell which vertices belong to the SCC.</p>
+</div>
+<p>Remaining problem: <strong>how to find a vertex guaranteed to lie in a sink SCC?</strong></p>
+</section>
+
+<section id="s11">
+<h2>11. Key fact — lowest fails, highest works</h2>
+<p>In a DAG the lowest-postorder vertex is a sink. Does that hold for general directed graphs?</p>
+<ul>
+  <li><strong>✗ Counterexample:</strong> A, B strongly connected; C alone. DFS from A gives B the lowest
+  postorder, but B lies in a <strong>source</strong> SCC — the opposite!</li>
+  <li><strong>✓ True fact:</strong> the <strong>highest-postorder vertex always lies in a source SCC</strong>
+  (for any start vertex and neighbor order; proved in §13).</li>
+</ul>
+<p>We need a sink-SCC vertex but can only find a source-SCC vertex.
+→ <strong>Reverse-graph trick</strong>:</p>
+<div class="ans">
+  <p>In <strong>G<sup>R</sup></strong> (all edges flipped):</p>
+  <ul>
+    <li>SCCs are the same as in G (v⇄w paths survive reversal).</li>
+    <li>Sources and sinks swap: sink SCC of G = source SCC of G<sup>R</sup>.</li>
+  </ul>
+  <p>∴ DFS on G<sup>R</sup> → highest-postorder vertex lies in a source SCC of G<sup>R</sup>
+  = <strong>a sink SCC of G</strong>. ✓</p>
+</div>
+</section>
+
+<section id="s12">
+<h2>12. Kosaraju's algorithm (two DFS runs)</h2>
+<pre>Kosaraju(G):                       # directed graph, adjacency list
+    1. G^R ← reverse graph of G
+    2. DFS on G^R  (record postorder)
+    3. order vertices by decreasing postorder
+    4. DFS on G using the undirected connected-components pseudocode
+       (label visited vertices with ccnum), visiting vertices in the order from step 3
+    → ccnum labels the SCCs, numbered in reverse topological order</pre>
+<div class="card q">
+  <p><strong>Q.</strong> Running time of the SCC algorithm?</p>
+</div>
+<div class="ans"><strong>Answer: O(n + m).</strong> Reverse graph O(n+m) + two DFS runs O(n+m) + O(n) sort (counting sort).</div>
+<svg class="diagram" viewBox="0 0 600 200" role="img" aria-label="Kosaraju two passes">
+  <g font-family="sans-serif" font-size="13" text-anchor="middle">
+    <rect x="20" y="60" width="160" height="80" rx="12" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="100" y="95" fill="var(--fg)" font-weight="bold">1. Reverse</text>
+    <text x="100" y="118" fill="var(--muted)">G → G^R</text>
+    <rect x="220" y="60" width="160" height="80" rx="12" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="300" y="95" fill="var(--fg)" font-weight="bold">2. DFS on G^R</text>
+    <text x="300" y="118" fill="var(--muted)">sort by postorder ↓</text>
+    <rect x="420" y="60" width="160" height="80" rx="12" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="500" y="95" fill="var(--fg)" font-weight="bold">3. DFS on G</text>
+    <text x="500" y="118" fill="var(--muted)">ccnum = SCC labels</text>
+    <text x="190" y="105" font-size="20" fill="var(--accent)">→</text>
+    <text x="390" y="105" font-size="20" fill="var(--accent)">→</text>
+  </g>
+</svg>
+<p class="caption">Kosaraju: reverse → DFS → DFS again in that order. Two vanilla DFS runs give SCCs + topological order.</p>
+</section>
+
+<section id="s13">
+<h2>13. Proof of the key fact — simpler claim</h2>
+<div class="card">
+  <p><strong>Simpler claim:</strong> if an edge goes from SCC S to SCC S′ (v ∈ S → w ∈ S′), then
+  <strong>max postorder(S) &gt; max postorder(S′)</strong>.</p>
+  <p>This gives a topological sort of SCCs by max postorder (decreasing), so the component of the
+  highest-postorder vertex comes first = a source SCC. ∎</p>
+</div>
+<p><strong>Proof:</strong> let z be the first vertex of S ∪ S′ visited. The edge S → S′ means no path S′ ⇝ S.</p>
+<ul>
+  <li><strong>Case 1: z ∈ S′.</strong> Explore from z visits and finishes all of S′ but never touches S
+  (no path back). → every postorder in S′ &lt; every postorder in S. ✓</li>
+  <li><strong>Case 2: z ∈ S.</strong> z reaches all of S and, via v, all of S′, so z roots the DFS subtree of
+  S ∪ S′ and finishes last → max postorder of S ∪ S′ is z ∈ S. ✓</li>
+</ul>
+</section>
+
+<section id="s14">
+<h2>14. BFS / Dijkstra review</h2>
+<table>
+  <tr><th></th><th>BFS</th><th>Dijkstra's</th></tr>
+  <tr><td>Input</td><td>Unweighted graph + start s</td><td>Weighted graph (positive weights) + start s</td></tr>
+  <tr><td>Output</td><td>dist[v] = min # edges, prev array</td><td>dist[v] = shortest-path length</td></tr>
+  <tr><td>Running time</td><td><strong>O(n + m)</strong></td><td><strong>O((n + m) log n)</strong> (min-heap)</td></tr>
+</table>
+<ul>
+  <li>Dijkstra's = BFS framework + min-heap (priority queue). This class always uses the min-heap version.</li>
+  <li>Edge lengths must be positive; for negative lengths see DP3.</li>
+</ul>
+</section>
+
+<section id="glossary">
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td><strong>DFS (depth-first search)</strong></td><td>Graph traversal that goes as deep as possible before backtracking. Runs in O(n+m).</td></tr>
+  <tr><td><strong>Explore</strong></td><td>The recursive subroutine of DFS: marks z visited and recursively explores its neighbors.</td></tr>
+  <tr><td><strong>Clock</strong></td><td>Counter used to assign pre/postorder numbers; starts at 1, incremented on visit and on finish.</td></tr>
+  <tr><td><strong>Preorder number</strong></td><td>Clock value when a vertex is first visited.</td></tr>
+  <tr><td><strong>Postorder number</strong></td><td>Clock value when a vertex's exploration finishes. The key ingredient of the SCC algorithm.</td></tr>
+  <tr><td><strong>Tree edge</strong></td><td>An edge actually explored by DFS (edge of the DFS tree/forest). Postorder decreases.</td></tr>
+  <tr><td><strong>Back edge</strong></td><td>Edge from a descendant to an ancestor. The only edge type on which postorder increases. Cycle ⟺ back edge.</td></tr>
+  <tr><td><strong>Forward edge</strong></td><td>Edge from an ancestor down to a descendant (spanning multiple levels). Postorder decreases.</td></tr>
+  <tr><td><strong>Cross edge</strong></td><td>Edge between vertices with no ancestor–descendant relation. Postorder decreases.</td></tr>
+  <tr><td><strong>DAG (directed acyclic graph)</strong></td><td>Directed graph with no cycles. Has no back edges; admits a topological sort.</td></tr>
+  <tr><td><strong>Topological sort / ordering</strong></td><td>Linear ordering of vertices so all edges go left → right. Obtained from decreasing postorder on a DAG.</td></tr>
+  <tr><td><strong>Source vertex</strong></td><td>Vertex with no incoming edges. Highest-postorder vertex in a DAG.</td></tr>
+  <tr><td><strong>Sink vertex</strong></td><td>Vertex with no outgoing edges. Lowest-postorder vertex in a DAG.</td></tr>
+  <tr><td><strong>Strongly connected</strong></td><td>Pair of vertices v, w with paths v ⇝ w and w ⇝ v both existing.</td></tr>
+  <tr><td><strong>SCC (strongly connected component)</strong></td><td>Maximal set of strongly connected vertices. The directed analog of a connected component.</td></tr>
+  <tr><td><strong>Metavertex / Metagraph</strong></td><td>One SCC compressed into a single vertex / the resulting graph. Always a DAG.</td></tr>
+  <tr><td><strong>Reverse graph (G<sup>R</sup>)</strong></td><td>Graph with all edge directions flipped. Same SCCs; sources and sinks swap.</td></tr>
+  <tr><td><strong>Kosaraju's algorithm</strong></td><td>SCC algorithm: DFS on G<sup>R</sup> → decreasing postorder → DFS on G. Two vanilla DFS runs, O(n+m).</td></tr>
+  <tr><td><strong>Connected component (ccnum)</strong></td><td>Set of mutually reachable vertices in an undirected graph. Its labels become SCC labels in Kosaraju's last step.</td></tr>
+  <tr><td><strong>Ancestor / Descendant</strong></td><td>A vertex above (explored earlier) / below (explored later) in the DFS tree.</td></tr>
+  <tr><td><strong>BFS (breadth-first search)</strong></td><td>Layer-by-layer traversal; computes min-#edges distances from the start plus a prev array. O(n+m).</td></tr>
+  <tr><td><strong>Dijkstra's algorithm</strong></td><td>Single-source shortest paths on positive-weight graphs. BFS + min-heap. O((n+m) log n).</td></tr>
+  <tr><td><strong>Min-heap (priority queue)</strong></td><td>Priority queue used by Dijkstra's; O(log n) per operation.</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>Checklist</h2>
+<ul class="check">
+  <li>Write the Explore pseudocode and explain O(n+m).</li>
+  <li>State the four edge types and postorder behavior (only back edges increase).</li>
+  <li>Prove cycle ⟺ back edge in both directions.</li>
+  <li>Topological sort = decreasing postorder, O(n+m) (counting sort).</li>
+  <li>Highest postorder = source, lowest = sink (DAG).</li>
+  <li>Define SCC and prove the metagraph is a DAG.</li>
+  <li>Explain why we peel sink SCCs (source Explore visits everything).</li>
+  <li>Write Kosaraju's four steps in order.</li>
+  <li>Sketch the key-fact proof (simpler claim, two cases).</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  GR1: Strongly Connected Components — review notes based on the lecture transcript
+</div></footer>
+</body>
+</html>
