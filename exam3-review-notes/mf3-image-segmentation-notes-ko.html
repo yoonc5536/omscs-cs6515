@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF3: Image Segmentation — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>MF3: Image Segmentation — 복습 노트</h1>
+  <p>이번 주 강의 트랜스크립트 기반 정리 (핵심 용어는 영어로 표기) · <span class="tag">Optional</span></p>
+  <span class="tag">Image segmentation</span><span class="tag">Reduction</span>
+  <span class="tag">Min st-cut</span><span class="tag">w → w′</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">문제</a><a href="#s2">정식화</a><a href="#s3">파라미터</a>
+  <a href="#s4">Partition·weight</a><a href="#s5">Min-cut으로</a><a href="#s6">Reformulation</a>
+  <a href="#s7">새 문제</a><a href="#s8">Flow network</a><a href="#s9">Cut = w′</a>
+  <a href="#s10">해법 요약</a><a href="#s11">수치 예제</a><a href="#sum">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. 문제 — 이미지를 foreground/background로 분리</h2>
+<p>Computer vision 문제인 <strong>image segmentation</strong>에 max-flow를 응용한다.
+이미지가 주어졌을 때 물체들을 분리하는 것이 목표이며, 여기서는 간단히
+<strong>foreground(전경)</strong>와 <strong>background(배경)</strong> 두 개로 나눈다.
+예: 이미지에서 삼각형을 나머지(배경)와 구분해내기.</p>
+</section>
+
+<section id="s2">
+<h2>2. 정식화 — 픽셀 = 정점</h2>
+<ul>
+  <li>이미지를 그래프 위에 올려놓고 본다: <strong>vertex = pixel</strong>.</li>
+  <li>입력은 <strong>undirected graph(무향 그래프)</strong> G. 이웃한 픽셀 사이에 edge.</li>
+  <li>예제: 3×3 픽셀 이미지 → 정점 9개.</li>
+</ul>
+</section>
+
+<section id="s3">
+<h2>3. 파라미터 — f<sub>i</sub>, b<sub>i</sub>, P<sub>ij</sub></h2>
+<div class="card">
+  <ul>
+    <li><strong>f<sub>i</sub></strong>: pixel i가 foreground일 likelihood(가중치).</li>
+    <li><strong>b<sub>i</sub></strong>: pixel i가 background일 likelihood(가중치).</li>
+    <li><strong>P<sub>ij</sub></strong>: 이웃한 픽셀 쌍의 <strong>separation penalty(분리 패널티)</strong> —
+    i와 j를 서로 다른 쪽에 배정할 때 내는 비용.</li>
+    <li>세 파라미터 모두 <strong>non-negative</strong>라 가정.</li>
+  </ul>
+</div>
+<p>예제 설정: 흰 픽셀은 foreground일 가능성이 높고(f<sub>i</sub> 큼), 검은 픽셀은 background일 가능성이 높다(b<sub>i</sub> 큼).
+픽셀 색이 다르면 분리해도 패널티가 없다. (Toy example이라 픽셀이 단색이라 가중치가 단순하다.)</p>
+</section>
+
+<section id="s4">
+<h2>4. Partition과 weight w(F, B)</h2>
+<p>목표: 정점들을 두 집합 <strong>F</strong>(foreground), <strong>B</strong>(background)로 <strong>partition</strong>한다.
+Partition의 점수:</p>
+<div class="ans">
+  <p><strong>w(F, B) = Σ<sub>i∈F</sub> f<sub>i</sub> + Σ<sub>j∈B</sub> b<sub>j</sub> − Σ<sub>(i,j)∈E, 분리됨</sub> P<sub>ij</sub></strong></p>
+  <ul>
+    <li>Foreground에 배정한 픽셀마다 f<sub>i</sub> 획득.</li>
+    <li>Background에 배정한 픽셀마다 b<sub>j</sub> 획득.</li>
+    <li>서로 다른 쪽에 배정된 edge마다 분리 패널티 P<sub>ij</sub> 차감.</li>
+  </ul>
+  <p>목표: <strong>w(F, B)를 maximize</strong>하는 partition을 찾는다.</p>
+</div>
+</section>
+
+<section id="s5">
+<h2>5. Min-cut으로의 reduction — 두 가지 걸림돌</h2>
+<p>이 maximization 문제를 <strong>min st-cut 문제로 reduce</strong>하고 싶다. 걸림돌 두 가지:</p>
+<ul>
+  <li><strong>Max → min 변환</strong>이 필요하다.</li>
+  <li>w(F,B)에는 <strong>빼는 항</strong>(−ΣP<sub>ij</sub>)이 있다. Min st-cut의 capacity는 전부 non-negative이므로,
+  빼기를 더하기로 바꿔야 한다.</li>
+</ul>
+</section>
+
+<section id="s6">
+<h2>6. Reformulation — w(F,B) = L − w′(F,B)</h2>
+<p><strong>L</strong> = 모든 픽셀의 foreground + background likelihood 합: L = Σ<sub>i</sub>(f<sub>i</sub> + b<sub>i</sub>).</p>
+<p>w(F,B)의 각 항을 "전체를 더하고 반대쪽을 빼는" 형태로 고쳐 쓰면:</p>
+<div class="card">
+  <ul>
+    <li>Σ<sub>i∈F</sub> f<sub>i</sub> = (전체 f 합) − Σ<sub>j∈B</sub> f<sub>j</sub></li>
+    <li>Σ<sub>j∈B</sub> b<sub>j</sub> = (전체 b 합) − Σ<sub>i∈F</sub> b<sub>i</sub></li>
+  </ul>
+  <p>따라서 <strong>w(F,B) = L − w′(F,B)</strong>, 여기서</p>
+  <p><strong>w′(F,B) = Σ<sub>i∈F</sub> b<sub>i</sub> + Σ<sub>j∈B</sub> f<sub>j</sub> + Σ<sub>분리됨</sub> P<sub>ij</sub></strong></p>
+  <p>(분리 패널티는 양변에서 상쇄되어 +로 남는다.)</p>
+</div>
+<div class="ans">
+  <p><strong>핵심:</strong> w(F,B)를 maximize하는 것 ⟺ <strong>w′(F,B)를 minimize</strong>하는 것 (L은 상수).
+  그리고 w′의 모든 항은 <strong>non-negative</strong>다 — min st-cut으로 바꿀 준비 완료.</p>
+</div>
+</section>
+
+<section id="s7">
+<h2>7. 새 문제 — w′ 최소화</h2>
+<div class="card">
+  <p><strong>입력:</strong> 이미지의 undirected graph, 각 픽셀의 f<sub>i</sub>, b<sub>i</sub> (non-negative),
+  각 edge의 P<sub>ij</sub> (non-negative).</p>
+  <p><strong>목표:</strong> <strong>w′(F,B)를 minimize</strong>하는 partition (F, B).</p>
+  <p>w′를 최소화하는 partition = w를 최대화하는 partition = 원래 문제의 해.</p>
+</div>
+</section>
+
+<section id="s8">
+<h2>8. Flow network 구성</h2>
+<p>이제 이 문제를 max-flow 문제로 reduce한다. Undirected graph G를 directed flow network로 바꾼다:</p>
+<ol>
+  <li><strong>이웃 edge → bi-directional:</strong> 각 undirected edge {i, j}를 i → j와 j → i 두 방향으로.
+  Separation penalty를 인코딩하기 위해 두 edge의 capacity를 모두 <strong>P<sub>ij</sub></strong>로 둔다.</li>
+  <li><strong>Foreground 정점 s 추가:</strong> s는 source. 모든 픽셀 i에 edge <strong>s → i</strong>,
+  capacity <strong>f<sub>i</sub></strong> (foreground likelihood 인코딩).</li>
+  <li><strong>Background 정점 t 추가:</strong> t는 sink. 모든 픽셀 i에 edge <strong>i → t</strong>,
+  capacity <strong>b<sub>i</sub></strong> (background likelihood 인코딩).</li>
+</ol>
+<svg class="diagram" viewBox="0 0 620 360" role="img" aria-label="Flow network construction">
+  <defs>
+    <marker id="f1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="216" y1="120" x2="384" y2="120" marker-end="url(#f1)"/>
+    <line x1="384" y1="140" x2="216" y2="140" marker-end="url(#f1)"/>
+    <line x1="216" y1="240" x2="384" y2="240" marker-end="url(#f1)"/>
+    <line x1="384" y1="260" x2="216" y2="260" marker-end="url(#f1)"/>
+    <line x1="200" y1="156" x2="200" y2="204" marker-end="url(#f1)"/>
+    <line x1="220" y1="204" x2="220" y2="156" marker-end="url(#f1)"/>
+    <line x1="400" y1="156" x2="400" y2="204" marker-end="url(#f1)"/>
+    <line x1="420" y1="204" x2="420" y2="156" marker-end="url(#f1)"/>
+  </g>
+  <g stroke="#2563eb" stroke-width="2.5">
+    <line x1="96" y1="180" x2="184" y2="140" marker-end="url(#f1)"/>
+    <line x1="96" y1="180" x2="184" y2="220" marker-end="url(#f1)"/>
+    <line x1="416" y1="140" x2="504" y2="180" marker-end="url(#f1)"/>
+    <line x1="416" y1="220" x2="504" y2="180" marker-end="url(#f1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="16" font-weight="bold" text-anchor="middle">
+    <circle cx="80" cy="180" r="17" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="80" y="187" fill="var(--fg)">s</text>
+    <circle cx="200" cy="130" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="137" fill="var(--fg)">a</text>
+    <circle cx="400" cy="130" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="400" y="137" fill="var(--fg)">b</text>
+    <circle cx="200" cy="230" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="237" fill="var(--fg)">c</text>
+    <circle cx="400" cy="230" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="400" y="237" fill="var(--fg)">d</text>
+    <circle cx="520" cy="180" r="17" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="520" y="187" fill="var(--fg)">t</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle" fill="var(--muted)">
+    <text x="140" y="150" fill="#2563eb">s→i : f_i</text>
+    <text x="140" y="222" fill="#2563eb">s→i : f_i</text>
+    <text x="465" y="150" fill="#16a34a">i→t : b_i</text>
+    <text x="465" y="222" fill="#16a34a">i→t : b_i</text>
+    <text x="300" y="112" fill="#6b7280">P_ij (양방향)</text>
+    <text x="300" y="282" fill="#6b7280">P_ij (양방향)</text>
+  </g>
+</svg>
+<p class="caption">Flow network 구성: 이웃 edge는 양방향(cap P<sub>ij</sub>), s→픽셀(cap f<sub>i</sub>), 픽셀→t(cap b<sub>i</sub>).</p>
+</section>
+
+<section id="s9">
+<h2>9. Cut의 capacity = w′(F, B)</h2>
+<p>이 flow network에서 max-flow를 돌리면 min st-cut을 얻는다 (MF2의 구성법).
+Partition (F, B)에 대응하는 cut (s-쪽 = F ∪ {s}, t-쪽 = B ∪ {t})의 capacity를 계산하면:</p>
+<div class="card">
+  <p><strong>Cut을 가로지르는 edge (F-쪽 → B-쪽) 세 종류:</strong></p>
+  <ul>
+    <li><strong>i ∈ F인 픽셀의 i → t</strong>: capacity <strong>b<sub>i</sub></strong> → Σ<sub>i∈F</sub> b<sub>i</sub></li>
+    <li><strong>j ∈ B인 픽셀의 s → j</strong>: capacity <strong>f<sub>j</sub></strong> → Σ<sub>j∈B</sub> f<sub>j</sub></li>
+    <li><strong>분리된 이웃 edge</strong>: i ∈ F, j ∈ B이면 양방향 중 <strong>i → j 한 방향만</strong> cut을 가로지른다
+    (j → i는 B → F라 제외) → capacity <strong>P<sub>ij</sub></strong></li>
+  </ul>
+  <p>합 = <strong>w′(F, B)</strong>와 정확히 일치!</p>
+</div>
+<p>따라서 min st-cut을 찾으면 = w′를 최소화하는 partition을 찾은 것이다.</p>
+</section>
+
+<section id="s10">
+<h2>10. 해법 요약</h2>
+<pre>Image Segmentation via Max-flow:
+    입력: undirected graph(이미지), f_i, b_i, P_ij
+    1. Flow network 구성:
+         - 이웃 edge → 양방향, cap P_ij
+         - s → i (cap f_i), i → t (cap b_i)
+    2. Max-flow 실행 → f* (max flow)
+    3. Min st-cut 구성 (MF2): L = {residual graph에서 s로부터 reachable}
+    4. (F, B) = (L − {s}, R − {t})  →  w′ 최소 ⟺ w 최대  ✓</pre>
+<p>원래 문제는 w 최대화였는데, w = L − w′이므로 w′ 최소 partition이 곧 정답이다.</p>
+</section>
+
+<section id="s11">
+<h2>11. 수치 예제 (2×2 픽셀)</h2>
+<table>
+  <tr><th>pixel</th><th>f<sub>i</sub></th><th>b<sub>i</sub></th></tr>
+  <tr><td>a (좌상)</td><td>5</td><td>0</td></tr>
+  <tr><td>b (우상)</td><td>1</td><td>4</td></tr>
+  <tr><td>c (좌하)</td><td>4</td><td>1</td></tr>
+  <tr><td>d (우하)</td><td>0</td><td>5</td></tr>
+</table>
+<p>이웃 쌍 (a-b, c-d, a-c, b-d)의 P<sub>ij</sub> = 2. L = Σ(f<sub>i</sub>+b<sub>i</sub>) = 20.</p>
+<table>
+  <tr><th>Partition (F, B)</th><th>w(F,B)</th><th>w′(F,B)</th><th>w + w′</th></tr>
+  <tr><td>F={a,c}, B={b,d}</td><td>(5+4)+(4+5)−(2+2) = <strong>14</strong></td><td>(0+1)+(1+0)+(2+2) = <strong>6</strong></td><td>20 ✓</td></tr>
+  <tr><td>F={a}, B={b,c,d}</td><td>5+(4+1+5)−(2+2) = 11</td><td>0+(1+4+0)+(2+2) = 9</td><td>20 ✓</td></tr>
+  <tr><td>F={a,b,c,d}, B=∅</td><td>(5+1+4+0)+0−0 = 10</td><td>(0+4+1+5)+0+0 = 10</td><td>20 ✓</td></tr>
+</table>
+<p><strong>최적:</strong> F={a,c} (w=14 최대, w′=6 최소). Flow network의 min-cut으로 확인:
+L={s,a,c}, R={b,d,t}인 cut의 capacity = s→b(1) + s→d(0) + a→t(0) + c→t(1) + a→b(2) + c→d(2) = <strong>6 = w′</strong> ✓</p>
+</section>
+
+<section id="sum">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>파라미터 f<sub>i</sub>, b<sub>i</sub>, P<sub>ij</sub>의 의미를 말할 수 있다.</li>
+  <li>w(F,B)의 정의와 "maximize" 목표를 쓸 수 있다.</li>
+  <li>w(F,B) = L − w′(F,B) 변환을 설명할 수 있다 (L은 상수).</li>
+  <li>w′의 세 항이 모두 non-negative임을 확인한다.</li>
+  <li>Flow network 구성 3단계 (bi-directional P<sub>ij</sub>, s→i f<sub>i</sub>, i→t b<sub>i</sub>)를 그릴 수 있다.</li>
+  <li>Cut capacity = w′인 이유를 세 종류 edge로 설명할 수 있다 (분리 edge는 한 방향만!).</li>
+  <li>전체 pipeline: max-flow → min st-cut (MF2) → w′ 최소 = w 최대.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  MF3: Image Segmentation — 트랜스크립트 기반 복습 노트 (Optional)
+</div></footer>
+</body>
+</html>
