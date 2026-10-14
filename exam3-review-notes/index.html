@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exam 3 — Review Notes (GR · MF Series)</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+         max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem; line-height: 1.6; }
+  h1 { font-size: 1.7rem; margin-bottom: 0.2rem; }
+  .sub { color: #666; margin-bottom: 2rem; }
+  h2.section { font-size: 1.15rem; margin: 2rem 0 0.9rem; }
+  .cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  a.card { display: block; border: 1px solid #d0d7e3; border-radius: 12px; padding: 1.1rem 1.25rem;
+           text-decoration: none; color: inherit; }
+  a.card:hover { border-color: #2563eb; }
+  a.card h3 { font-size: 1.05rem; margin: 0 0 0.35rem; }
+  a.card p { margin: 0; font-size: 0.9rem; color: #666; }
+  .tag { display: inline-block; font-size: 0.72rem; font-weight: 700; border-radius: 999px;
+         padding: 0.1rem 0.55rem; margin-bottom: 0.5rem; margin-right: 0.3rem; }
+  .en { background: #dbeafe; color: #1d4ed8; }
+  .ko { background: #fee2e2; color: #b91c1c; }
+  .links { margin-top: 0.6rem; font-size: 0.9rem; }
+  .links a { color: #2563eb; }
+  .back { margin-top: 2rem; font-size: 0.9rem; }
+  footer { margin-top: 2.5rem; font-size: 0.8rem; color: #888; }
+</style>
+</head>
+<body>
+<h1>Exam 3 — Review Notes</h1>
+<p class="sub">Per-lecture transcript review notes · GR series + MF series · English / 한국어 · HTML</p>
+
+<h2 class="section">GR Series — Graphs (Greedy)</h2>
+<div class="cards">
+  <div class="card">
+    <span class="tag en">EN</span> <span class="tag ko">한국어</span>
+    <h3>GR1: Strongly Connected Components</h3>
+    <p>DFS review, four edge types, cycle ⟺ back edge, topological sort, SCC quiz, metagraph DAG, Kosaraju's two-DFS algorithm, key-fact proof, BFS/Dijkstra review. Glossary included.</p>
+    <p class="links"><a href="gr1-scc-notes-ko.html">한국어</a> · <a href="gr1-scc-notes-en.html">English</a></p>
+  </div>
+  <div class="card">
+    <span class="tag en">EN</span> <span class="tag ko">한국어</span>
+    <h3>GR2: 2-Satisfiability</h3>
+    <p>SAT notation, SAT quiz, k-SAT dichotomy (2-SAT easy, 3-SAT NP-complete), unit-clause elimination, implication graph, SCC unsatisfiability condition, sink→True assignment algorithm, key-fact proof.</p>
+    <p class="links"><a href="gr2-2sat-notes-ko.html">한국어</a> · <a href="gr2-2sat-notes-en.html">English</a></p>
+  </div>
+  <div class="card">
+    <span class="tag en">EN</span> <span class="tag ko">한국어</span>
+    <h3>GR3: Minimum Spanning Tree</h3>
+    <p>Greedy approach, Kruskal's algorithm + O(m log n) analysis, cut property (statement + proof via T′ = T ∪ {e*} − {e′}), Prim's algorithm.</p>
+    <p class="links"><a href="gr3-mst-notes-ko.html">한국어</a> · <a href="gr3-mst-notes-en.html">English</a></p>
+  </div>
+</div>
+
+<h2 class="section">MF Series — Max-Flow</h2>
+<div class="cards">
+  <div class="card">
+    <span class="tag en">EN</span> <span class="tag ko">한국어</span>
+    <h3>MF1: Ford-Fulkerson Algorithm</h3>
+    <p>Flow network, valid-flow formulation, residual networks, Ford-Fulkerson pseudocode, O(mC) runtime, pseudo-polynomial time, Edmonds-Karp preview.</p>
+    <p class="links"><a href="mf1-ford-fulkerson-notes-ko.html">한국어</a> · <a href="mf1-ford-fulkerson-notes-en.html">English</a></p>
+  </div>
+  <div class="card">
+    <span class="tag en">EN</span> <span class="tag ko">한국어</span>
+    <h3>MF2: Max-Flow Min-Cut</h3>
+    <p>Residual-graph verification quiz, st-cut definition, max-flow = min-cut theorem (both inequalities), min-cut construction from max-flow, Ford-Fulkerson / Edmonds-Karp correctness.</p>
+    <p class="links"><a href="mf2-maxflow-mincut-notes-ko.html">한국어</a> · <a href="mf2-maxflow-mincut-notes-en.html">English</a></p>
+  </div>
+  <div class="card">
+    <span class="tag en">EN</span> <span class="tag ko">한국어</span>
+    <h3>MF3: Image Segmentation (Optional)</h3>
+    <p>Foreground/background separation, partition weight w(F,B), reformulation w = L − w′, flow-network construction, cut capacity = w′, numeric 2×2 example.</p>
+    <p class="links"><a href="mf3-image-segmentation-notes-ko.html">한국어</a> · <a href="mf3-image-segmentation-notes-en.html">English</a></p>
+  </div>
+</div>
+
+<p class="back"><a href="../">← Back to study guides</a></p>
+<footer>Personal study notes for OMSCS CS 6515. Not affiliated with Georgia Tech.</footer>
+</body>
+</html>
