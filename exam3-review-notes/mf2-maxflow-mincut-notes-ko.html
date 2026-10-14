@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF2: Max-flow Min-cut — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+.warn{border-left:4px solid #f59e0b}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:660px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>MF2: Max-flow Min-cut — 복습 노트</h1>
+  <p>이번 주 강의 트랜스크립트 기반 정리 (핵심 용어는 영어로 표기)</p>
+  <span class="tag">Max-flow Min-cut theorem</span><span class="tag">st-cut</span>
+  <span class="tag">Augmenting path</span><span class="tag">FF correctness</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">강의 목표</a><a href="#s2">Recap·퀴즈</a><a href="#s3">st-cut</a>
+  <a href="#s4">Min st-cut</a><a href="#s5">정리 진술</a><a href="#s6">증명 ①</a>
+  <a href="#s7">Claim 증명</a><a href="#s8">증명 ②</a><a href="#s9">Cut의 성질</a>
+  <a href="#s10">정리 완성</a><a href="#sum">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. 이번 강의의 두 가지 목표</h2>
+<ol>
+  <li><strong>Max-flow = Min-cut theorem</strong> 증명.</li>
+  <li><strong>Ford-Fulkerson 알고리즘의 정확성(correctness)</strong> 증명 —
+  이 과정에서 Edmonds-Karp의 정확성도 함께 따라 나온다.</li>
+</ol>
+<p>MF1에서는 FF의 런타임 O(mC)만 분석하고 "출력된 flow가 정말 max-flow인가"는 증명하지 않았다.
+이번 강의에서 그 빈틈을 메운다.</p>
+</section>
+
+<section id="s2">
+<h2>2. Recap + 퀴즈 — Max-flow 검증</h2>
+<h3>FF가 멈추는 조건</h3>
+<p>FF는 현재 flow f*의 residual graph G<sup>f*</sup>에 <strong>augmenting path</strong>(s → t 경로)가 없을 때 멈춘다.
+핵심 <strong>Lemma</strong>: residual graph에 augmenting path가 없는 flow f*는 max-flow다. (이번 강의에서 증명.)</p>
+<div class="card q">
+  <p><strong>Q.</strong> Flow network와 flow f가 주어졌을 때, f가 max-flow인지 확인하는 데 걸리는 시간은?
+  (n = |V|, m = |E|, big-O로 답하라.)</p>
+</div>
+<div class="ans">
+  <p><strong>정답: O(n + m) — linear time.</strong></p>
+  <ul>
+    <li>위 Lemma 덕분이다: f의 residual graph를 만들고 <strong>O(n+m)</strong>,
+    s에서 DFS를 돌려 t에 도달 가능한지 확인 <strong>O(n+m)</strong>.</li>
+    <li>t에 도달 불가 → augmenting path 없음 → f는 max-flow (Yes).</li>
+    <li>t에 도달 가능 → 그 경로로 augment하면 더 큰 flow를 만들 수 있음 → f는 max-flow가 아님 (No).</li>
+  </ul>
+</div>
+<p><strong>시험 포인트:</strong> "max-flow인지 검증" = residual graph + DFS reachability, O(n+m).
+FF의 한 라운드와 같은 비용이다.</p>
+</section>
+
+<section id="s3">
+<h2>3. Min-cut 문제 — st-cut과 capacity</h2>
+<ul>
+  <li><strong>Cut</strong>: 정점을 두 집합으로 나누는 partition. 왼쪽 L, 오른쪽 R.</li>
+  <li><strong>st-cut</strong>: s ∈ L, t ∈ R인 cut (s와 t를 분리).</li>
+  <li><strong>Capacity of cut</strong>: <strong>L → R 방향</strong> edge들의 capacity 합.
+  R → L 방향 edge는 <strong>무시</strong>한다 (directed graph이므로 방향이 중요).</li>
+</ul>
+<div class="card">
+  <p><strong>예제:</strong> L = {s, a, b, f}, R = {c, d, e, t} (L이 connected일 필요는 없다).
+  L → R edge 6개: s→c, a→d, a→e, b→e, f→e, f→t.
+  Capacity = 8 + 2 + 2 + 5 + 7 + 3 = <strong>27</strong>.
+  c → f 같은 R → L edge는 세지 않는다.</p>
+</div>
+<svg class="diagram" viewBox="0 0 620 400" role="img" aria-label="st-cut example">
+  <defs>
+    <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+  </defs>
+  <rect x="30" y="30" width="240" height="340" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2" stroke-dasharray="8,5"/>
+  <rect x="350" y="30" width="240" height="340" rx="14" fill="#f8fafc" stroke="#9ca3af" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="150" y="58" text-anchor="middle" font-size="16" font-weight="bold" fill="#2563eb">L</text>
+  <text x="470" y="58" text-anchor="middle" font-size="16" font-weight="bold" fill="#6b7280">R</text>
+  <g stroke="#9ca3af" stroke-width="1.5">
+    <line x1="102" y1="200" x2="198" y2="108" marker-end="url(#c1)"/>
+    <line x1="102" y1="200" x2="198" y2="200" marker-end="url(#c1)"/>
+    <line x1="222" y1="100" x2="428" y2="100" marker-end="url(#c1)"/>
+    <line x1="222" y1="200" x2="428" y2="200" marker-end="url(#c1)"/>
+    <line x1="222" y1="300" x2="428" y2="300" marker-end="url(#c1)"/>
+    <line x1="442" y1="108" x2="236" y2="284" marker-end="url(#c1)" stroke-dasharray="6,4"/>
+  </g>
+  <g stroke="#dc2626" stroke-width="3">
+    <line x1="102" y1="200" x2="198" y2="292" marker-end="url(#c2)"/>
+    <line x1="222" y1="108" x2="428" y2="108" marker-end="url(#c2)" transform="translate(0,-14)"/>
+    <line x1="222" y1="200" x2="428" y2="200" marker-end="url(#c2)" transform="translate(0,14)"/>
+    <line x1="222" y1="292" x2="428" y2="292" marker-end="url(#c2)" transform="translate(0,14)"/>
+    <line x1="222" y1="308" x2="428" y2="228" marker-end="url(#c2)"/>
+    <line x1="222" y1="308" x2="428" y2="212" marker-end="url(#c2)" transform="translate(0,-16)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="90" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="90" y="206" fill="var(--fg)">s</text>
+    <circle cx="210" cy="100" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="210" y="106" fill="var(--fg)">a</text>
+    <circle cx="210" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="210" y="206" fill="var(--fg)">b</text>
+    <circle cx="210" cy="300" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="210" y="306" fill="var(--fg)">f</text>
+    <circle cx="440" cy="100" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="440" y="106" fill="var(--fg)">d</text>
+    <circle cx="440" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="440" y="206" fill="var(--fg)">e</text>
+    <circle cx="440" cy="300" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="440" y="306" fill="var(--fg)">c</text>
+    <circle cx="550" cy="200" r="15" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="550" y="206" fill="var(--fg)">t</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="140" y="262" fill="#dc2626" font-weight="bold">8</text>
+    <text x="325" y="82" fill="#dc2626" font-weight="bold">2</text>
+    <text x="325" y="222" fill="#dc2626" font-weight="bold">2</text>
+    <text x="325" y="322" fill="#dc2626" font-weight="bold">7</text>
+    <text x="330" y="252" fill="#dc2626" font-weight="bold">5</text>
+    <text x="330" y="282" fill="#dc2626" font-weight="bold">3</text>
+    <text x="340" y="196" fill="#9ca3af">c→f 제외 (R→L)</text>
+  </g>
+</svg>
+<p class="caption">st-cut 예제. 빨간 edge 6개(L→R)의 capacity 합 = 8+2+2+5+7+3 = 27. 점선 c→f는 R→L이라 제외.</p>
+</section>
+
+<section id="s4">
+<h2>4. Min st-cut 문제 정식화</h2>
+<div class="card">
+  <p><strong>입력:</strong> Flow network (directed graph + s, t + positive capacity).</p>
+  <p><strong>출력:</strong> st-cut (L, R) (s ∈ L, t ∈ R) 중 <strong>capacity가 최소</strong>인 것.
+  Capacity = L → R edge들의 capacity 합 (R → L 무시).</p>
+</div>
+<p><strong>예제:</strong> R = {t}, L = 나머지 전부인 cut의 capacity는 <strong>12</strong> (t로 들어오는 두 edge).
+이것이 min st-cut이다. 왜 최소인지 아는가? → Max-flow = Min-cut 정리 덕분이다:
+이 그래프에 size 12인 flow가 존재하므로, flow 12 = cut 12면 둘 다 optimal일 수밖에 없다.</p>
+</section>
+
+<section id="s5">
+<h2>5. 정리 진술 — Max-Flow = Min st-Cut</h2>
+<div class="ans">
+  <p><strong>Theorem.</strong> 임의의 flow network에 대해,
+  <strong>(max-flow의 size) = (min st-cut의 capacity)</strong>.</p>
+</div>
+<p><strong>Notation 주의:</strong> "st-cut"이라고 부르는 이유는 s와 t를 분리한다는 점을 강조하기 위해서다.
+일반 <strong>min-cut 문제</strong>는 s, t를 분리하지 않아도 된다 — 그래서 min st-cut과 구분한다.
+마찬가지로 max-flow도 사실은 "max st-flow"다.</p>
+<p><strong>증명 전략:</strong> 두 부등식을 각각 증명한다.</p>
+<ul>
+  <li>① max-flow ≤ min st-cut capacity</li>
+  <li>② max-flow ≥ min st-cut capacity</li>
+</ul>
+</section>
+
+<section id="s6">
+<h2>6. 증명 ① — max-flow ≤ min-cut</h2>
+<p>①을 직접 증명하는 대신, 더 쉬운 명제를 증명한다:</p>
+<div class="card">
+  <p><strong>충분조건:</strong> <em>임의의</em> flow f와 <em>임의의</em> st-cut (L, R)에 대해
+  <strong>size(f) ≤ cap(L, R)</strong>이면, ①이 따라 나온다.</p>
+  <p>왜? f에 대해 max를 취하면(어차피 max-flow도 flow이므로) 좌변은 max-flow가 되고,
+  우변은 임의의 cut에 대해 성립하므로 min cut을 취해도 된다.</p>
+</div>
+<p>이제 "임의의 flow f, 임의의 st-cut (L,R)에 대해 size(f) ≤ cap(L,R)"을 증명한다.
+직관: s에서 t로 가는 flow는 언젠가 L을 탈출해야 하고, 탈출구는 L → R edge들뿐이다.
+그 edge들의 capacity 합이 27이면 flow도 27을 넘을 수 없다.</p>
+<h3>핵심 Claim</h3>
+<div class="ans">
+  <p><strong>Claim:</strong> size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L).
+  (L 밖으로 나가는 flow − L 안으로 들어오는 flow)</p>
+</div>
+<p>Claim이 있으면 ①은 즉시: size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L) ≤ f<sub>out</sub>(L) ≤ cap(L,R).
+(두 번째 항을 버리면 커지고, 나가는 flow는 각 edge의 capacity를 넘을 수 없으므로.)</p>
+</section>
+
+<section id="s7">
+<h2>7. Claim 증명 — size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L)</h2>
+<ol>
+  <li>f<sub>out</sub>(L): tail이 L 밖·head가 L 안인 edge들의 flow 합. f<sub>in</sub>(L): 그 반대.</li>
+  <li>여기에 <strong>내부 edge</strong>(양 끝이 모두 L 안)를 더하고 뺀다 (값은 그대로).</li>
+  <li>양의 항들을 합치면: L 안의 모든 정점 v에 대한 (v에서 나가는 총 flow).
+  음의 항들을 합치면: L 안의 모든 정점 v에 대한 (v로 들어오는 총 flow).</li>
+  <li>s를 따로 떼어낸다: s로 들어오는 flow는 0이므로, 남는 건 <strong>s에서 나가는 flow = size(f)</strong>.</li>
+  <li>나머지 정점 v ∈ L − {s}는 <strong>flow conservation</strong>으로 out = in → 합이 0.</li>
+</ol>
+<p>따라서 size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L). ∎</p>
+<p>이 Claim은 ②의 증명에서도 다시 쓰인다.</p>
+</section>
+
+<section id="s8">
+<h2>8. 증명 ② — max-flow ≥ min-cut (cut 구성)</h2>
+<p>FF가 출력한 flow f*를 가져온다. FF는 residual graph에 augmenting path가 없을 때 멈췄으므로,
+f*의 residual graph G<sup>f*</sup>에는 s → t 경로가 없다.</p>
+<div class="card">
+  <p><strong>Cut 구성:</strong> L = G<sup>f*</sup>에서 <strong>s로부터 reachable한 정점들</strong>,
+  R = 나머지. t는 reachable하지 않으므로 t ∈ R. s ∈ L이므로 (L, R)은 valid한 st-cut이다.</p>
+</div>
+<p>이제 이 cut의 capacity가 size(f*)와 같음을 보인다 (그러면 ②가 따라 나온다 — 아래 §10 참고).</p>
+</section>
+
+<section id="s9">
+<h2>9. 구성된 cut의 성질</h2>
+<p>예제: L = {s, a, b, d, e} (residual graph에서 s로부터 reachable), R = {c, f, t}.</p>
+<h3>L → R edge는 fully saturated</h3>
+<ul>
+  <li>예제: d → t, d → c, s → c.</li>
+  <li>이유: 만약 v → w (v ∈ L, w ∈ R)가 residual graph에 있었다면 w도 reachable해서 L에 들어가야 한다 — 모순.
+  따라서 forward edge가 residual에 없다는 것은 <strong>flow = capacity</strong>라는 뜻.</li>
+  <li>∴ f<sub>out</sub>(L) = cap(L, R).</li>
+</ul>
+<h3>R → L edge는 flow 0</h3>
+<ul>
+  <li>예제: f → e가 유일한 R → L edge.</li>
+  <li>이유: z → y (z ∈ R, y ∈ L)의 flow가 양수였다면 backward edge y → z가 residual graph에 있어야 하고,
+  y ∈ L이므로 z도 reachable → z ∈ L이 되어 모순. 따라서 flow는 0.</li>
+  <li>∴ f<sub>in</sub>(L) = 0.</li>
+</ul>
+<svg class="diagram" viewBox="0 0 620 380" role="img" aria-label="Reachable set cut construction">
+  <defs>
+    <marker id="c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/>
+    </marker>
+    <marker id="c4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/>
+    </marker>
+  </defs>
+  <rect x="30" y="30" width="300" height="320" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2" stroke-dasharray="8,5"/>
+  <rect x="380" y="30" width="210" height="320" rx="14" fill="#f8fafc" stroke="#9ca3af" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="180" y="58" text-anchor="middle" font-size="15" font-weight="bold" fill="#2563eb">L = reachable in G^f*</text>
+  <text x="485" y="58" text-anchor="middle" font-size="15" font-weight="bold" fill="#6b7280">R</text>
+  <g stroke="#dc2626" stroke-width="3">
+    <line x1="130" y1="200" x2="400" y2="290" marker-end="url(#c3)"/>
+    <line x1="250" y1="110" x2="400" y2="110" marker-end="url(#c3)"/>
+    <line x1="250" y1="130" x2="400" y2="290" marker-end="url(#c3)"/>
+  </g>
+  <g stroke="#9ca3af" stroke-width="2" stroke-dasharray="6,4">
+    <line x1="400" y1="290" x2="250" y2="200" marker-end="url(#c4)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="115" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="115" y="206" fill="var(--fg)">s</text>
+    <circle cx="235" cy="110" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="235" y="116" fill="var(--fg)">a</text>
+    <circle cx="235" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="235" y="206" fill="var(--fg)">b</text>
+    <circle cx="235" cy="290" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="235" y="296" fill="var(--fg)">d</text>
+    <circle cx="140" cy="290" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="140" y="296" fill="var(--fg)">e</text>
+    <circle cx="415" cy="110" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="415" y="116" fill="var(--fg)">f</text>
+    <circle cx="415" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="415" y="206" fill="var(--fg)">c</text>
+    <circle cx="530" cy="200" r="15" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="530" y="206" fill="var(--fg)">t</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="270" y="252" fill="#dc2626" font-weight="bold">saturated</text>
+    <text x="330" y="252" fill="#9ca3af">f→e: flow 0</text>
+  </g>
+</svg>
+<p class="caption">L = residual graph에서 s로부터 reachable한 정점들. 빨간 L→R edge들은 fully saturated,
+점선 f→e는 flow 0. 따라서 size(f*) = cap(L,R).</p>
+<p>Claim(§7)에 대입: size(f*) = f<sub>out</sub>(L) − f<sub>in</sub>(L) = cap(L,R) − 0 = <strong>cap(L,R)</strong>. ∎</p>
+</section>
+
+<section id="s10">
+<h2>10. 정리 완성 — 따라 나오는 결과들</h2>
+<h3>② 마무리</h3>
+<p>size(f*) = cap(L,R)을 증명했다. 이제:</p>
+<ul>
+  <li>max-flow ≥ size(f*) (max는 특정 flow f*보다 크거나 같다).</li>
+  <li>cap(L,R) ≥ min st-cut capacity (특정 cut은 min보다 크거나 같다).</li>
+  <li>∴ <strong>max-flow ≥ min st-cut capacity</strong>. ①과 합쳐 <strong>등식成立</strong>. ∎</li>
+</ul>
+<h3>따라 나오는 결과 (byproducts)</h3>
+<ol>
+  <li><strong>Lemma 증명:</strong> augmenting path가 없는 flow f*에 대해 size(f*) = cap(L,R)인 cut을 구성했으므로,
+  등식이 성립하려면 양쪽이 모두 optimal — 즉 f*는 max-flow다. (§2의 Lemma 증명 완료.)</li>
+  <li><strong>Ford-Fulkerson 정확성:</strong> FF는 augmenting path가 없을 때 멈추므로 출력은 max-flow다.
+  <strong>Edmonds-Karp</strong>도 같은 조건에서 멈추므로 정확성이 함께 증명된다.</li>
+  <li><strong>Min-cut 구성법:</strong> max-flow f*가 있으면, L = {residual graph에서 s로부터 reachable}로 두면
+  (L, R)이 min st-cut이다. (Image segmentation 응용에서 사용 예정.)</li>
+</ol>
+<pre># Max-flow 검증 (퀴즈 정답의 코드 형태)
+def is_max_flow(G, s, t, f):
+    Gf = build_residual(G, f)   # O(n + m)
+    return not dfs_reaches(Gf, s, t)  # O(n + m) → 총 O(n + m)
+
+# Min st-cut 구성 (max-flow f*로부터)
+def min_st_cut(G, s, f_star):
+    Gf = build_residual(G, f_star)
+    L = {v : reachable from s in Gf}  # DFS/BFS
+    R = V - L
+    return (L, R)  # cap(L, R) == size(f*)</pre>
+</section>
+
+<section id="sum">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>st-cut의 정의와 capacity 정의를 말할 수 있다 (L→R만, R→L 무시).</li>
+  <li>퀴즈: flow가 max-flow인지 검증하는 시간 O(n+m)을 설명할 수 있다.</li>
+  <li>Claim size(f) = f<sub>out</sub>(L) − f<sub>in</sub>(L)의 증명 아이디어를 설명할 수 있다 (내부 edge 더하고 빼기 + conservation).</li>
+  <li>① max-flow ≤ min-cut의 논리 흐름을 말할 수 있다.</li>
+  <li>②의 cut 구성법: L = residual graph에서 s로부터 reachable.</li>
+  <li>L→R edge는 saturated, R→L edge는 flow 0인 이유를 설명할 수 있다.</li>
+  <li>정리로부터 따라 나오는 3가지 (Lemma, FF/EK 정확성, min-cut 구성법)를 말할 수 있다.</li>
+  <li>Min st-cut vs min-cut의 차이를 설명할 수 있다.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  MF2: Max-flow Min-cut — 트랜스크립트 기반 복습 노트
+</div></footer>
+</body>
+</html>
