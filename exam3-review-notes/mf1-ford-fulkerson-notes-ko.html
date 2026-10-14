@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF1: Ford-Fulkerson Algorithm — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+.warn{border-left:4px solid #f59e0b}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>MF1: Ford-Fulkerson Algorithm — 복습 노트</h1>
+  <p>이번 주 강의 트랜스크립트 기반 정리 (핵심 용어는 영어로 표기)</p>
+  <span class="tag">Max-flow</span><span class="tag">Residual network</span>
+  <span class="tag">Ford-Fulkerson</span><span class="tag">O(mC)</span>
+  <span class="tag">Edmonds-Karp</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">문제 설정</a><a href="#s2">정식화</a><a href="#s3">퀴즈 리뷰</a>
+  <a href="#s4">사이클</a><a href="#s5">역평행 간선</a><a href="#s6">Naive 시도</a>
+  <a href="#s7">역방향 간선</a><a href="#s8">Residual network</a><a href="#s9">FF 알고리즘</a>
+  <a href="#s10">런타임</a><a href="#s11">심화 논의</a><a href="#sum">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. 문제 설정 — 무엇을 maximize하는가</h2>
+<ul>
+  <li><strong>Flow network(플로우 네트워크)</strong>: directed graph(방향 그래프) G + 시작점 <strong>source s</strong> + 도착점 <strong>sink t</strong> +
+  각 edge e마다 <strong>capacity(용량)</strong> c<sub>e</sub> &gt; 0.</li>
+  <li>직관: s에서 t로 "보급품"을 보낸다. 인터넷 트래픽이면 capacity = bandwidth(대역폭),
+  석유면 capacity = 파이프 용량.</li>
+  <li>목표: edge 용량을 초과하지 않으면서 s → t로 보낼 수 있는 <strong>최대량</strong>을 구한다.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. 정식화 — valid flow의 두 가지 제약</h2>
+<p>변수 f<sub>e</sub> = edge e를 따라 흐르는 flow. Valid flow는 다음을 만족한다:</p>
+<div class="card">
+  <p><strong>① Capacity constraint(용량 제약):</strong> 모든 edge e에 대해 0 ≤ f<sub>e</sub> ≤ c<sub>e</sub>.
+  음수 flow 불가, 용량 초과 불가.</p>
+  <p><strong>② Flow conservation(유량 보존):</strong> s, t를 제외한 모든 vertex v에서
+  (v로 들어오는 flow) = (v에서 나가는 flow). 즉
+  ∑<sub>w→v</sub> f<sub>wv</sub> = ∑<sub>v→z</sub> f<sub>vz</sub>. 중간 정점에서는 flow가 생기거나 사라지지 않는다.</p>
+</div>
+<p><strong>Flow의 size(크기)</strong> = s에서 나가는 총 flow = t로 들어오는 총 flow.
+Max-flow 문제는 valid flow 중 size가 최대인 것을 찾는 것이다.</p>
+</section>
+
+<section id="s3">
+<h2>3. 퀴즈 리뷰 — Max-flow 예제</h2>
+<div class="card q">
+  <p><strong>Q.</strong> 아래 flow network에서 각 edge의 flow 값을 정수로 지정해 s → t flow를 maximize하라.
+  순서: sa, sb, sc, ad, ae, be, cf, dc, dt, ed, fe, ft.</p>
+</div>
+<svg class="diagram" viewBox="0 0 560 400" role="img" aria-label="Max-flow example network">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="72" y1="200" x2="168" y2="88" marker-end="url(#a1)"/>
+    <line x1="72" y1="200" x2="168" y2="200" marker-end="url(#a1)"/>
+    <line x1="72" y1="200" x2="168" y2="312" marker-end="url(#a1)"/>
+    <line x1="192" y1="80" x2="318" y2="80" marker-end="url(#a1)"/>
+    <line x1="192" y1="88" x2="318" y2="192" marker-end="url(#a1)"/>
+    <line x1="192" y1="200" x2="318" y2="200" marker-end="url(#a1)"/>
+    <line x1="192" y1="320" x2="318" y2="320" marker-end="url(#a1)"/>
+    <line x1="332" y1="88" x2="206" y2="304" marker-end="url(#a1)"/>
+    <line x1="332" y1="80" x2="438" y2="192" marker-end="url(#a1)"/>
+    <line x1="332" y1="208" x2="332" y2="96" marker-end="url(#a1)"/>
+    <line x1="332" y1="320" x2="332" y2="216" marker-end="url(#a1)"/>
+    <line x1="332" y1="320" x2="438" y2="208" marker-end="url(#a1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="60" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="60" y="206" fill="var(--fg)">s</text>
+    <circle cx="180" cy="80" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="180" y="86" fill="var(--fg)">a</text>
+    <circle cx="180" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="180" y="206" fill="var(--fg)">b</text>
+    <circle cx="180" cy="320" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="180" y="326" fill="var(--fg)">c</text>
+    <circle cx="330" cy="80" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="330" y="86" fill="var(--fg)">d</text>
+    <circle cx="330" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="330" y="206" fill="var(--fg)">e</text>
+    <circle cx="330" cy="320" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="330" y="326" fill="var(--fg)">f</text>
+    <circle cx="450" cy="200" r="15" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="450" y="206" fill="var(--fg)">t</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="105" y="130" fill="#15803d" font-weight="bold">6</text><text x="105" y="145" fill="#dc2626">8</text>
+    <text x="120" y="192" fill="#15803d" font-weight="bold">1</text><text x="120" y="207" fill="#dc2626">3</text>
+    <text x="105" y="272" fill="#15803d" font-weight="bold">5</text><text x="105" y="287" fill="#dc2626">6</text>
+    <text x="255" y="72" fill="#15803d" font-weight="bold">5</text><text x="255" y="87" fill="#dc2626">6</text>
+    <text x="262" y="132" fill="#15803d" font-weight="bold">1</text><text x="262" y="147" fill="#dc2626">2</text>
+    <text x="255" y="192" fill="#15803d" font-weight="bold">1</text><text x="255" y="207" fill="#dc2626">2</text>
+    <text x="255" y="312" fill="#15803d" font-weight="bold">7</text><text x="255" y="327" fill="#dc2626">8</text>
+    <text x="262" y="212" fill="#15803d" font-weight="bold">2</text><text x="262" y="227" fill="#dc2626">4</text>
+    <text x="392" y="128" fill="#15803d" font-weight="bold">5</text><text x="392" y="143" fill="#dc2626">5</text>
+    <text x="344" y="152" fill="#15803d" font-weight="bold">2</text><text x="344" y="167" fill="#dc2626">3</text>
+    <text x="344" y="272" fill="#15803d" font-weight="bold">0</text><text x="344" y="287" fill="#dc2626">3</text>
+    <text x="392" y="272" fill="#15803d" font-weight="bold">7</text><text x="392" y="287" fill="#dc2626">7</text>
+  </g>
+  <g font-family="sans-serif" font-size="12">
+    <text x="20" y="30" fill="#15803d" font-weight="bold">초록 = flow</text>
+    <text x="20" y="48" fill="#dc2626" font-weight="bold">빨강 = capacity</text>
+  </g>
+</svg>
+<p class="caption">퀴즈 예제 네트워크 (flow / capacity). 트랜스크립트의 설명과 일치하도록 재구성한 수치다.</p>
+<div class="ans">
+  <p><strong>정답 (flow 값):</strong> sa=6, sb=1, sc=5, ad=5, ae=1, be=1, cf=7, dc=2, dt=5, ed=2, fe=0, ft=7 — <strong>총 flow 12</strong>.</p>
+</div>
+<h3>왜 최대인가 — 검증</h3>
+<ul>
+  <li><strong>Conservation 확인:</strong> c: in(5+2)=7 = out 7 ✓ / e: in(1+1)=2 = out 2 ✓ / d: in(5+2)=7 = out(2+5)=7 ✓ /
+  a: in 6 = out(5+1)=6 ✓ / b: in 1 = out 1 ✓ / f: in 7 = out(0+7)=7 ✓.</li>
+  <li><strong>Capacity 확인:</strong> 모든 flow ≤ capacity ✓.</li>
+  <li><strong>최적성:</strong> t로 들어오는 edge는 dt, ft뿐이고 그 capacity 합이 5+7=<strong>12</strong>.
+  t로 들어오는 flow는 12를 넘을 수 없는데 12를 달성했으므로 최대다.</li>
+</ul>
+<p><strong>시험 포인트:</strong> "왜 최대인지"를 물을 때 t로 들어오는(또는 s에서 나가는) edge들의 capacity 합이
+달성한 flow와 같으면 그걸로 증명 끝이다.</p>
+</section>
+
+<section id="s4">
+<h2>4. 사이클은 OK</h2>
+<p>위 예제에 c → f → e → d → c 사이클이 있다. Shortest path 문제에서는 negative cycle이 골칫거리였는데,
+max-flow에서는 사이클이 있어도 문제가 <strong>well-defined</strong>하다.</p>
+<ul>
+  <li>최대 flow는 사이클을 이용하지 않는다: d로 들어온 1 단위를 사이클로 빙빙 돌려 다시 d로 보내는 대신,
+  그냥 d에서 바로 내보내면 된다 — 사이클을 <strong>bypass</strong>할 수 있다.</li>
+  <li>사이클의 <em>일부</em>는 이용할 수도 있지만, 미리 알 수는 없다. 결론: 사이클이 있어도 문제는 잘 정의된다.</li>
+</ul>
+</section>
+
+<section id="s5">
+<h2>5. 역평행 간선(anti-parallel edges) 제거</h2>
+<p>a → b와 b → a가 동시에 있는 <strong>anti-parallel edges</strong>는 미리 제거해 둔다.
+나중에 residual network를 만들 때 forward/backward edge를 추가하는데, 원래 anti-parallel edge가 있으면 헷갈리기 때문이다.</p>
+<ul>
+  <li><strong>변환법:</strong> b → a (capacity 3)를 길이가 2인 경로 b → x → a로 쪼갠다.
+  x는 새로운 보조 정점(auxiliary vertex), 두 edge의 capacity는 모두 3으로 둔다.</li>
+  <li>두 네트워크는 <strong>equivalent</strong> — 한쪽의 max-flow 해를 다른 쪽으로 쉽게 옮길 수 있다.</li>
+</ul>
+<svg class="diagram" viewBox="0 0 560 170" role="img" aria-label="Anti-parallel edge transformation">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="60" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="60" y="91" fill="var(--fg)">a</text>
+    <circle cx="200" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="91" fill="var(--fg)">b</text>
+    <circle cx="360" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="360" y="91" fill="var(--fg)">a</text>
+    <circle cx="500" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="500" y="91" fill="var(--fg)">b</text>
+    <circle cx="430" cy="30" r="16" fill="var(--bg)" stroke="#f59e0b" stroke-width="3"/><text x="430" y="36" fill="var(--fg)">x</text>
+  </g>
+  <g stroke="#6b7280" stroke-width="2.5">
+    <line x1="78" y1="75" x2="182" y2="75" marker-end="url(#a2)"/>
+    <line x1="182" y1="95" x2="78" y2="95" marker-end="url(#a2)"/>
+    <line x1="378" y1="85" x2="482" y2="85" marker-end="url(#a2)"/>
+    <line x1="490" y1="72" x2="442" y2="42" marker-end="url(#a2)"/>
+    <line x1="418" y1="42" x2="372" y2="72" marker-end="url(#a2)"/>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle" fill="var(--muted)">
+    <text x="130" y="65">a → b</text><text x="130" y="115">b → a (cap 3)</text>
+    <text x="430" y="110">b → x → a (cap 3, 3)</text>
+    <text x="280" y="91" font-size="20" fill="var(--accent)">→</text>
+  </g>
+</svg>
+<p class="caption">Anti-parallel edge b → a를 보조 정점 x를 이용해 길이 2 경로로 변환.</p>
+</section>
+
+<section id="s6">
+<h2>6. Naive한 시도 — 왜 실패하는가</h2>
+<p><strong>Toy example</strong> (정점 4개: s, a, b, t). Capacity: s→a=10, a→b=10, b→t=10, s→b=7, a→t=7.
+최대 flow는 17이다 (s에서 나가는 capacity 합 = t로 들어오는 capacity 합 = 17).</p>
+<p><strong>Naive 알고리즘:</strong></p>
+<ol>
+  <li>Flow를 0으로 초기화.</li>
+  <li><strong>Available capacity</strong> 그래프(= capacity − 현재 flow)를 만든다.</li>
+  <li>그 그래프에서 s–t path P를 찾는다 (BFS/DFS, 아무 path나).</li>
+  <li>c(P) = P 위 edge들의 available capacity 중 최소값. P를 따라 c(P)만큼 augment.</li>
+  <li>s–t path가 없을 때까지 2–4 반복.</li>
+</ol>
+<p><strong>실패 과정:</strong> P = s → a → b → t를 잡으면 c(P) = min(10,10,10) = 10.
+Flow는 sa=10, ab=10, bt=10이 되고, 세 edge의 available capacity가 0이 되어 s–t path가 사라진다.
+알고리즘은 <strong>flow 10에서 멈추지만</strong>, 실제 최대는 17이다 — <strong>suboptimal</strong>!</p>
+<p>문제점: available capacity 그래프는 "현재 flow에서 할 수 있는 모든 일"을 표현하지 못한다.
+특히 <strong>이미 보낸 flow를 되돌리는(줄이는)</strong> 선택지가 없다.</p>
+</section>
+
+<section id="s7">
+<h2>7. 핵심 아이디어 — 역방향 간선(backward edges)</h2>
+<p>최적해를 역추적하면, 원하는 augment 경로는 <strong>s → b → a → t</strong>다.
+s → b와 a → t는 flow를 늘리지만, b → a는 원래 네트워크에 없는 edge다.</p>
+<div class="card">
+  <p><strong>파이프·수도꼭지 비유:</strong> a → b로 flow를 보내는 건 수도꼭지를 여는 것.
+  b → a로 flow를 보내는 건 수도꼭지를 <strong>잠그는</strong> 것, 즉 a → b flow를 <strong>줄이는</strong> 것이다.</p>
+  <p>현재 a → b flow가 10이므로, b → a로는 최대 10만큼 "보낼 수" 있다 (a → b를 10만큼 줄이는 것과 동등).</p>
+</div>
+<p>따라서 available capacity 그래프 대신, forward edge(남은 용량) + backward edge(되돌릴 수 있는 flow)를 모두 담은
+<strong>residual network</strong>를 써야 한다.</p>
+</section>
+
+<section id="s8">
+<h2>8. Residual network G<sup>f</sup>의 정의</h2>
+<p>현재 flow f에 대한 residual network G<sup>f</sup>: 정점은 그대로, edge는 flow에 따라 정해진다.</p>
+<div class="card">
+  <p>원래 flow network의 각 edge v → w에 대해:</p>
+  <ul>
+    <li><strong>Forward edge:</strong> available capacity가 있으면 (f<sub>vw</sub> &lt; c<sub>vw</sub>),
+    같은 방향 edge v → w를 residual capacity <strong>c<sub>vw</sub> − f<sub>vw</sub></strong>로 추가.</li>
+    <li><strong>Backward edge:</strong> flow가 양수이면 (f<sub>vw</sub> &gt; 0),
+    역방향 edge w → v를 residual capacity <strong>f<sub>vw</sub></strong>로 추가.
+    (w → v로 x만큼 보내는 것 = v → w flow를 x만큼 줄이는 것.)</li>
+  </ul>
+  <p>Forward + backward edge가 동시에 존재할 수 있어서, 미리 anti-parallel edge를 제거해 둔 것이다 (§5).</p>
+</div>
+<svg class="diagram" viewBox="0 0 560 300" role="img" aria-label="Residual network of toy example">
+  <defs>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="70" cy="150" r="16" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="70" y="156" fill="var(--fg)">s</text>
+    <circle cx="280" cy="60" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="280" y="66" fill="var(--fg)">a</text>
+    <circle cx="280" cy="240" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="280" y="246" fill="var(--fg)">b</text>
+    <circle cx="490" cy="150" r="16" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="490" y="156" fill="var(--fg)">t</text>
+  </g>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="88" y1="150" x2="262" y2="228" marker-end="url(#a3)"/>
+    <line x1="298" y1="60" x2="472" y2="142" marker-end="url(#a3)"/>
+  </g>
+  <g stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="7,4">
+    <line x1="262" y1="228" x2="262" y2="78" marker-end="url(#a4)"/>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="170" y="205" fill="var(--fg)">s→b : 7</text>
+    <text x="392" y="92" fill="var(--fg)">a→t : 7</text>
+    <text x="252" y="155" fill="#f59e0b" font-weight="bold">b→a : 10</text>
+  </g>
+  <g font-family="sans-serif" font-size="13" font-weight="bold">
+    <text x="150" y="262" fill="#f59e0b">- - - backward edge</text>
+    <text x="150" y="282" fill="var(--fg)">→ 주황 경로 s→b→a→t로 7만큼 augment 가능</text>
+  </g>
+</svg>
+<p class="caption">1라운드 후 toy example의 residual network. s→a, a→b, b→t는 residual capacity 0.
+주황 점선 b→a는 backward edge (a→b flow 10을 되돌릴 수 있음). c(P) = min(7, 10, 7) = 7.</p>
+<p><strong>2라운드:</strong> P = s → b → a → t, c(P) = 7.
+sb = 7, ab = 10 − 7 = 3, at = 7. 총 flow = 10 + 7 = <strong>17 = 최대</strong> ✓</p>
+</section>
+
+<section id="s9">
+<h2>9. Ford-Fulkerson 알고리즘</h2>
+<pre>Ford-Fulkerson(G, s, t):
+    모든 edge e에 대해 f(e) ← 0
+    loop:
+        현재 flow f에 대한 residual network G^f를 만든다
+        G^f에서 s–t path P를 찾는다 (BFS/DFS)
+        path가 없으면: 현재 flow f를 출력하고 종료
+        c(P) ← P 위 edge들의 residual capacity 중 최소값
+        P를 따라 c(P)만큼 augment:
+            forward edge (u,v):  f(u,v) ← f(u,v) + c(P)
+            backward edge (u,v): f(v,u) ← f(v,u) − c(P)   # 역방향으로 되돌림
+        (2단계로 돌아가 반복)</pre>
+<p><strong>종료 조건:</strong> residual network에 s–t path가 없으면 멈춘다.
+이때의 flow가 max-flow라는 것은 나중에 배울 <strong>Max-flow = Min-cut theorem</strong>에서 따라 나온다.</p>
+</section>
+
+<section id="s10">
+<h2>10. 런타임 분석 — O(mC)</h2>
+<div class="card warn">
+  <p><strong>⚠ 핵심 가정: 모든 capacity가 정수(integer)다.</strong>
+  이 가정 하에서만 아래 런타임 분석이 성립한다.</p>
+</div>
+<h3>왜 정수 가정이 필요한가</h3>
+<ul>
+  <li>Augment량이 c(P) = residual capacity들의 최소값인데, capacity가 정수면 c(P)도 정수.</li>
+  <li>따라서 residual network의 capacity가 계속 정수로 유지되고, 매 라운드 flow가 <strong>최소 1씩</strong> 증가한다.</li>
+</ul>
+<h3>라운드 수 ≤ C</h3>
+<p>C = max-flow의 size(찾으려는 값). 매 라운드 최소 1씩 증가하므로 라운드는 <strong>최대 C번</strong>.</p>
+<h3>라운드당 시간 = O(m)</h3>
+<ul>
+  <li>Residual network 업데이트: augment 경로 P의 길이는 최대 n−1이므로 <strong>O(n)</strong>.</li>
+  <li>s–t path 탐색: BFS/DFS로 <strong>O(n + m)</strong>. m ≥ n−1이라 가정하면 <strong>O(m)</strong>.</li>
+  <li>Augment: 경로를 따라가며 <strong>O(m)</strong>으로 bound.</li>
+  <li>→ 라운드당 <strong>O(m)</strong>이 dominant.</li>
+</ul>
+<div class="ans"><strong>총 런타임: O(mC)</strong> — 라운드당 O(m) × 최대 C 라운드.</div>
+</section>
+
+<section id="s11">
+<h2>11. 심화 논의 — pseudo-polynomial과 Edmonds-Karp</h2>
+<h3>Pseudo-polynomial</h3>
+<p>O(mC)의 두 가지 문제점:</p>
+<ul>
+  <li>Capacity가 정수라는 가정이 필요하다.</li>
+  <li>런타임이 <strong>출력(C, capacity의 크기)</strong>에 의존한다. 이상적으로는 capacity 값 자체가 아니라
+  그 <strong>log</strong>에 의존해야 하고, 아예 무관해야 한다. (Knapsack의 상황과 유사.)</li>
+</ul>
+<h3>Edmonds-Karp 알고리즘 (1972)</h3>
+<ul>
+  <li>Ford-Fulkerson과 같은 paradigm. 차이점: residual network에서 <strong>아무</strong> s–t path가 아니라
+  <strong>shortest path (edge 수 최소)</strong>를 택한다. BFS로 찾는다 (edge 가중치는 무시).</li>
+  <li>라운드 수가 <strong>최대 mn</strong>임이 증명된다 → 총 런타임 <strong>O(m²n)</strong>.</li>
+  <li>런타임이 max-flow size와 무관하고, <strong>정수 가정도 불필요</strong>하다.</li>
+</ul>
+<h3>현재 최고 기록</h3>
+<p><strong>Orlin (2013)</strong>의 알고리즘이 <strong>O(mn)</strong> — general graph에서 exact max-flow의 현재 최고 기록이다
+(Edmonds-Karp 1972로부터 약 40년 만).</p>
+<table>
+  <tr><th>알고리즘</th><th>Path 선택</th><th>런타임</th><th>정수 가정</th></tr>
+  <tr><td>Ford-Fulkerson</td><td>아무 s–t path (DFS/BFS)</td><td>O(mC)</td><td>필요</td></tr>
+  <tr><td>Edmonds-Karp</td><td>Shortest s–t path (BFS)</td><td>O(m²n)</td><td>불필요</td></tr>
+  <tr><td>Orlin (2013)</td><td>—</td><td>O(mn)</td><td>불필요</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>Valid flow의 두 제약 (capacity, conservation)을 말할 수 있다.</li>
+  <li>Flow size = s의 out-flow = t의 in-flow.</li>
+  <li>퀴즈 예제에서 flow 12가 최대인 이유를 설명할 수 있다 (t로 들어오는 capacity 합 = 12).</li>
+  <li>Naive 알고리즘이 왜 10에서 멈추는지 설명할 수 있다 (되돌리기 불가).</li>
+  <li>Residual network의 forward/backward edge 정의를 쓸 수 있다.</li>
+  <li>Backward edge의 의미: "수도꼭지 잠그기" = 기존 flow 줄이기.</li>
+  <li>Ford-Fulkerson 6단계를 순서대로 쓸 수 있다.</li>
+  <li>O(mC) 분석: 정수 가정 → 매 라운드 ≥1 증가 → ≤C 라운드 × O(m).</li>
+  <li>Pseudo-polynomial의 의미: 런타임이 capacity 값 자체에 의존.</li>
+  <li>Edmonds-Karp: BFS shortest path, O(m²n), 정수 가정 불필요.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  MF1: Ford-Fulkerson Algorithm — 트랜스크립트 기반 복습 노트
+</div></footer>
+</body>
+</html>
