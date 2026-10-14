@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GR3: Minimum Spanning Tree — Review Notes</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>GR3: Minimum Spanning Tree — Review Notes</h1>
+  <p>Based on this week's lecture transcript</p>
+  <span class="tag">Greedy</span><span class="tag">Kruskal's</span>
+  <span class="tag">Cut property</span><span class="tag">Prim's</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">Greedy</a><a href="#s2">MST problem</a><a href="#s3">Tree facts</a>
+  <a href="#s4">Greedy example</a><a href="#s5">Kruskal's</a><a href="#s6">Runtime</a>
+  <a href="#s7">Correctness idea</a><a href="#s8">Cut</a><a href="#s9">Cut property</a>
+  <a href="#s10">Kruskal ← Cut</a><a href="#s11">Building T′</a><a href="#s12">T′ is a tree</a>
+  <a href="#s13">T′ is an MST</a><a href="#s14">Prim's</a><a href="#glossary">Glossary</a><a href="#sum">Checklist</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. The greedy approach</h2>
+<p><strong>Greedy:</strong> from a partial solution, take the <strong>locally optimal</strong> next move.
+When does this reach the global optimum?</p>
+<ul>
+  <li>For knapsack, greedy fails on some examples (solved by DP).</li>
+  <li><strong>For MST, greedy works</strong> — the topic of this lecture.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. The MST problem</h2>
+<div class="card">
+  <p><strong>Input:</strong> undirected graph G, weight w(e) on each edge e.</p>
+  <p><strong>Goal:</strong> the smallest connected subgraph — a <strong>tree</strong> — of minimum total weight:
+  the <strong>minimum weight spanning tree</strong>.</p>
+  <p>"Spanning tree" stresses: connected + tree (not a forest).</p>
+</div>
+</section>
+
+<section id="s3">
+<h2>3. Basic tree facts</h2>
+<ul>
+  <li>Tree = connected + acyclic.</li>
+  <li>A tree on n vertices has exactly <strong>n − 1</strong> edges.
+  (Need at least n−1 to connect; more creates a cycle.)</li>
+  <li>Exactly <strong>one path</strong> between every pair of vertices.
+  (Zero → disconnected; two or more → cycle.)</li>
+</ul>
+<div class="ans"><strong>Test used in the proof:</strong> connected + exactly n−1 edges → it's a tree.</div>
+</section>
+
+<section id="s4">
+<h2>4. Greedy example — edges by increasing weight</h2>
+<p>Start from the empty graph; consider edges in <strong>increasing weight</strong> order,
+adding each unless it creates a cycle:</p>
+<ul>
+  <li>Weights 1–5: all added (no cycle).</li>
+  <li>Weight 6: <strong>skipped</strong> (creates a cycle).</li>
+  <li>Weight 7 (five edges): all added. Weight 9: skipped if v–w already connected (cycle), else added.</li>
+  <li>Weight 12: skipped.</li>
+</ul>
+<p>The result is an MST. Formalizing this gives Kruskal's algorithm.</p>
+</section>
+
+<section id="s5">
+<h2>5. Kruskal's algorithm</h2>
+<pre>Kruskal(G):                          # undirected, edge weights
+    1. sort edges by increasing weight (e.g. mergesort)
+    2. X ← ∅                          # edges placed into the MST so far
+    3. for each edge e = (v, w) in sorted order:
+         if adding e to X creates no cycle → X ← X ∪ {e}
+    4. return X</pre>
+<p><strong>"Creates a cycle?"</strong> test: in the subgraph of X, if v and w are in the <strong>same component</strong>,
+a v–w path already exists → e creates a cycle. Otherwise add it.</p>
+</section>
+
+<section id="s6">
+<h2>6. Runtime analysis — O(m log n)</h2>
+<ul>
+  <li><strong>Step 1 (sorting):</strong> O(m log n) (= O(m log m)).</li>
+  <li><strong>Step 3 (checks + merges):</strong> <strong>Union-Find</strong> at O(log n) per operation.
+  Look up c(v), c(w), merge on insertion. At most m operations → O(m log n).</li>
+</ul>
+<div class="ans"><strong>Total O(m log n).</strong> The lecture's focus is the <strong>correctness proof</strong>, not the data structure.</div>
+</section>
+
+<section id="s7">
+<h2>7. Correctness idea — induction</h2>
+<p>Induction hypothesis: current X is <strong>correct so far</strong> = a subgraph of some MST T (X ⊆ T).
+Now consider edge e = (v, w) with v, w in different components (no cycle).</p>
+<p><strong>Claim:</strong> X ∪ {e} is also correct so far, i.e. a subgraph of some MST T′.
+(T′ may differ from T — we only need to be heading toward <em>some</em> MST.)</p>
+<p>Key observation: let S = c(v) (v's component). No edge of X crosses S–S̄ (components are maximal).
+But <strong>e crosses S–S̄</strong>, and by the sorted order <strong>e is a minimum-weight edge crossing S–S̄</strong>.
+→ exactly the <strong>cut property</strong> hypothesis.</p>
+</section>
+
+<section id="s8">
+<h2>8. Cut definition</h2>
+<p>A <strong>cut</strong> partitions vertices into S and S̄ (complement).
+<strong>cut(S, S̄)</strong> = the set of edges with one endpoint in S and the other in S̄ (edges "crossing" S–S̄).</p>
+<svg class="diagram" viewBox="0 0 560 260" role="img" aria-label="Cut example">
+  <rect x="30" y="30" width="230" height="200" rx="16" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <text x="50" y="55" font-family="sans-serif" font-size="18" font-weight="bold" fill="#2563eb">S</text>
+  <text x="480" y="55" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16a34a">S̄</text>
+  <g stroke="#dc2626" stroke-width="3">
+    <line x1="200" y1="100" x2="360" y2="100"/>
+    <line x1="200" y1="160" x2="360" y2="160"/>
+    <line x1="210" y1="210" x2="350" y2="215"/>
+  </g>
+  <g font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">
+    <circle cx="120" cy="110" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="120" y="116" fill="var(--fg)">v</text>
+    <circle cx="120" cy="180" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="120" y="186" fill="var(--fg)">a</text>
+    <circle cx="440" cy="110" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="440" y="116" fill="var(--fg)">w</text>
+    <circle cx="440" cy="180" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="440" y="186" fill="var(--fg)">b</text>
+  </g>
+  <text x="280" y="92" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#dc2626">cut edges</text>
+</svg>
+<p class="caption">cut(S, S̄): the edges crossing between S and S̄ (red).</p>
+</section>
+
+<section id="s9">
+<h2>9. The cut property (statement)</h2>
+<div class="ans">
+  <p><strong>Cut property:</strong> assume</p>
+  <ul>
+    <li>X is correct so far (a subgraph of some MST T).</li>
+    <li>No edge of X crosses cut(S, S̄).</li>
+    <li>e* is a <strong>minimum-weight</strong> edge crossing cut(S, S̄) (any one if tied).</li>
+  </ul>
+  <p><strong>Conclusion:</strong> X ∪ {e*} is still correct so far — a subgraph of some MST T′.</p>
+</div>
+<p>Intuition: given a tree T without e*, add e* and drop one edge from the created cycle to get a
+tree of no greater weight (proved below).</p>
+</section>
+
+<section id="s10">
+<h2>10. Cut property → Kruskal's</h2>
+<p>When Kruskal's adds e* = (v, w): take S = c(v) (v's component).
+Maximality means no edge of X crosses S–S̄; the sorted order makes e* a minimum-weight
+crossing edge. → the cut property applies → X ∪ {e*} stays correct so far. ∎</p>
+</section>
+
+<section id="s11">
+<h2>11. Proof — constructing T′</h2>
+<p>Fix: G, X ⊆ T (T an MST), cut(S, S̄) crossed by no edge of X, minimum-weight crossing edge e*
+(endpoints a, b). Goal: build an MST T′ with X ∪ {e*} ⊆ T′.</p>
+<ul>
+  <li><strong>Easy case:</strong> e* ∈ T → T′ = T. Done.</li>
+  <li><strong>Hard case:</strong> e* ∉ T. T ∪ {e*} creates a <strong>cycle C</strong>
+  (a tree plus one edge — T has an a–b path).</li>
+</ul>
+<p>T is connected, so the a–b path crosses S–S̄ <strong>at least once</strong>.
+Pick such a crossing edge of T and call it <strong>e′</strong> (it lies on cycle C since e* also crosses the cut).
+Set <strong>T′ = T ∪ {e*} − {e′}</strong>.</p>
+</section>
+
+<section id="s12">
+<h2>12. T′ is a tree</h2>
+<p>Test: <strong>connected + exactly n−1 edges</strong>.</p>
+<ul>
+  <li>Edge count: T had n−1; one added, one removed → still n−1. ✓</li>
+  <li>Connected: for any y, z take their T-path P. If P avoids e′, it's a T′-path.
+  If P uses e′ = (c, d), <strong>replace</strong> e′ by the rest of cycle C (a c–d path P′ lying in T′).
+  (This gives a walk; trimming yields a path.) ✓</li>
+</ul>
+<p>In fact removing <strong>any</strong> edge of the cycle yields a tree — one of the two key proof ideas.</p>
+</section>
+
+<section id="s13">
+<h2>13. T′ is an MST</h2>
+<ul>
+  <li>weight(T′) = weight(T) + w(e*) − w(e′).</li>
+  <li>e* is minimum-weight across the cut and e′ also crosses it, so <strong>w(e*) ≤ w(e′)</strong>.
+  → weight(T′) ≤ weight(T). T is an MST, so weight(T′) = weight(T): <strong>T′ is an MST</strong>. ∎</li>
+</ul>
+<div class="ans">
+  <p><strong>Two takeaways:</strong></p>
+  <ul>
+    <li><strong>Statement:</strong> a minimum-weight edge across a cut belongs to some MST.</li>
+    <li><strong>Proof idea:</strong> adding an edge to a tree creates a cycle; removing any cycle edge gives a new tree.</li>
+  </ul>
+</div>
+</section>
+
+<section id="s14">
+<h2>14. Prim's algorithm</h2>
+<p><strong>Prim's</strong> correctness can also be proved via the cut property
+(an MST algorithm similar in shape to Dijkstra's).
+Try proving Prim's yourself with the cut property as an exercise.</p>
+</section>
+
+<section id="glossary">
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td><strong>MST (minimum spanning tree)</strong></td><td>A spanning tree of minimum total weight.</td></tr>
+  <tr><td><strong>Spanning tree</strong></td><td>A tree covering all vertices (connected + acyclic). n vertices → exactly n−1 edges.</td></tr>
+  <tr><td><strong>Tree fact</strong></td><td>A tree on n vertices has exactly n−1 edges, and exactly one path between every pair of vertices.</td></tr>
+  <tr><td><strong>Greedy</strong></td><td>A strategy that repeatedly makes the locally optimal choice from a partial solution. Works for MST but fails for Knapsack.</td></tr>
+  <tr><td><strong>Locally optimal</strong></td><td>The choice that looks best at the current step; whether it reaches the global optimum varies by problem.</td></tr>
+  <tr><td><strong>Kruskal's algorithm</strong></td><td>Consider edges in increasing weight order; add an edge unless it creates a cycle. Runtime O(m log n).</td></tr>
+  <tr><td><strong>Union-Find</strong></td><td>The data structure for Kruskal's cycle test; O(log n) per operation (details skipped in the lecture).</td></tr>
+  <tr><td><strong>Correct so far</strong></td><td>The state in which the current edge set X is a subgraph of some MST T. The induction hypothesis.</td></tr>
+  <tr><td><strong>Cut</strong></td><td>A partition of the vertices into S and S̄ (complement). cut(S, S̄) is the set of edges crossing between S and S̄.</td></tr>
+  <tr><td><strong>Complement (S̄)</strong></td><td>The complement of S. In a cut: "one end in S, the other in S̄."</td></tr>
+  <tr><td><strong>Cut property</strong></td><td>If X is correct so far and no edge of X crosses cut(S, S̄), then for the minimum-weight crossing edge e*, X ∪ {e*} is also correct so far. I.e. "the minimum-weight edge crossing a cut belongs to some MST."</td></tr>
+  <tr><td><strong>T′ = T ∪ {e*} − {e′}</strong></td><td>The new MST constructed in the cut-property proof: adding e* to T creates a cycle C, and one cut-crossing edge e′ on C is removed.</td></tr>
+  <tr><td><strong>Removing a cycle edge</strong></td><td>Adding one edge to a tree creates a cycle, and removing any edge of that cycle yields a tree again. A core proof idea.</td></tr>
+  <tr><td><strong>Component c(v)</strong></td><td>The connected component of v in the subgraph of current X. Kruskal's proof forms a cut with S = c(v).</td></tr>
+  <tr><td><strong>Prim's algorithm</strong></td><td>An MST algorithm with a Dijkstra-like form. Its correctness also follows from the cut property.</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>Checklist</h2>
+<ul class="check">
+  <li>Write Kruskal's pseudocode and explain O(m log n) (sorting + union-find).</li>
+  <li>Define cut and cut(S, S̄).</li>
+  <li>State the cut property precisely (three assumptions + conclusion).</li>
+  <li>Connect cut property → Kruskal's (S = c(v)).</li>
+  <li>Draw the T′ = T ∪ {e*} − {e′} construction.</li>
+  <li>Prove T′ is a tree (connected + n−1 edges).</li>
+  <li>Prove T′ is an MST (w(e*) ≤ w(e′)).</li>
+  <li>Know that Prim's follows from the cut property too.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  GR3: Minimum Spanning Tree — review notes based on the lecture transcript
+</div></footer>
+</body>
+</html>
