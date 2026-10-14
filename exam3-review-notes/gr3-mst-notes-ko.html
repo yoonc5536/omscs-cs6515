@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GR3: Minimum Spanning Tree — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>GR3: Minimum Spanning Tree — 복습 노트</h1>
+  <p>이번 주 강의 트랜스크립트 기반 정리 (핵심 용어는 영어로 표기)</p>
+  <span class="tag">Greedy</span><span class="tag">Kruskal's</span>
+  <span class="tag">Cut property</span><span class="tag">Prim's</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">Greedy</a><a href="#s2">MST 문제</a><a href="#s3">트리 성질</a>
+  <a href="#s4">Greedy 예제</a><a href="#s5">Kruskal's</a><a href="#s6">런타임</a>
+  <a href="#s7">정확성 아이디어</a><a href="#s8">Cut</a><a href="#s9">Cut property</a>
+  <a href="#s10">Kruskal ← Cut</a><a href="#s11">T′ 구성</a><a href="#s12">T′는 트리</a>
+  <a href="#s13">T′는 MST</a><a href="#s14">Prim's</a><a href="#glossary">용어집</a><a href="#sum">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. Greedy approach</h2>
+<p><strong>Greedy:</strong> 부분 해(partial solution)에서 다음 한 수로 <strong>locally optimal</strong>한 선택을 한다.
+언제 global optimum에 도달하는가?</p>
+<ul>
+  <li>Knapsack에서는 greedy가 실패하는 예가 있다 (DP로 해결).</li>
+  <li><strong>MST에서는 greedy가 동작한다</strong> — 이 강의의 주제.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. MST 문제</h2>
+<div class="card">
+  <p><strong>입력:</strong> undirected graph G, 각 edge e의 weight w(e).</p>
+  <p><strong>목표:</strong> 여전히 connected인 최소 크기의 subgraph — 즉 <strong>tree</strong>.
+  그 중 weight(합)가 최소인 <strong>minimum weight spanning tree</strong>.</p>
+  <p><strong>Spanning tree</strong>라고 부르는 이유: connected + tree (forest가 아님)를 강조.</p>
+</div>
+</section>
+
+<section id="s3">
+<h2>3. 트리의 기본 성질</h2>
+<ul>
+  <li>Tree = connected + acyclic.</li>
+  <li>n개 정점인 tree는 정확히 <strong>n − 1개</strong>의 edge를 갖는다.
+  (연결하려면 최소 n−1개, 더 많으면 cycle.)</li>
+  <li>Tree에서는 모든 정점 쌍 사이에 <strong>정확히 하나의 path</strong>가 존재한다.
+  (0개면 disconnected, 2개 이상이면 cycle.)</li>
+</ul>
+<div class="ans"><strong>증명에 쓰는 판정법:</strong> connected + edge가 정확히 n−1개 → tree다.</div>
+</section>
+
+<section id="s4">
+<h2>4. Greedy 예제 — 가중치 순서대로</h2>
+<p>빈 그래프에서 시작해 edge를 <strong>가중치 오름차순</strong>으로 본다.
+추가해도 cycle이 생기지 않으면 넣는다:</p>
+<ul>
+  <li>Weight 1 ~ 5: 모두 추가 (cycle 없음).</li>
+  <li>Weight 6: <strong>cycle이 생기므로 skip</strong>.</li>
+  <li>Weight 7 (5개): 모두 추가. Weight 9: v–w가 이미 연결되어 있으면 skip (cycle), 아니면 추가.</li>
+  <li>Weight 12: skip.</li>
+</ul>
+<p>결과가 MST다. 이를 정식화하면 Kruskal's algorithm.</p>
+</section>
+
+<section id="s5">
+<h2>5. Kruskal's algorithm</h2>
+<pre>Kruskal(G):                          # undirected, edge weights
+    1. edge를 가중치 오름차순으로 정렬 (mergesort 등)
+    2. X ← ∅                          # 현재까지 MST에 넣은 edge 집합
+    3. 정렬된 순서대로 각 edge e = (v, w)에 대해:
+         e를 X에 넣어도 cycle이 생기지 않으면 → X ← X ∪ {e}
+    4. return X</pre>
+<p><strong>"Cycle이 생기는가"</strong>의 판정: X의 subgraph에서 v와 w가 <strong>같은 component</strong>에 있으면
+이미 v–w path가 존재 → e를 추가하면 cycle. 다르면 추가.</p>
+</section>
+
+<section id="s6">
+<h2>6. 런타임 분석 — O(m log n)</h2>
+<ul>
+  <li><strong>Step 1 (정렬):</strong> O(m log n) (= O(m log m)).</li>
+  <li><strong>Step 3 (검사+병합):</strong> <strong>Union-Find</strong> 자료구조로 연산당 O(log n).
+  c(v), c(w) 조회 + (추가 시) merge. 최대 m회 연산 → O(m log n).</li>
+</ul>
+<div class="ans"><strong>총합 O(m log n).</strong> 이 강의의 초점은 자료구조가 아니라 <strong>정확성 증명</strong>이다.</div>
+</section>
+
+<section id="s7">
+<h2>7. 정확성 아이디어 — induction</h2>
+<p>Induction 가정: 현재 X는 <strong>correct so far</strong> = 어떤 MST T의 subgraph (X ⊆ T).
+이제 edge e를 추가하려 한다 (v, w가 다른 component에 있어 cycle이 안 생김).</p>
+<p><strong>Claim:</strong> X ∪ {e}도 correct so far, 즉 어떤 MST T′의 subgraph다.
+(T′는 T와 다른 MST일 수 있다 — 특정 MST가 아니라 <strong>어떤</strong> MST로 가는 중이면 된다.)</p>
+<p>핵심 관찰: S = c(v) (v의 component)라 두면, X의 어떤 edge도 S와 S̄ 사이를 가로지르지 않는다
+(component는 maximal이므로). 그런데 <strong>e는 S–S̄를 가로지르고</strong>, 정렬 순서상
+<strong>e는 S–S̄를 가로지르는 최소 가중치 edge</strong>다. → 이것이 바로 <strong>cut property</strong>의 조건.</p>
+</section>
+
+<section id="s8">
+<h2>8. Cut 정의</h2>
+<p><strong>Cut</strong>: 정점을 S와 S̄(여집합)으로 나누는 분할.
+<strong>cut(S, S̄)</strong> = 한쪽 끝은 S, 다른 쪽 끝은 S̄에 있는 edge들의 집합 (S–S̄를 "가로지르는" edge들).</p>
+<svg class="diagram" viewBox="0 0 560 260" role="img" aria-label="Cut example">
+  <rect x="30" y="30" width="230" height="200" rx="16" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <text x="50" y="55" font-family="sans-serif" font-size="18" font-weight="bold" fill="#2563eb">S</text>
+  <text x="480" y="55" font-family="sans-serif" font-size="18" font-weight="bold" fill="#16a34a">S̄</text>
+  <g stroke="#dc2626" stroke-width="3">
+    <line x1="200" y1="100" x2="360" y2="100"/>
+    <line x1="200" y1="160" x2="360" y2="160"/>
+    <line x1="210" y1="210" x2="350" y2="215"/>
+  </g>
+  <g font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">
+    <circle cx="120" cy="110" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="120" y="116" fill="var(--fg)">v</text>
+    <circle cx="120" cy="180" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="120" y="186" fill="var(--fg)">a</text>
+    <circle cx="440" cy="110" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="440" y="116" fill="var(--fg)">w</text>
+    <circle cx="440" cy="180" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="440" y="186" fill="var(--fg)">b</text>
+  </g>
+  <text x="280" y="92" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#dc2626">cut edges</text>
+</svg>
+<p class="caption">Cut(S, S̄): S와 S̄ 사이를 가로지르는 edge들의 집합 (빨간선).</p>
+</section>
+
+<section id="s9">
+<h2>9. Cut property (진술)</h2>
+<div class="ans">
+  <p><strong>Cut property:</strong> 다음을 가정한다.</p>
+  <ul>
+    <li>X는 correct so far (어떤 MST T의 subgraph).</li>
+    <li>X의 어떤 edge도 cut(S, S̄)를 가로지르지 않는다.</li>
+    <li>e*는 cut(S, S̄)를 가로지르는 <strong>최소 가중치</strong> edge (동점자 중 아무거나).</li>
+  </ul>
+  <p><strong>결론:</strong> X ∪ {e*}도 correct so far — 즉 어떤 MST T′의 subgraph다.</p>
+</div>
+<p>직관: e*를 포함하지 않는 tree T가 있으면, e*를 넣고 cycle에서 한 edge를 빼면
+weight가 늘지 않는 새 tree를 만들 수 있다 (아래 증명).</p>
+</section>
+
+<section id="s10">
+<h2>10. Cut property → Kruskal's</h2>
+<p>Kruskal's에서 e* = (v, w)를 추가할 때: S = c(v) (v의 component).
+Component가 maximal이므로 X의 edge 중 S–S̄를 가로지르는 것은 없다.
+정렬 순서상 e*는 S–S̄를 가로지르는 최소 가중치 edge다.
+→ Cut property의 가정을 만족 → X ∪ {e*}는 여전히 correct so far. ∎</p>
+</section>
+
+<section id="s11">
+<h2>11. 증명 — T′ 구성</h2>
+<p>고정: G, X ⊆ T (T는 MST), cut(S, S̄) (X의 edge는 안 가로지름), 최소 가중치 cut edge e* (양 끝점 a, b).
+목표: X ∪ {e*} ⊆ T′인 MST T′를 구성.</p>
+<ul>
+  <li><strong>쉬운 경우:</strong> e* ∈ T이면 T′ = T. 끝.</li>
+  <li><strong>어려운 경우:</strong> e* ∉ T. T ∪ {e*}는 <strong>cycle C</strong>를 만든다
+  (tree에 edge를 하나 더하면 cycle — T 안에 a–b path가 있으니까).</li>
+</ul>
+<p>T는 connected이므로 a–b path는 S–S̄를 <strong>최소 한 번</strong>은 가로지른다.
+그 가로지르는 edge 중 T에 속한 것을 <strong>e′</strong>이라 하자 (e*도 cut을 가로지르므로 e′는 cycle C 위에 있다).
+<strong>T′ = T ∪ {e*} − {e′}</strong> 로 둔다.</p>
+</section>
+
+<section id="s12">
+<h2>12. T′는 tree다</h2>
+<p>판정법: <strong>connected + edge 정확히 n−1개</strong>.</p>
+<ul>
+  <li>Edge 수: T가 n−1개, 하나 넣고 하나 뺐으므로 그대로 n−1개. ✓</li>
+  <li>Connected: 임의의 y, z에 대해 T 안의 path P를 취한다.
+  P가 e′를 쓰지 않으면 그대로 T′의 path. e′ = (c, d)를 쓰면,
+  cycle C에서 e′를 뺀 나머지 (= T′에 있는 c–d path P′)로 e′를 <strong>대체</strong>한다.
+  (Walk가 되지만 backtracking을 잘라 path로 만들 수 있으므로 연결됨.) ✓</li>
+</ul>
+<p>사실 cycle의 <strong>어떤</strong> edge를 빼도 tree가 된다 — 이게 증명의 핵심 아이디어 중 하나.</p>
+</section>
+
+<section id="s13">
+<h2>13. T′는 MST다</h2>
+<ul>
+  <li>weight(T′) = weight(T) + w(e*) − w(e′).</li>
+  <li>e*는 cut의 최소 가중치 edge이고 e′도 cut을 가로지르므로 <strong>w(e*) ≤ w(e′)</strong>.
+  → weight(T′) ≤ weight(T). T가 MST이므로 weight(T′) = weight(T). <strong>T′도 MST.</strong> ∎</li>
+</ul>
+<div class="ans">
+  <p><strong>기억할 두 가지:</strong></p>
+  <ul>
+    <li><strong>진술:</strong> cut을 가로지르는 최소 가중치 edge는 어떤 MST에 속한다.</li>
+    <li><strong>증명 아이디어:</strong> tree에 edge를 넣으면 cycle이 생기고, cycle에서 아무 edge나 빼면 새 tree가 된다.</li>
+  </ul>
+</div>
+</section>
+
+<section id="s14">
+<h2>14. Prim's algorithm</h2>
+<p><strong>Prim's</strong>도 cut property로 정확성을 증명할 수 있다
+(Dijkstra's와 비슷한 형태의 MST 알고리즘).
+Cut property를 이해했는지 확인하는 연습으로 Prim's의 정확성을 직접 증명해보자.</p>
+</section>
+
+<section id="glossary">
+<h2>용어집 (Glossary)</h2>
+<table>
+  <tr><th>용어 (영어)</th><th>의미</th></tr>
+  <tr><td><strong>MST (minimum spanning tree)</strong></td><td>전체 weight가 최소인 spanning tree.</td></tr>
+  <tr><td><strong>Spanning tree</strong></td><td>모든 정점을 포함하는 tree (connected + acyclic). n개 정점 → 정확히 n−1개 edge.</td></tr>
+  <tr><td><strong>Tree fact</strong></td><td>n개 정점인 tree는 edge가 정확히 n−1개이며, 모든 정점 쌍 사이에 path가 정확히 하나 존재한다.</td></tr>
+  <tr><td><strong>Greedy</strong></td><td>부분 해에서 locally optimal한 선택을 반복하는 전략. MST에서는 동작하지만 Knapsack에서는 실패.</td></tr>
+  <tr><td><strong>Locally optimal</strong></td><td>현재 단계에서 가장 좋아 보이는 선택. Global optimum에 도달할지는 문제마다 다르다.</td></tr>
+  <tr><td><strong>Kruskal's algorithm</strong></td><td>edge를 가중치 오름차순으로 보고, cycle이 생기지 않으면 추가. 런타임 O(m log n).</td></tr>
+  <tr><td><strong>Union-Find</strong></td><td>Kruskal's의 cycle 검사를 위한 자료구조. 연산당 O(log n) (강의에서는 세부 분석 생략).</td></tr>
+  <tr><td><strong>Correct so far</strong></td><td>현재 edge 집합 X가 어떤 MST T의 subgraph인 상태. Induction의 가정.</td></tr>
+  <tr><td><strong>Cut</strong></td><td>정점을 S와 S̄(여집합)으로 나누는 분할. cut(S, S̄)은 S–S̄를 가로지르는 edge들의 집합.</td></tr>
+  <tr><td><strong>Complement (S̄)</strong></td><td>S의 여집합. Cut에서는 "한쪽 끝은 S, 다른 쪽 끝은 S̄".</td></tr>
+  <tr><td><strong>Cut property</strong></td><td>X가 correct so far이고 X의 edge가 cut(S, S̄)를 가로지르지 않을 때, cut을 가로지르는 최소 가중치 edge e*에 대해 X ∪ {e*}도 correct so far. 즉 "cut을 가로지르는 최소 가중치 edge는 어떤 MST에 속한다."</td></tr>
+  <tr><td><strong>T′ = T ∪ {e*} − {e′}</strong></td><td>Cut property 증명에서 구성하는 새 MST. e*를 T에 넣으면 생기는 cycle C 위에서, cut을 가로지르는 edge e′ 하나를 빼는 방식.</td></tr>
+  <tr><td><strong>Removing a cycle edge</strong></td><td>tree에 edge 하나를 넣으면 cycle이 생기고, 그 cycle의 어떤 edge를 빼도 다시 tree가 된다. 증명의 핵심 아이디어.</td></tr>
+  <tr><td><strong>Component c(v)</strong></td><td>현재 X의 subgraph에서 v가 속한 connected component. Kruskal's 증명에서 S = c(v)로 cut을 만든다.</td></tr>
+  <tr><td><strong>Prim's algorithm</strong></td><td>Dijkstra's와 비슷한 형태의 MST 알고리즘. Cut property로 정확성을 증명할 수 있다.</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>Kruskal's 의사코드를 쓰고 O(m log n)을 설명할 수 있다 (정렬 + union-find).</li>
+  <li>Cut과 cut(S, S̄)의 정의를 말할 수 있다.</li>
+  <li>Cut property를 정확히 진술할 수 있다 (3가지 가정 + 결론).</li>
+  <li>Cut property → Kruskal's 연결 (S = c(v))을 설명할 수 있다.</li>
+  <li>T′ = T ∪ {e*} − {e′} 구성을 그릴 수 있다.</li>
+  <li>T′가 tree인 이유 (connected + n−1 edges)를 증명할 수 있다.</li>
+  <li>T′가 MST인 이유 (w(e*) ≤ w(e′))를 증명할 수 있다.</li>
+  <li>Prim's도 cut property로 증명할 수 있음을 안다.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  GR3: Minimum Spanning Tree — 트랜스크립트 기반 복습 노트
+</div></footer>
+</body>
+</html>
