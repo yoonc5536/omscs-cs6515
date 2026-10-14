@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GR1: Strongly Connected Components — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>GR1: Strongly Connected Components — 복습 노트</h1>
+  <p>이번 주 강의 트랜스크립트 기반 정리 (핵심 용어는 영어로 표기)</p>
+  <span class="tag">DFS</span><span class="tag">Topological sort</span>
+  <span class="tag">SCC</span><span class="tag">Kosaraju</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">DFS 복습</a><a href="#s2">Directed DFS</a><a href="#s3">간선 분류</a>
+  <a href="#s4">사이클</a><a href="#s5">Topo sort</a><a href="#s6">퀴즈</a>
+  <a href="#s7">DAG 구조</a><a href="#s8">SCC 정의</a><a href="#s9">Metagraph</a>
+  <a href="#s10">SCC 아이디어</a><a href="#s11">Key fact</a><a href="#s12">Kosaraju</a>
+  <a href="#s13">증명</a><a href="#s14">BFS·Dijkstra</a><a href="#glossary">용어집</a><a href="#sum">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. DFS 복습 — undirected connected components</h2>
+<pre>DFS(G):                          # G: adjacency list
+    visited[*] ← False
+    ccnum ← 0
+    for v in V (arbitrary order):
+        if not visited[v]:
+            ccnum ← ccnum + 1
+            Explore(v)
+
+Explore(z):
+    visited[z] ← True; cc[z] ← ccnum
+    for w in adj[z]:
+        if not visited[w]: Explore(w)</pre>
+<ul>
+  <li>런타임 <strong>O(n + m)</strong> (linear time).</li>
+  <li><strong>Path 찾기:</strong> 처음 방문할 때 <code>prev[w] ← z</code>를 기록하면 (Dijkstra's의 prev 배열처럼),
+  같은 component 안의 두 정점 사이 path를 backtracking으로 복원할 수 있다.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. Directed DFS — pre/postorder</h2>
+<p>Directed graph에서는 connectivity 정보를 위해 <strong>preorder / postorder number</strong>를 추가한다.
+<strong>Clock</strong>을 1부터 시작:</p>
+<ul>
+  <li><strong>pre(z)</strong>: 정점 z를 처음 방문할 때의 clock 값 (방문 후 clock++).</li>
+  <li><strong>post(z)</strong>: z의 탐색을 마칠 때의 clock 값 (기록 후 clock++).</li>
+</ul>
+<p>SCC 알고리즘에서는 사실상 <strong>postorder만</strong> 사용한다.</p>
+</section>
+
+<section id="s3">
+<h2>3. 간선 4종류와 postorder 성질</h2>
+<table>
+  <tr><th>종류</th><th>모습</th><th>postorder</th></tr>
+  <tr><td><strong>Tree edge</strong></td><td>DFS tree 간선 (탐색된 edge)</td><td>post 감소 (head &gt; tail)</td></tr>
+  <tr><td><strong>Back edge</strong></td><td>descendant → ancestor (위로)</td><td><strong>post 증가</strong> (유일!)</td></tr>
+  <tr><td><strong>Forward edge</strong></td><td>ancestor → descendant (아래로, 여러 칸)</td><td>post 감소</td></tr>
+  <tr><td><strong>Cross edge</strong></td><td>조상-자손 관계 없음 (옆으로)</td><td>post 감소</td></tr>
+</table>
+<div class="ans"><strong>핵심:</strong> back edge에서만 postorder가 증가한다.
+나머지 세 종류(tree, forward, cross)는 모두 postorder가 감소한다.</div>
+</section>
+
+<section id="s4">
+<h2>4. 사이클 ⟺ back edge</h2>
+<p><strong>Theorem:</strong> G에 cycle이 존재 ⟺ DFS tree에 back edge가 존재
+(시작 정점·인접 리스트 순서 무관).</p>
+<ul>
+  <li><strong>(⇒)</strong> Cycle의 정점 중 가장 먼저 탐색된 정점을 i라 하자.
+  나머지 cycle 정점들은 모두 i의 subtree에 들어간다. i로 들어오는 cycle edge (i−1 → i)는
+  descendant → ancestor이므로 back edge.</li>
+  <li><strong>(⇐)</strong> Back edge a → b가 있으면, a는 b의 descendant이므로
+  b에서 a로 내려가는 tree edge 경로 + back edge a → b = cycle.</li>
+</ul>
+</section>
+
+<section id="s5">
+<h2>5. Topological sort — decreasing postorder</h2>
+<p><strong>DAG</strong>(directed acyclic graph)에는 back edge가 없으므로 (§4),
+모든 edge에서 postorder가 감소한다. 따라서:</p>
+<div class="ans"><strong>Topological sort:</strong> DFS 1회 실행 후 정점을 <strong>postorder 내림차순</strong>으로 정렬.
+모든 edge가 왼쪽 → 오른쪽으로 간다.</div>
+<ul>
+  <li>정렬이 O(n log n)처럼 보여도 <strong>O(n)</strong>에 가능:
+  postorder 범위가 1 ~ 2n이므로 크기 2n 배열에 버킷 배치 (counting sort).</li>
+  <li>총합: DFS O(n+m) + 정렬 O(n) = <strong>O(n+m)</strong>.</li>
+</ul>
+</section>
+
+<section id="s6">
+<h2>6. 퀴즈 — Topological ordering</h2>
+<div class="card q">
+  <p><strong>Q.</strong> 5개 정점 그래프의 topological ordering을 하나 쓰고, valid한 ordering이 총 몇 개인지 구하라.</p>
+</div>
+<div class="ans">
+  <p><strong>정답:</strong> 예) X, Y, Z, U, W. 총 <strong>3개</strong> —
+  U를 뒤 3자리 중 아무 데나 둘 수 있고 (3가지), Z는 W 앞에 와야 하므로 나머지는 강제된다.</p>
+</div>
+</section>
+
+<section id="s7">
+<h2>7. DAG 구조 — source와 sink</h2>
+<ul>
+  <li><strong>Source</strong>: incoming edge 없음. <strong>Sink</strong>: outgoing edge 없음.</li>
+  <li>모든 DAG는 source와 sink를 각각 최소 1개씩 갖는다.</li>
+  <li><strong>최고 postorder 정점 = source</strong>, <strong>최저 postorder 정점 = sink</strong>
+  (topological ordering의 맨 앞/맨 뒤).</li>
+</ul>
+<p><strong>대안 topo sort:</strong> sink를 찾아 맨 뒤에 두고 그래프에서 제거 → 반복.
+(뒤에서 앞으로 채우기.) 이 아이디어가 SCC 알고리즘으로 이어진다.</p>
+</section>
+
+<section id="s8">
+<h2>8. SCC 정의 + 퀴즈</h2>
+<div class="card">
+  <p><strong>Strongly connected</strong>: v → w 경로와 w → v 경로가 모두 존재.</p>
+  <p><strong>SCC (strongly connected component)</strong>: strongly connected인 정점들의 <strong>maximal</strong> 집합
+  (더 넣을 수 없을 때까지 확장).</p>
+</div>
+<div class="card q">
+  <p><strong>Q.</strong> 12개 정점 directed graph의 SCC는 몇 개이며, 각각 무엇인가?</p>
+</div>
+<div class="ans">
+  <p><strong>정답: 5개</strong> — {A}, {B, E}, {C, F, G}, {D}, {H, I, J, K, L}.</p>
+  <ul>
+    <li>A: A에서 나갈 수는 있지만 A로 들어올 수 없음 → 혼자.</li>
+    <li>D: 들어올 수는 있지만 D에서 나갈 수 없음 → 혼자.</li>
+  </ul>
+</div>
+</section>
+
+<section id="s9">
+<h2>9. Metagraph는 DAG다</h2>
+<p>각 SCC를 하나의 <strong>metavertex</strong>로 압축한 <strong>metagraph</strong>를 만든다.
+(Component 간 edge가 여러 개면 multigraph가 되지만 무시해도 된다.)</p>
+<div class="ans"><strong>Theorem:</strong> Metagraph는 항상 <strong>DAG</strong>다.</div>
+<p><strong>증명 (모순):</strong> metagraph에 cycle이 있으면, cycle 위의 두 component S, S′ 사이에
+S → S′ 경로와 S′ → S 경로가 있다. S, S′ 내부는 각각 strongly connected이므로
+S ∪ S′ 전체가 strongly connected → maximality에 모순. ∎</p>
+<p>즉 <strong>모든 directed graph는 SCC들의 DAG</strong>이며, SCC들을 topological ordering할 수 있다.</p>
+<svg class="diagram" viewBox="0 0 560 220" role="img" aria-label="Metagraph DAG">
+  <defs>
+    <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2.5">
+    <line x1="105" y1="110" x2="195" y2="110" marker-end="url(#m1)"/>
+    <line x1="245" y1="110" x2="335" y2="110" marker-end="url(#m1)"/>
+    <line x1="245" y1="125" x2="335" y2="165" marker-end="url(#m1)"/>
+    <line x1="385" y1="110" x2="475" y2="110" marker-end="url(#m1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">
+    <rect x="60" y="88" width="46" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <rect x="195" y="88" width="50" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <rect x="335" y="88" width="52" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <rect x="335" y="150" width="40" height="40" rx="10" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/>
+    <rect x="475" y="88" width="70" height="44" rx="10" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/>
+    <text x="83" y="116" fill="var(--fg)">A</text>
+    <text x="220" y="116" fill="var(--fg)">BE</text>
+    <text x="361" y="116" fill="var(--fg)">CFG</text>
+    <text x="355" y="176" fill="var(--fg)">D</text>
+    <text x="510" y="116" fill="var(--fg)">HIJKL</text>
+  </g>
+</svg>
+<p class="caption">SCC metagraph 예시 — DAG이며 왼쪽→오른쪽이 topological ordering.</p>
+</section>
+
+<section id="s10">
+<h2>10. SCC 알고리즘 아이디어 — sink부터 뜯어내기</h2>
+<p>DAG topo sort의 "sink를 찾아 뒤에 두고 제거"를 SCC에 적용한다:
+<strong>sink SCC</strong>를 찾아 출력하고 제거 → 반복. (뒤에서 앞으로 = reverse topological order.)</p>
+<div class="card">
+  <p><strong>왜 sink인가:</strong> sink SCC 안의 정점 V에서 Explore를 돌리면,
+  sink 밖으로 나갈 방법이 없으므로 <strong>정확히 그 component만</strong> 방문한다.</p>
+  <p><strong>왜 source는 안 되나:</strong> source SCC의 정점 A에서 Explore하면
+  A에서 그래프 전체에 도달 가능 → 어떤 정점이 같은 SCC인지 구분 불가.</p>
+</div>
+<p>남은 문제: <strong>sink SCC 안에 있는 정점을 어떻게 찾는가?</strong></p>
+</section>
+
+<section id="s11">
+<h2>11. Key fact — lowest는 틀리고, highest는 맞다</h2>
+<p>DAG에서는 최저 postorder 정점이 sink였다. 일반 directed graph에서도 그럴까?</p>
+<ul>
+  <li><strong>✗ 반례:</strong> A, B가 strongly connected, C는 혼자. A에서 DFS 시작하면
+  postorder 최저는 B인데, B는 <strong>source</strong> SCC에 있다 — 정반대!</li>
+  <li><strong>✓ 참인 명제:</strong> <strong>최고 postorder 정점은 항상 source SCC 안에 있다.</strong>
+  (어떤 시작 정점·이웃 순서에서도 성립. §13에서 증명.)</li>
+</ul>
+<p>우리는 sink SCC 안의 정점이 필요한데, 구할 수 있는 건 source SCC 안의 정점뿐이다.
+→ <strong>Reverse graph 트릭</strong>:</p>
+<div class="ans">
+  <p><strong>G<sup>R</sup></strong> (모든 edge를 뒤집은 그래프)에서:</p>
+  <ul>
+    <li>SCC들은 G와 동일 (v⇄w 경로가 뒤집혀도 그대로).</li>
+    <li>Source와 sink가 뒤바뀐다: G의 sink SCC = G<sup>R</sup>의 source SCC.</li>
+  </ul>
+  <p>∴ G<sup>R</sup>에서 DFS → 최고 postorder 정점 = G<sup>R</sup>의 source SCC 안
+  = <strong>G의 sink SCC 안</strong>. ✓</p>
+</div>
+</section>
+
+<section id="s12">
+<h2>12. Kosaraju 알고리즘 (DFS 2회)</h2>
+<pre>Kosaraju(G):                       # directed graph, adjacency list
+    1. G^R ← reverse graph of G
+    2. DFS on G^R  (postorder 기록)
+    3. 정점을 postorder 내림차순으로 정렬
+    4. G에서 DFS — 단, undirected connected components 의사코드 그대로
+       (ccnum으로 방문 정점에 번호 부여), 정점 순서는 3의 순서대로
+    → ccnum이 SCC 번호이며, reverse topological order로 매겨진다</pre>
+<div class="card q">
+  <p><strong>Q.</strong> SCC 알고리즘의 런타임은?</p>
+</div>
+<div class="ans"><strong>정답: O(n + m).</strong> Reverse graph 구성 O(n+m) + DFS 2회 O(n+m) + 정렬 O(n) (counting sort).</div>
+<svg class="diagram" viewBox="0 0 600 200" role="img" aria-label="Kosaraju two passes">
+  <g font-family="sans-serif" font-size="13" text-anchor="middle">
+    <rect x="20" y="60" width="160" height="80" rx="12" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="100" y="95" fill="var(--fg)" font-weight="bold">1. Reverse</text>
+    <text x="100" y="118" fill="var(--muted)">G → G^R</text>
+    <rect x="220" y="60" width="160" height="80" rx="12" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="300" y="95" fill="var(--fg)" font-weight="bold">2. DFS on G^R</text>
+    <text x="300" y="118" fill="var(--muted)">postorder ↓ 정렬</text>
+    <rect x="420" y="60" width="160" height="80" rx="12" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="500" y="95" fill="var(--fg)" font-weight="bold">3. DFS on G</text>
+    <text x="500" y="118" fill="var(--muted)">ccnum = SCC 번호</text>
+    <text x="190" y="105" font-size="20" fill="var(--accent)">→</text>
+    <text x="390" y="105" font-size="20" fill="var(--accent)">→</text>
+  </g>
+</svg>
+<p class="caption">Kosaraju: 뒤집고 → DFS → 순서대로 다시 DFS. 바닐라 DFS 2회로 SCC + topological order.</p>
+</section>
+
+<section id="s13">
+<h2>13. Key fact 증명 — simpler claim</h2>
+<div class="card">
+  <p><strong>Simpler claim:</strong> SCC S에서 SCC S′로 edge(v ∈ S → w ∈ S′)가 있으면,
+  <strong>max postorder(S) &gt; max postorder(S′)</strong>.</p>
+  <p>이게 보이면: component들을 max postorder 내림차순으로 정렬하면 모든 edge가 왼쪽→오른쪽
+  (= topological order), 최고 postorder 정점의 component가 맨 앞 = source SCC. ∎</p>
+</div>
+<p><strong>증명:</strong> S ∪ S′에서 가장 먼저 방문된 정점을 z라 하자. S → S′ edge가 있으므로 S′에서 S로 가는 경로는 없다.</p>
+<ul>
+  <li><strong>Case 1: z ∈ S′.</strong> z에서 explore하면 S′ 전체는 방문·종료되지만 S는 전혀 건드리지 못한다
+  (S로 가는 경로가 없으므로). → S′의 모든 postorder &lt; S의 모든 postorder. ✓</li>
+  <li><strong>Case 2: z ∈ S.</strong> z에서 S 전체 + v를 거쳐 S′ 전체에 도달 가능하므로,
+  z가 S ∪ S′의 DFS subtree root가 된다. Root가 가장 늦게 끝나므로
+  z의 postorder가 S ∪ S′ 중 최대 → max(S) &gt; max(S′). ✓</li>
+</ul>
+</section>
+
+<section id="s14">
+<h2>14. BFS·Dijkstra 복습</h2>
+<table>
+  <tr><th></th><th>BFS</th><th>Dijkstra's</th></tr>
+  <tr><td>입력</td><td>Unweighted graph + start s</td><td>Weighted graph (positive weights) + start s</td></tr>
+  <tr><td>출력</td><td>dist[v] = 최소 edge 수, prev 배열</td><td>dist[v] = 최단 경로 길이</td></tr>
+  <tr><td>런타임</td><td><strong>O(n + m)</strong></td><td><strong>O((n + m) log n)</strong> (min-heap)</td></tr>
+</table>
+<ul>
+  <li>Dijkstra's = BFS framework + min-heap (priority queue). 이 수업에서는 항상 min-heap 버전을 쓴다.</li>
+  <li>Edge 길이가 positive여야 한다. Negative가 있으면 DP3의 방법을 참고.</li>
+</ul>
+</section>
+
+<section id="glossary">
+<h2>용어집 (Glossary)</h2>
+<table>
+  <tr><th>용어 (영어)</th><th>의미</th></tr>
+  <tr><td><strong>DFS (depth-first search)</strong></td><td>깊이 우선 탐색. 한 정점에서 시작해 가능한 한 깊이 들어갔다가 되돌아오는 그래프 탐색. 런타임 O(n+m).</td></tr>
+  <tr><td><strong>Explore</strong></td><td>DFS의 재귀 서브루틴. 정점 z를 방문 처리하고 이웃을 재귀적으로 탐색한다.</td></tr>
+  <tr><td><strong>Clock</strong></td><td>pre/postorder 번호를 매기기 위한 카운터. 1부터 시작해 방문·종료 시마다 증가.</td></tr>
+  <tr><td><strong>Preorder number</strong></td><td>정점을 처음 방문할 때의 clock 값.</td></tr>
+  <tr><td><strong>Postorder number</strong></td><td>정점의 탐색을 마칠 때의 clock 값. SCC 알고리즘의 핵심 재료.</td></tr>
+  <tr><td><strong>Tree edge</strong></td><td>DFS가 실제로 탐색한 edge (DFS tree/forest의 간선). Postorder가 감소.</td></tr>
+  <tr><td><strong>Back edge</strong></td><td>descendant → ancestor로 올라가는 edge. Postorder가 증가하는 유일한 종류. 사이클 ⟺ back edge.</td></tr>
+  <tr><td><strong>Forward edge</strong></td><td>ancestor → descendant로 내려가는 edge (tree edge보다 여러 칸). Postorder가 감소.</td></tr>
+  <tr><td><strong>Cross edge</strong></td><td>조상–자손 관계가 없는 정점 사이의 edge. Postorder가 감소.</td></tr>
+  <tr><td><strong>DAG (directed acyclic graph)</strong></td><td>사이클이 없는 directed graph. Back edge가 없으며 topological sort가 가능하다.</td></tr>
+  <tr><td><strong>Topological sort / ordering</strong></td><td>모든 edge가 왼쪽 → 오른쪽으로 가도록 정점을 일렬로 세우기. DAG에서 decreasing postorder로 구한다.</td></tr>
+  <tr><td><strong>Source vertex</strong></td><td>incoming edge가 없는 정점. DAG에서 최고 postorder 정점.</td></tr>
+  <tr><td><strong>Sink vertex</strong></td><td>outgoing edge가 없는 정점. DAG에서 최저 postorder 정점.</td></tr>
+  <tr><td><strong>Strongly connected</strong></td><td>두 정점 v, w 사이에 v ⇝ w 경로와 w ⇝ v 경로가 모두 존재하는 관계.</td></tr>
+  <tr><td><strong>SCC (strongly connected component)</strong></td><td>strongly connected인 정점들의 maximal 집합. Directed graph의 connected component 대응물.</td></tr>
+  <tr><td><strong>Metavertex / Metagraph</strong></td><td>SCC 하나를 하나의 정점으로 압축한 것 / 그렇게 만든 그래프. 항상 DAG다.</td></tr>
+  <tr><td><strong>Reverse graph (G<sup>R</sup>)</strong></td><td>모든 edge의 방향을 뒤집은 그래프. SCC는 같고 source/sink가 뒤바뀐다.</td></tr>
+  <tr><td><strong>Kosaraju's algorithm</strong></td><td>SCC 알고리즘: G<sup>R</sup>에서 DFS → postorder 내림차순 → G에서 DFS. 바닐라 DFS 2회, O(n+m).</td></tr>
+  <tr><td><strong>Connected component (ccnum)</strong></td><td>undirected graph에서 서로 도달 가능한 정점들의 집합. Kosaraju 마지막 단계의 번호가 SCC 번호가 된다.</td></tr>
+  <tr><td><strong>Ancestor / Descendant</strong></td><td>DFS tree에서 위쪽(먼저 탐색된) 정점 / 아래쪽(나중에 탐색된) 정점.</td></tr>
+  <tr><td><strong>BFS (breadth-first search)</strong></td><td>너비 우선 탐색. 층별로 탐색하며 start로부터 최소 edge 수 거리와 prev 배열을 구한다. O(n+m).</td></tr>
+  <tr><td><strong>Dijkstra's algorithm</strong></td><td>positive 가중치 그래프의 single-source 최단 경로. BFS + min-heap. O((n+m) log n).</td></tr>
+  <tr><td><strong>Min-heap (priority queue)</strong></td><td>Dijkstra's에서 쓰는 우선순위 큐. 연산당 O(log n).</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>Explore 의사코드를 쓰고 O(n+m)을 설명할 수 있다.</li>
+  <li>간선 4종류와 postorder 성질 (back만 증가)을 말할 수 있다.</li>
+  <li>사이클 ⟺ back edge를 양방향으로 증명할 수 있다.</li>
+  <li>Topological sort = decreasing postorder, O(n+m) (counting sort).</li>
+  <li>최고 postorder = source, 최저 postorder = sink (DAG).</li>
+  <li>SCC 정의와 metagraph가 DAG인 이유를 설명할 수 있다.</li>
+  <li>왜 sink SCC부터 찾는지 (source는 explore가 전체를 방문) 설명할 수 있다.</li>
+  <li>Kosaraju 4단계를 순서대로 쓸 수 있다.</li>
+  <li>Key fact (highest postorder → source SCC)의 증명 아이디어를 말할 수 있다.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  GR1: Strongly Connected Components — 트랜스크립트 기반 복습 노트
+</div></footer>
+</body>
+</html>
