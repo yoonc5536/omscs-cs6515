@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GR2: 2-Satisfiability — Review Notes</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>GR2: 2-Satisfiability — Review Notes</h1>
+  <p>Based on this week's lecture transcript</p>
+  <span class="tag">SAT</span><span class="tag">2-SAT</span>
+  <span class="tag">Implication graph</span><span class="tag">SCC</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">Notation</a><a href="#s2">SAT problem</a><a href="#s3">Quiz</a>
+  <a href="#s4">k-SAT</a><a href="#s5">Unit clauses</a><a href="#s6">Implications</a>
+  <a href="#s7">SCC condition</a><a href="#s8">Algorithm</a><a href="#s9">Key fact</a>
+  <a href="#s10">Claim proof</a><a href="#glossary">Glossary</a><a href="#sum">Checklist</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. SAT notation</h2>
+<ul>
+  <li><strong>Boolean formula</strong>: variables x<sub>1</sub> … x<sub>n</sub> take True/False.</li>
+  <li><strong>Literal</strong>: positive or negative form of a variable — <strong>2n</strong> total
+  (x<sub>1</sub>, x̄<sub>1</sub>, x<sub>2</sub>, x̄<sub>2</sub>, …). Read x̄ as "x bar" or "x complement".</li>
+  <li><strong>∧</strong> = AND (looks like an A), <strong>∨</strong> = OR.</li>
+  <li><strong>CNF (conjunctive normal form)</strong>: AND of clauses.
+  Each <strong>clause</strong> is an OR of literals, e.g. (x̄<sub>3</sub> ∨ x<sub>5</sub> ∨ x<sub>1</sub> ∨ x<sub>2</sub>).
+  Satisfying a clause means satisfying at least one of its literals.</li>
+  <li>Any formula can be converted to CNF, but the size may blow up.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. The SAT problem</h2>
+<div class="card">
+  <p><strong>Input:</strong> a CNF formula f with n variables and m clauses.</p>
+  <p><strong>Output:</strong> a <strong>satisfying assignment</strong> if one exists, else <strong>NO</strong>.</p>
+</div>
+</section>
+
+<section id="s3">
+<h2>3. Quiz — SAT</h2>
+<div class="card q">
+  <p><strong>Q.</strong> f = (x̄<sub>1</sub> ∨ x<sub>2</sub> ∨ x<sub>3</sub>) ∧ (x̄<sub>2</sub> ∨ x<sub>3</sub>) ∧ (x̄<sub>3</sub> ∨ x<sub>1</sub>) ∧ (x̄<sub>3</sub>)<br>
+  Give a satisfying assignment if one exists, else NO.</p>
+</div>
+<div class="ans"><strong>Answer:</strong> x<sub>1</sub> = False, x<sub>2</sub> = True, x<sub>3</sub> = False.
+(The unit clause (x̄<sub>3</sub>) forces x<sub>3</sub> = False; verify the rest by substitution.)</div>
+</section>
+
+<section id="s4">
+<h2>4. k-SAT — the dichotomy</h2>
+<ul>
+  <li><strong>k-SAT</strong>: every clause has size at most k.</li>
+  <li>SAT and k-SAT for k ≥ 3 are <strong>NP-complete</strong> (3-SAT, 4-SAT, …).</li>
+  <li><strong>2-SAT is solvable in polynomial time</strong> — using the SCC algorithm.</li>
+</ul>
+<div class="ans"><strong>Dichotomy:</strong> 2-SAT is easy (linear time); 3-SAT and up are NP-complete.</div>
+</section>
+
+<section id="s5">
+<h2>5. Simplifying the input — eliminating unit clauses</h2>
+<p>Example: (x̄<sub>3</sub> ∨ x<sub>2</sub>) ∧ (x̄<sub>1</sub>) ∧ (x<sub>1</sub> ∨ x<sub>4</sub>) ∧ (x̄<sub>4</sub> ∨ x<sub>2</sub>) ∧ (x̄<sub>3</sub> ∨ x<sub>4</sub>).</p>
+<ol>
+  <li>Find a unit clause, e.g. (x̄<sub>1</sub>). It forces x<sub>1</sub> = False.</li>
+  <li>Set that literal True (x̄<sub>1</sub> True = x<sub>1</sub> False).</li>
+  <li>Clauses containing x̄<sub>1</sub> are satisfied → delete them. In clauses containing x<sub>1</sub>,
+  drop the literal: (x<sub>1</sub> ∨ x<sub>4</sub>) → (x<sub>4</sub>).</li>
+  <li>Reduced formula f′: f satisfiable ⟺ f′ satisfiable.</li>
+  <li>Repeat on new unit clauses. End with the empty formula (satisfied) or <strong>all clauses of size exactly 2</strong>.</li>
+</ol>
+<p>∴ From now on assume <strong>all clauses have size exactly 2</strong>.</p>
+</section>
+
+<section id="s6">
+<h2>6. The implication graph</h2>
+<p>Convert the logic problem into a graph problem: <strong>2n vertices</strong> (one per literal),
+<strong>2m edges</strong> (two per clause):</p>
+<div class="card">
+  <p>Clause <strong>(α ∨ β)</strong> → two implication edges:</p>
+  <ul>
+    <li><strong>ᾱ → β</strong>: if α is not satisfied, β must be.</li>
+    <li><strong>β̄ → α</strong>: if β is not satisfied, α must be.</li>
+  </ul>
+</div>
+<p>Example: f = (x̄<sub>1</sub> ∨ x̄<sub>2</sub>) ∧ (x<sub>2</sub> ∨ x<sub>3</sub>) ∧ (x̄<sub>3</sub> ∨ x<sub>1</sub>) →
+edges: x<sub>1</sub>→x̄<sub>2</sub>, x<sub>2</sub>→x̄<sub>1</sub>, x̄<sub>2</sub>→x<sub>3</sub>, x̄<sub>3</sub>→x<sub>2</sub>, x<sub>3</sub>→x<sub>1</sub>, x̄<sub>1</sub>→x̄<sub>3</sub>.</p>
+<svg class="diagram" viewBox="0 0 600 300" role="img" aria-label="Implication graph">
+  <defs>
+    <marker id="i1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="300" y1="62" x2="450" y2="62" marker-end="url(#i1)"/>
+    <line x1="450" y1="122" x2="300" y2="122" marker-end="url(#i1)"/>
+    <line x1="450" y1="82" x2="300" y2="202" marker-end="url(#i1)"/>
+    <line x1="300" y1="222" x2="450" y2="142" marker-end="url(#i1)"/>
+    <line x1="450" y1="222" x2="300" y2="142" marker-end="url(#i1)"/>
+    <line x1="300" y1="162" x2="150" y2="142" marker-end="url(#i1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">
+    <circle cx="280" cy="62" r="20" fill="var(--bg)" stroke="#2563eb" stroke-width="2.5"/><text x="280" y="68" fill="var(--fg)">x₁</text>
+    <circle cx="470" cy="62" r="20" fill="var(--bg)" stroke="#6b7280" stroke-width="2.5"/><text x="470" y="68" fill="var(--fg)">x̄₂</text>
+    <circle cx="470" cy="142" r="20" fill="var(--bg)" stroke="#6b7280" stroke-width="2.5"/><text x="470" y="148" fill="var(--fg)">x̄₃</text>
+    <circle cx="280" cy="142" r="20" fill="var(--bg)" stroke="#2563eb" stroke-width="2.5"/><text x="280" y="148" fill="var(--fg)">x̄₁</text>
+    <circle cx="280" cy="222" r="20" fill="var(--bg)" stroke="#2563eb" stroke-width="2.5"/><text x="280" y="228" fill="var(--fg)">x₃</text>
+    <circle cx="470" cy="222" r="20" fill="var(--bg)" stroke="#6b7280" stroke-width="2.5"/><text x="470" y="228" fill="var(--fg)">x₂</text>
+  </g>
+</svg>
+<p class="caption">Implication graph example: each clause (α ∨ β) yields ᾱ→β and β̄→α.</p>
+</section>
+
+<section id="s7">
+<h2>7. The SCC condition — unsatisfiability test</h2>
+<ul>
+  <li>Path <strong>x<sub>1</sub> ⇝ x̄<sub>1</sub></strong>: setting x<sub>1</sub> = True forces x<sub>1</sub> = False at the end → contradiction.
+  ∴ x<sub>1</sub> cannot be True.</li>
+  <li>Both <strong>x<sub>1</sub> ⇝ x̄<sub>1</sub></strong> and <strong>x̄<sub>1</sub> ⇝ x<sub>1</sub></strong>: x<sub>1</sub> can be neither True nor False
+  → <strong>f is unsatisfiable</strong>.</li>
+</ul>
+<div class="ans">
+  <p><strong>Unsat condition:</strong> if for some variable i, x<sub>i</sub> and x̄<sub>i</sub> lie in the <strong>same SCC</strong>,
+  then f is not satisfiable.</p>
+  <p><strong>Converse:</strong> if for every i, x<sub>i</sub> and x̄<sub>i</sub> are in different SCCs, then f is satisfiable
+  (the algorithm below constructs a satisfying assignment).</p>
+</div>
+</section>
+
+<section id="s8">
+<h2>8. The 2-SAT algorithm</h2>
+<p>Same "peel off a sink" strategy as the GR1 SCC algorithm:</p>
+<ol>
+  <li>Simplify f (eliminate unit clauses) → all clauses of size 2.</li>
+  <li>Build the implication graph G and find its SCCs (with topological order).</li>
+  <li>Take a <strong>sink SCC</strong> S → set <strong>all literals of S to True</strong>.
+  (No outgoing edges, so no implications to follow; incoming edges are safe since their tails are already satisfied.)</li>
+  <li>The complement set S̄ is a <strong>source SCC</strong> (§9) → set it to <strong>False</strong>.
+  (No incoming edges to cause trouble; being False means outgoing implications need not be followed.)</li>
+  <li>Remove S and S̄ (each variable's positive and negative literal disappear together) → repeat.
+  When the graph is empty, the formula is satisfied.</li>
+</ol>
+<div class="ans"><strong>Running time O(n + m):</strong> dominated by the SCC computation (linear time).</div>
+</section>
+
+<section id="s9">
+<h2>9. Key fact — complement of a sink is a source</h2>
+<div class="card">
+  <p><strong>Key fact:</strong> if for all i, x<sub>i</sub> and x̄<sub>i</sub> are in different SCCs, then
+  S is a sink SCC ⟺ S̄ (the complement set) is a source SCC.</p>
+  <p>The proof rests on this <strong>claim</strong>: if there is a path <strong>α ⇝ β</strong>, there is also a path <strong>β̄ ⇝ ᾱ</strong> (and vice versa).</p>
+</div>
+<p><strong>Proof sketch of the key fact:</strong></p>
+<ol>
+  <li>If S is an SCC then S̄ is an SCC: α, β ∈ S strongly connected gives paths α⇝β and β⇝α;
+  applying the claim yields β̄⇝ᾱ and ᾱ⇝β̄, so ᾱ, β̄ are strongly connected too.</li>
+  <li>If S is a sink SCC then S̄ is a source: no outgoing edge α→β in S means, by the claim,
+  no incoming edge to ᾱ in S̄. ∴ S̄ has no incoming edges = source SCC. (Reverse argument symmetric.)</li>
+</ol>
+</section>
+
+<section id="s10">
+<h2>10. Proof of the claim — reversing a path</h2>
+<p><strong>Claim:</strong> a path α ⇝ β implies a path β̄ ⇝ ᾱ.</p>
+<p><strong>Proof:</strong> write the path as γ<sub>0</sub>(=α) → γ<sub>1</sub> → … → γ<sub>l</sub>(=β).
+The edge γ<sub>1</sub> → γ<sub>2</sub> comes from some clause (γ̄<sub>1</sub> ∨ γ<sub>2</sub>),
+whose other implication is <strong>γ̄<sub>2</sub> → γ<sub>1</sub></strong>.
+Repeating along the path yields γ̄<sub>l</sub> ⇝ γ̄<sub>0</sub>, i.e. <strong>β̄ ⇝ ᾱ</strong>. ∎</p>
+<p>The reverse direction is symmetric. This completes the correctness proof of the linear-time 2-SAT algorithm.</p>
+</section>
+
+<section id="glossary">
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td><strong>Literal</strong></td><td>The positive or negative form of a variable (x<sub>i</sub>, x̄<sub>i</sub>). n variables → 2n literals.</td></tr>
+  <tr><td><strong>Boolean formula</strong></td><td>A logical formula whose variables take True/False values.</td></tr>
+  <tr><td><strong>CNF (conjunctive normal form)</strong></td><td>An AND of clauses. Any formula can be converted to CNF (size may blow up).</td></tr>
+  <tr><td><strong>Clause</strong></td><td>An OR of literals. To satisfy a clause, at least one of its literals must be satisfied.</td></tr>
+  <tr><td><strong>Unit clause</strong></td><td>A clause with a single literal. That literal is forced to True.</td></tr>
+  <tr><td><strong>Satisfying assignment</strong></td><td>A variable assignment that makes the formula True.</td></tr>
+  <tr><td><strong>Satisfiable / Unsatisfiable</strong></td><td>A satisfying assignment exists / does not exist.</td></tr>
+  <tr><td><strong>k-SAT</strong></td><td>SAT in which every clause has size ≤ k.</td></tr>
+  <tr><td><strong>NP-complete</strong></td><td>The class of problems believed to have no polynomial-time algorithm. 3-SAT and up are NP-complete.</td></tr>
+  <tr><td><strong>Dichotomy</strong></td><td>2-SAT is solvable in polynomial (linear) time, while 3-SAT and beyond are NP-complete.</td></tr>
+  <tr><td><strong>Implication graph</strong></td><td>A directed graph with 2n vertices (one per literal) and 2m edges (two per clause). Clause (α ∨ β) → ᾱ→β and β̄→α.</td></tr>
+  <tr><td><strong>Implication edge</strong></td><td>A logical edge derived from clause (α ∨ β). ᾱ→β means "if α is not satisfied, β must be." Logically equivalent to the clause.</td></tr>
+  <tr><td><strong>SCC condition</strong></td><td>If x<sub>i</sub> and x̄<sub>i</sub> are in the same SCC for some i, f is unsatisfiable (converse: if they always differ, f is satisfiable).</td></tr>
+  <tr><td><strong>Sink SCC</strong></td><td>An SCC with no outgoing edges. The 2-SAT algorithm sets the sink's literals to True.</td></tr>
+  <tr><td><strong>Source SCC</strong></td><td>An SCC with no incoming edges. By the key fact, the complement of a sink SCC is a source.</td></tr>
+  <tr><td><strong>Complement (S̄)</strong></td><td>The set of complements of the literals in SCC S. If S is an SCC, so is S̄.</td></tr>
+  <tr><td><strong>Key fact</strong></td><td>If x<sub>i</sub> and x̄<sub>i</sub> are in different SCCs for all i: S is a sink SCC ⟺ S̄ is a source SCC.</td></tr>
+  <tr><td><strong>Claim</strong></td><td>If there is a path α ⇝ β, there is also a path β̄ ⇝ ᾱ (and vice versa). The heart of the key-fact proof.</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>Checklist</h2>
+<ul class="check">
+  <li>Explain CNF, clauses, literals, 2n literals.</li>
+  <li>Write the five unit-clause elimination steps.</li>
+  <li>Build edges ᾱ→β, β̄→α from clause (α ∨ β).</li>
+  <li>Explain why x<sub>i</sub>, x̄<sub>i</sub> in the same SCC → unsat.</li>
+  <li>State the sink → True, complement source → False assignment strategy.</li>
+  <li>Prove the claim (α⇝β ⟹ β̄⇝ᾱ).</li>
+  <li>Explain the O(n+m) running time.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  GR2: 2-Satisfiability — review notes based on the lecture transcript
+</div></footer>
+</body>
+</html>
