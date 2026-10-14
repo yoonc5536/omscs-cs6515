@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GR2: 2-Satisfiability — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>GR2: 2-Satisfiability — 복습 노트</h1>
+  <p>이번 주 강의 트랜스크립트 기반 정리 (핵심 용어는 영어로 표기)</p>
+  <span class="tag">SAT</span><span class="tag">2-SAT</span>
+  <span class="tag">Implication graph</span><span class="tag">SCC</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">표기법</a><a href="#s2">SAT 문제</a><a href="#s3">퀴즈</a>
+  <a href="#s4">k-SAT</a><a href="#s5">Unit clause</a><a href="#s6">Implication</a>
+  <a href="#s7">SCC 조건</a><a href="#s8">알고리즘</a><a href="#s9">Key fact</a>
+  <a href="#s10">Claim 증명</a><a href="#glossary">용어집</a><a href="#sum">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. SAT 표기법</h2>
+<ul>
+  <li><strong>Boolean formula</strong>: 변수 x<sub>1</sub> … x<sub>n</sub>은 True/False.</li>
+  <li><strong>Literal</strong>: 변수의 positive/negative 형태 — 총 <strong>2n개</strong>
+  (x<sub>1</sub>, x̄<sub>1</sub>, x<sub>2</sub>, x̄<sub>2</sub>, …). x̄는 "x bar" 또는 "x complement".</li>
+  <li><strong>∧</strong> = AND ("A처럼 생겼다"), <strong>∨</strong> = OR.</li>
+  <li><strong>CNF (conjunctive normal form)</strong>: clause들의 AND.
+  각 <strong>clause</strong>는 literal들의 OR. 예: (x̄<sub>3</sub> ∨ x<sub>5</sub> ∨ x<sub>1</sub> ∨ x<sub>2</sub>).
+  Clause를 만족하려면 그 안의 literal 하나 이상을 만족.</li>
+  <li>어떤 formula든 CNF로 변환 가능하지만 크기가 불어날 수 있다.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. SAT 문제</h2>
+<div class="card">
+  <p><strong>입력:</strong> n개 변수, m개 clause로 이루어진 CNF formula f.</p>
+  <p><strong>출력:</strong> f를 True로 만드는 <strong>satisfying assignment</strong>가 있으면 그것을,
+  없으면 <strong>NO</strong>.</p>
+</div>
+</section>
+
+<section id="s3">
+<h2>3. 퀴즈 — SAT</h2>
+<div class="card q">
+  <p><strong>Q.</strong> f = (x̄<sub>1</sub> ∨ x<sub>2</sub> ∨ x<sub>3</sub>) ∧ (x̄<sub>2</sub> ∨ x<sub>3</sub>) ∧ (x̄<sub>3</sub> ∨ x<sub>1</sub>) ∧ (x̄<sub>3</sub>)<br>
+  Satisfying assignment가 있으면 쓰고, 없으면 NO.</p>
+</div>
+<div class="ans"><strong>정답:</strong> x<sub>1</sub> = False, x<sub>2</sub> = True, x<sub>3</sub> = False.
+(x̄<sub>3</sub>가 unit clause이므로 x<sub>3</sub>=False가 강제되고, 나머지는 대입해 확인.)</div>
+</section>
+
+<section id="s4">
+<h2>4. k-SAT — 이분법</h2>
+<ul>
+  <li><strong>k-SAT</strong>: 모든 clause의 크기가 ≤ k.</li>
+  <li>SAT와 k ≥ 3인 k-SAT는 <strong>NP-complete</strong> (3-SAT, 4-SAT, …).</li>
+  <li><strong>2-SAT는 polynomial time</strong>에 풀린다 — SCC 알고리즘 사용.</li>
+</ul>
+<div class="ans"><strong>Dichotomy:</strong> 2-SAT는 쉽고(linear time), 3-SAT부터는 NP-complete다.</div>
+</section>
+
+<section id="s5">
+<h2>5. 입력 단순화 — unit clause 제거</h2>
+<p>예: (x̄<sub>3</sub> ∨ x<sub>2</sub>) ∧ (x̄<sub>1</sub>) ∧ (x<sub>1</sub> ∨ x<sub>4</sub>) ∧ (x̄<sub>4</sub> ∨ x<sub>2</sub>) ∧ (x̄<sub>3</sub> ∨ x<sub>4</sub>).</p>
+<ol>
+  <li>Unit clause (x̄<sub>1</sub>)를 찾는다. 만족하려면 x<sub>1</sub> = False가 강제.</li>
+  <li>그 literal을 True로 고정 (x̄<sub>1</sub>을 True로 = x<sub>1</sub>을 False로).</li>
+  <li>x̄<sub>1</sub>을 포함한 clause는 만족되므로 제거. 반대로 x<sub>1</sub>을 포함한 clause에서는
+  x<sub>1</sub> literal을 삭제: (x<sub>1</sub> ∨ x<sub>4</sub>) → (x<sub>4</sub>).</li>
+  <li>남은 formula f′: 원래 f가 satisfiable ⟺ f′가 satisfiable.</li>
+  <li>새로 생긴 unit clause에 대해 반복. 끝에는 빈 formula(만족) 또는 <strong>모든 clause가 정확히 크기 2</strong>.</li>
+</ol>
+<p>∴ 앞으로는 <strong>모든 clause가 크기 2</strong>라고 가정하고 알고리즘을 설계한다.</p>
+</section>
+
+<section id="s6">
+<h2>6. Implication graph</h2>
+<p>논리 문제를 그래프 문제로 바꾼다. 정점 <strong>2n개</strong> (literal마다 하나), edge <strong>2m개</strong> (clause마다 2개):</p>
+<div class="card">
+  <p>Clause <strong>(α ∨ β)</strong> → 두 implication edge:</p>
+  <ul>
+    <li><strong>ᾱ → β</strong>: α를 만족하지 않으면 β를 만족해야.</li>
+    <li><strong>β̄ → α</strong>: β를 만족하지 않으면 α를 만족해야.</li>
+  </ul>
+</div>
+<p>예: f = (x̄<sub>1</sub> ∨ x̄<sub>2</sub>) ∧ (x<sub>2</sub> ∨ x<sub>3</sub>) ∧ (x̄<sub>3</sub> ∨ x<sub>1</sub>) →
+edge: x<sub>1</sub>→x̄<sub>2</sub>, x<sub>2</sub>→x̄<sub>1</sub>, x̄<sub>2</sub>→x<sub>3</sub>, x̄<sub>3</sub>→x<sub>2</sub>, x<sub>3</sub>→x<sub>1</sub>, x̄<sub>1</sub>→x̄<sub>3</sub>.</p>
+<svg class="diagram" viewBox="0 0 600 300" role="img" aria-label="Implication graph">
+  <defs>
+    <marker id="i1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="300" y1="62" x2="450" y2="62" marker-end="url(#i1)"/>
+    <line x1="450" y1="122" x2="300" y2="122" marker-end="url(#i1)"/>
+    <line x1="450" y1="82" x2="300" y2="202" marker-end="url(#i1)"/>
+    <line x1="300" y1="222" x2="450" y2="142" marker-end="url(#i1)"/>
+    <line x1="450" y1="222" x2="300" y2="142" marker-end="url(#i1)"/>
+    <line x1="300" y1="162" x2="150" y2="142" marker-end="url(#i1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">
+    <circle cx="280" cy="62" r="20" fill="var(--bg)" stroke="#2563eb" stroke-width="2.5"/><text x="280" y="68" fill="var(--fg)">x₁</text>
+    <circle cx="470" cy="62" r="20" fill="var(--bg)" stroke="#6b7280" stroke-width="2.5"/><text x="470" y="68" fill="var(--fg)">x̄₂</text>
+    <circle cx="470" cy="142" r="20" fill="var(--bg)" stroke="#6b7280" stroke-width="2.5"/><text x="470" y="148" fill="var(--fg)">x̄₃</text>
+    <circle cx="280" cy="142" r="20" fill="var(--bg)" stroke="#2563eb" stroke-width="2.5"/><text x="280" y="148" fill="var(--fg)">x̄₁</text>
+    <circle cx="280" cy="222" r="20" fill="var(--bg)" stroke="#2563eb" stroke-width="2.5"/><text x="280" y="228" fill="var(--fg)">x₃</text>
+    <circle cx="470" cy="222" r="20" fill="var(--bg)" stroke="#6b7280" stroke-width="2.5"/><text x="470" y="228" fill="var(--fg)">x₂</text>
+  </g>
+</svg>
+<p class="caption">Implication graph 예시: clause (α ∨ β)마다 ᾱ→β, β̄→α 두 edge.</p>
+</section>
+
+<section id="s7">
+<h2>7. SCC 조건 — unsat 판정</h2>
+<ul>
+  <li>경로 <strong>x<sub>1</sub> ⇝ x̄<sub>1</sub></strong>이 있으면: x<sub>1</sub>=True로 두면 연쇄 implication 끝에 x<sub>1</sub>=False가 강제 → 모순.
+  ∴ x<sub>1</sub>은 True일 수 없다.</li>
+  <li><strong>x<sub>1</sub> ⇝ x̄<sub>1</sub></strong>과 <strong>x̄<sub>1</sub> ⇝ x<sub>1</sub></strong>이 모두 있으면:
+  x<sub>1</sub>을 True로도 False로도 둘 수 없다 → <strong>f는 unsatisfiable</strong>.</li>
+</ul>
+<div class="ans">
+  <p><strong>Unsat 조건:</strong> 어떤 변수 i에 대해 x<sub>i</sub>와 x̄<sub>i</sub>가 <strong>같은 SCC</strong>에 있으면
+  f는 satisfiable하지 않다.</p>
+  <p><strong>역:</strong> 모든 i에 대해 x<sub>i</sub>, x̄<sub>i</sub>가 서로 다른 SCC에 있으면 f는 satisfiable하다
+  (아래 알고리즘으로 satisfying assignment를 직접 구성).</p>
+</div>
+</section>
+
+<section id="s8">
+<h2>8. 2-SAT 알고리즘</h2>
+<p>GR1의 SCC 알고리즘과 같은 "sink를 찾아 뜯어내기" 전략:</p>
+<ol>
+  <li>f를 단순화 (unit clause 제거) → 모든 clause 크기 2.</li>
+  <li>Implication graph G를 만들고 SCC를 구한다 (topological order 포함).</li>
+  <li><strong>Sink SCC</strong> S를 취한다 → <strong>S의 literal들을 모두 True로</strong> 설정.
+  (Sink는 outgoing edge가 없으므로 implication을 따라갈 걱정이 없고,
+  incoming edge들은 tail이 이미 만족되어 안전.)</li>
+  <li><strong>Complement 집합 S̄은 source SCC</strong> (§9) → <strong>False로</strong> 설정.
+  (Incoming edge가 없으니 나중에 문제가 안 되고, False이므로 outgoing implication을 따를 필요도 없다.)</li>
+  <li>S와 S̄을 제거 (해당 변수는 positive·negative literal이 함께 제거되어 사라짐) → 반복.
+  빈 그래프가 되면 satisfying assignment 완성.</li>
+</ol>
+<div class="ans"><strong>런타임 O(n + m):</strong> 주된 비용은 SCC 구성 (linear time).</div>
+</section>
+
+<section id="s9">
+<h2>9. Key fact — sink의 complement는 source</h2>
+<div class="card">
+  <p><strong>Key fact:</strong> 모든 i에 대해 x<sub>i</sub>와 x̄<sub>i</sub>가 다른 SCC에 있으면,
+  S가 sink SCC ⟺ S̄ (complement 집합)이 source SCC.</p>
+  <p>증명의 핵심은 다음 <strong>claim</strong>: 경로 <strong>α ⇝ β</strong>가 있으면 경로 <strong>β̄ ⇝ ᾱ</strong>도 있다 (역도 성립).</p>
+</div>
+<p><strong>Key fact 증명 스케치:</strong></p>
+<ol>
+  <li>S가 SCC이면 S̄도 SCC이다: α, β ∈ S가 strongly connected이면 경로 α⇝β, β⇝α가 있고,
+  claim을 적용하면 β̄⇝ᾱ, ᾱ⇝β̄ → ᾱ, β̄도 strongly connected.</li>
+  <li>S가 sink SCC이면 S̄은 source: S에 outgoing edge가 없으면, claim에 의해 S̄에는 incoming edge가 없다
+  (edge α→β가 없음 ⟺ edge β̄→ᾱ가 없음). ∴ S̄은 source SCC. (역방향도 동일.)</li>
+</ol>
+</section>
+
+<section id="s10">
+<h2>10. Claim 증명 — 경로 뒤집기</h2>
+<p><strong>Claim:</strong> α ⇝ β 경로가 있으면 β̄ ⇝ ᾱ 경로가 있다.</p>
+<p><strong>증명:</strong> 경로를 γ<sub>0</sub>(=α) → γ<sub>1</sub> → … → γ<sub>l</sub>(=β)라 하자.
+Edge γ<sub>1</sub> → γ<sub>2</sub>는 어떤 clause (γ̄<sub>1</sub> ∨ γ<sub>2</sub>)에서 온 implication이다.
+같은 clause의 다른 implication은 <strong>γ̄<sub>2</sub> → γ<sub>1</sub></strong>.
+경로를 따라 이를 반복하면 γ̄<sub>l</sub> ⇝ γ̄<sub>0</sub>, 즉 <strong>β̄ ⇝ ᾱ</strong> 경로가 생긴다. ∎</p>
+<p>역방향도 같은 논증. 이로써 2-SAT linear-time 알고리즘의 정확성 증명이 완성된다.</p>
+</section>
+
+<section id="glossary">
+<h2>용어집 (Glossary)</h2>
+<table>
+  <tr><th>용어 (영어)</th><th>의미</th></tr>
+  <tr><td><strong>Literal</strong></td><td>변수의 positive/negative 형태 (x<sub>i</sub>, x̄<sub>i</sub>). n개 변수 → 총 2n개 literal.</td></tr>
+  <tr><td><strong>Boolean formula</strong></td><td>각 변수가 True/False 값을 갖는 논리식.</td></tr>
+  <tr><td><strong>CNF (conjunctive normal form)</strong></td><td>clause들의 AND. 어떤 formula든 CNF로 변환 가능 (크기는 불어날 수 있음).</td></tr>
+  <tr><td><strong>Clause</strong></td><td>literal들의 OR. Clause를 만족하려면 그 안의 literal 하나 이상을 만족.</td></tr>
+  <tr><td><strong>Unit clause</strong></td><td>literal이 하나뿐인 clause. 그 literal의 값이 True로 강제됨.</td></tr>
+  <tr><td><strong>Satisfying assignment</strong></td><td>formula를 True로 만드는 변수 값 할당.</td></tr>
+  <tr><td><strong>Satisfiable / Unsatisfiable</strong></td><td>satisfying assignment가 존재함 / 존재하지 않음.</td></tr>
+  <tr><td><strong>k-SAT</strong></td><td>모든 clause의 크기가 ≤ k인 SAT.</td></tr>
+  <tr><td><strong>NP-complete</strong></td><td>다항 시간 알고리즘이 없을 것으로 믿어지는 문제 클래스. 3-SAT부터 NP-complete.</td></tr>
+  <tr><td><strong>Dichotomy</strong></td><td>2-SAT는 polynomial (linear) time에 풀리지만 3-SAT부터는 NP-complete인 이분법.</td></tr>
+  <tr><td><strong>Implication graph</strong></td><td>정점 2n개(literal마다 하나), edge 2m개(clause마다 2개)의 directed graph. Clause (α ∨ β) → ᾱ→β, β̄→α.</td></tr>
+  <tr><td><strong>Implication edge</strong></td><td>clause (α ∨ β)에서 유도되는 논리 edge. ᾱ→β: "α를 만족하지 않으면 β를 만족해야 한다." Clause와 논리적으로 동등.</td></tr>
+  <tr><td><strong>SCC condition</strong></td><td>어떤 변수 i에 대해 x<sub>i</sub>와 x̄<sub>i</sub>가 같은 SCC에 있으면 f는 unsatisfiable (역: 전부 다르면 satisfiable).</td></tr>
+  <tr><td><strong>Sink SCC</strong></td><td>outgoing edge가 없는 SCC. 2-SAT 알고리즘에서 sink의 literal들을 True로 설정.</td></tr>
+  <tr><td><strong>Source SCC</strong></td><td>incoming edge가 없는 SCC. Key fact에 의해 sink SCC의 complement가 source.</td></tr>
+  <tr><td><strong>Complement (S̄)</strong></td><td>SCC S에 속한 literal들의 complement literal 집합. S가 SCC이면 S̄도 SCC.</td></tr>
+  <tr><td><strong>Key fact</strong></td><td>x<sub>i</sub>와 x̄<sub>i</sub>가 모두 다른 SCC에 있으면: S가 sink SCC ⟺ S̄이 source SCC.</td></tr>
+  <tr><td><strong>Claim</strong></td><td>경로 α ⇝ β가 있으면 경로 β̄ ⇝ ᾱ도 있다 (역도 성립). Key fact 증명의 핵심.</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>CNF, clause, literal, 2n literals를 설명할 수 있다.</li>
+  <li>Unit clause 제거 5단계를 쓸 수 있다.</li>
+  <li>Clause (α ∨ β)에서 edge ᾱ→β, β̄→α를 만들 수 있다.</li>
+  <li>x<sub>i</sub>와 x̄<sub>i</sub>가 같은 SCC → unsat인 이유를 설명할 수 있다.</li>
+  <li>Sink SCC → True, complement source SCC → False 할당 전략을 말할 수 있다.</li>
+  <li>Claim (α⇝β ⟹ β̄⇝ᾱ)을 증명할 수 있다.</li>
+  <li>전체 런타임 O(n+m)을 설명할 수 있다.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  GR2: 2-Satisfiability — 트랜스크립트 기반 복습 노트
+</div></footer>
+</body>
+</html>
