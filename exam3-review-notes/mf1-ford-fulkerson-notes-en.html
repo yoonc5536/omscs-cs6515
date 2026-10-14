@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF1: Ford-Fulkerson Algorithm — Review Notes</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+.warn{border-left:4px solid #f59e0b}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>MF1: Ford-Fulkerson Algorithm — Review Notes</h1>
+  <p>Based on this week's lecture transcript</p>
+  <span class="tag">Max-flow</span><span class="tag">Residual network</span>
+  <span class="tag">Ford-Fulkerson</span><span class="tag">O(mC)</span>
+  <span class="tag">Edmonds-Karp</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">Setup</a><a href="#s2">Formulation</a><a href="#s3">Quiz review</a>
+  <a href="#s4">Cycles</a><a href="#s5">Anti-parallel edges</a><a href="#s6">Naive attempt</a>
+  <a href="#s7">Backward edges</a><a href="#s8">Residual network</a><a href="#s9">FF algorithm</a>
+  <a href="#s10">Runtime</a><a href="#s11">Discussion</a><a href="#sum">Checklist</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. Problem setup — what are we maximizing?</h2>
+<ul>
+  <li>A <strong>flow network</strong>: directed graph G + start vertex <strong>source s</strong> + end vertex <strong>sink t</strong> +
+  a <strong>capacity</strong> c<sub>e</sub> &gt; 0 on each edge e.</li>
+  <li>Intuition: shipping "supply" from s to t. Internet traffic → capacity = link bandwidth;
+  oil → capacity = pipe capacity.</li>
+  <li>Goal: maximize the amount shipped from s to t without exceeding edge capacities.</li>
+</ul>
+</section>
+
+<section id="s2">
+<h2>2. Formulation — the two constraints of a valid flow</h2>
+<p>Variables f<sub>e</sub> = flow along edge e. A valid flow satisfies:</p>
+<div class="card">
+  <p><strong>① Capacity constraint:</strong> 0 ≤ f<sub>e</sub> ≤ c<sub>e</sub> for every edge e.
+  No negative flow, no exceeding capacity.</p>
+  <p><strong>② Flow conservation:</strong> for every vertex v except s and t,
+  flow in = flow out: ∑<sub>w→v</sub> f<sub>wv</sub> = ∑<sub>v→z</sub> f<sub>vz</sub>.
+  Nothing is created or lost at intermediate vertices.</p>
+</div>
+<p><strong>Size of a flow</strong> = total flow out of s = total flow into t.
+The max-flow problem asks for a valid flow of maximum size.</p>
+</section>
+
+<section id="s3">
+<h2>3. Quiz review — max-flow example</h2>
+<div class="card q">
+  <p><strong>Q.</strong> Specify an integer flow value for each edge of the network below to maximize the s → t flow.
+  Order: sa, sb, sc, ad, ae, be, cf, dc, dt, ed, fe, ft.</p>
+</div>
+<svg class="diagram" viewBox="0 0 560 400" role="img" aria-label="Max-flow example network">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="72" y1="200" x2="168" y2="88" marker-end="url(#a1)"/>
+    <line x1="72" y1="200" x2="168" y2="200" marker-end="url(#a1)"/>
+    <line x1="72" y1="200" x2="168" y2="312" marker-end="url(#a1)"/>
+    <line x1="192" y1="80" x2="318" y2="80" marker-end="url(#a1)"/>
+    <line x1="192" y1="88" x2="318" y2="192" marker-end="url(#a1)"/>
+    <line x1="192" y1="200" x2="318" y2="200" marker-end="url(#a1)"/>
+    <line x1="192" y1="320" x2="318" y2="320" marker-end="url(#a1)"/>
+    <line x1="332" y1="88" x2="206" y2="304" marker-end="url(#a1)"/>
+    <line x1="332" y1="80" x2="438" y2="192" marker-end="url(#a1)"/>
+    <line x1="332" y1="208" x2="332" y2="96" marker-end="url(#a1)"/>
+    <line x1="332" y1="320" x2="332" y2="216" marker-end="url(#a1)"/>
+    <line x1="332" y1="320" x2="438" y2="208" marker-end="url(#a1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="60" cy="200" r="15" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="60" y="206" fill="var(--fg)">s</text>
+    <circle cx="180" cy="80" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="180" y="86" fill="var(--fg)">a</text>
+    <circle cx="180" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="180" y="206" fill="var(--fg)">b</text>
+    <circle cx="180" cy="320" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="180" y="326" fill="var(--fg)">c</text>
+    <circle cx="330" cy="80" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="330" y="86" fill="var(--fg)">d</text>
+    <circle cx="330" cy="200" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="330" y="206" fill="var(--fg)">e</text>
+    <circle cx="330" cy="320" r="15" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="330" y="326" fill="var(--fg)">f</text>
+    <circle cx="450" cy="200" r="15" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="450" y="206" fill="var(--fg)">t</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="105" y="130" fill="#15803d" font-weight="bold">6</text><text x="105" y="145" fill="#dc2626">8</text>
+    <text x="120" y="192" fill="#15803d" font-weight="bold">1</text><text x="120" y="207" fill="#dc2626">3</text>
+    <text x="105" y="272" fill="#15803d" font-weight="bold">5</text><text x="105" y="287" fill="#dc2626">6</text>
+    <text x="255" y="72" fill="#15803d" font-weight="bold">5</text><text x="255" y="87" fill="#dc2626">6</text>
+    <text x="262" y="132" fill="#15803d" font-weight="bold">1</text><text x="262" y="147" fill="#dc2626">2</text>
+    <text x="255" y="192" fill="#15803d" font-weight="bold">1</text><text x="255" y="207" fill="#dc2626">2</text>
+    <text x="255" y="312" fill="#15803d" font-weight="bold">7</text><text x="255" y="327" fill="#dc2626">8</text>
+    <text x="262" y="212" fill="#15803d" font-weight="bold">2</text><text x="262" y="227" fill="#dc2626">4</text>
+    <text x="392" y="128" fill="#15803d" font-weight="bold">5</text><text x="392" y="143" fill="#dc2626">5</text>
+    <text x="344" y="152" fill="#15803d" font-weight="bold">2</text><text x="344" y="167" fill="#dc2626">3</text>
+    <text x="344" y="272" fill="#15803d" font-weight="bold">0</text><text x="344" y="287" fill="#dc2626">3</text>
+    <text x="392" y="272" fill="#15803d" font-weight="bold">7</text><text x="392" y="287" fill="#dc2626">7</text>
+  </g>
+  <g font-family="sans-serif" font-size="12">
+    <text x="20" y="30" fill="#15803d" font-weight="bold">green = flow</text>
+    <text x="20" y="48" fill="#dc2626" font-weight="bold">red = capacity</text>
+  </g>
+</svg>
+<p class="caption">Quiz example network (flow / capacity). Numbers reconstructed to match the transcript's description.</p>
+<div class="ans">
+  <p><strong>Answer (flow values):</strong> sa=6, sb=1, sc=5, ad=5, ae=1, be=1, cf=7, dc=2, dt=5, ed=2, fe=0, ft=7 — <strong>total flow 12</strong>.</p>
+</div>
+<h3>Why it is maximum — verification</h3>
+<ul>
+  <li><strong>Conservation:</strong> c: in(5+2)=7 = out 7 ✓ / e: in(1+1)=2 = out 2 ✓ / d: in(5+2)=7 = out(2+5)=7 ✓ /
+  a: in 6 = out(5+1)=6 ✓ / b: in 1 = out 1 ✓ / f: in 7 = out(0+7)=7 ✓.</li>
+  <li><strong>Capacity:</strong> every flow ≤ capacity ✓.</li>
+  <li><strong>Optimality:</strong> the only edges into t are dt and ft, with total capacity 5+7=<strong>12</strong>.
+  Flow into t cannot exceed 12, and we achieved 12 — hence maximum.</li>
+</ul>
+<p><strong>Exam point:</strong> to prove maximality, show the flow equals the total capacity of the edges
+into t (or out of s).</p>
+</section>
+
+<section id="s4">
+<h2>4. Cycles are OK</h2>
+<p>The example contains the cycle c → f → e → d → c. Unlike negative cycles in shortest paths,
+cycles in a flow network keep the problem <strong>well-defined</strong>.</p>
+<ul>
+  <li>A maximum flow never needs the cycle: one unit arriving at d and looping around the cycle back to d
+  can simply <strong>bypass</strong> the cycle and leave d directly.</li>
+  <li>We might want <em>part</em> of a cycle, but we can't know which part in advance.
+  Conclusion: cycles are fine.</li>
+</ul>
+</section>
+
+<section id="s5">
+<h2>5. Removing anti-parallel edges</h2>
+<p>Edges a → b and b → a together are <strong>anti-parallel edges</strong>. We remove them up front,
+because adding forward/backward edges to the residual network later would get confusing otherwise.</p>
+<ul>
+  <li><strong>Transformation:</strong> split b → a (capacity 3) into a length-2 path b → x → a,
+  where x is a new auxiliary vertex and both edges get capacity 3.</li>
+  <li>The two networks are <strong>equivalent</strong> — a max-flow solution converts easily in both directions.</li>
+</ul>
+<svg class="diagram" viewBox="0 0 560 170" role="img" aria-label="Anti-parallel edge transformation">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="60" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="60" y="91" fill="var(--fg)">a</text>
+    <circle cx="200" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="91" fill="var(--fg)">b</text>
+    <circle cx="360" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="360" y="91" fill="var(--fg)">a</text>
+    <circle cx="500" cy="85" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="500" y="91" fill="var(--fg)">b</text>
+    <circle cx="430" cy="30" r="16" fill="var(--bg)" stroke="#f59e0b" stroke-width="3"/><text x="430" y="36" fill="var(--fg)">x</text>
+  </g>
+  <g stroke="#6b7280" stroke-width="2.5">
+    <line x1="78" y1="75" x2="182" y2="75" marker-end="url(#a2)"/>
+    <line x1="182" y1="95" x2="78" y2="95" marker-end="url(#a2)"/>
+    <line x1="378" y1="85" x2="482" y2="85" marker-end="url(#a2)"/>
+    <line x1="490" y1="72" x2="442" y2="42" marker-end="url(#a2)"/>
+    <line x1="418" y1="42" x2="372" y2="72" marker-end="url(#a2)"/>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle" fill="var(--muted)">
+    <text x="130" y="65">a → b</text><text x="130" y="115">b → a (cap 3)</text>
+    <text x="430" y="110">b → x → a (cap 3, 3)</text>
+    <text x="280" y="91" font-size="20" fill="var(--accent)">→</text>
+  </g>
+</svg>
+<p class="caption">Converting anti-parallel edge b → a into a length-2 path via auxiliary vertex x.</p>
+</section>
+
+<section id="s6">
+<h2>6. Naive attempt — why it fails</h2>
+<p><strong>Toy example</strong> (4 vertices: s, a, b, t). Capacities: s→a=10, a→b=10, b→t=10, s→b=7, a→t=7.
+Max flow is 17 (total capacity out of s = into t = 17).</p>
+<p><strong>Naive algorithm:</strong></p>
+<ol>
+  <li>Initialize flow to 0 everywhere.</li>
+  <li>Build the <strong>available-capacity</strong> graph (= capacity − current flow).</li>
+  <li>Find an s–t path P in it (BFS/DFS, any path).</li>
+  <li>c(P) = minimum available capacity along P. Augment c(P) units along P.</li>
+  <li>Repeat until no s–t path remains.</li>
+</ol>
+<p><strong>Failure trace:</strong> picking P = s → a → b → t gives c(P) = min(10,10,10) = 10.
+Flows become sa=10, ab=10, bt=10; those edges have zero available capacity, so no s–t path remains.
+The algorithm stops at <strong>flow 10</strong> while the true maximum is 17 — <strong>suboptimal</strong>!</p>
+<p>The flaw: the available-capacity graph doesn't represent everything possible — in particular,
+there is no way to <strong>undo</strong> (decrease) flow already sent.</p>
+</section>
+
+<section id="s7">
+<h2>7. Key idea — backward edges</h2>
+<p>Reverse-engineering the optimum, we want to augment along <strong>s → b → a → t</strong>.
+s → b and a → t increase flow, but b → a doesn't exist in the original network.</p>
+<div class="card">
+  <p><strong>Pipe/faucet analogy:</strong> sending flow a → b opens the faucet.
+  Sending flow b → a <strong>closes</strong> the faucet — i.e. <strong>decreases</strong> the a → b flow.</p>
+  <p>Since a → b currently carries 10, we can "send" up to 10 units b → a (equivalent to reducing a → b by up to 10).</p>
+</div>
+<p>So instead of the available-capacity graph, we need the <strong>residual network</strong>,
+containing forward edges (remaining capacity) plus backward edges (flow we can take back).</p>
+</section>
+
+<section id="s8">
+<h2>8. Residual network G<sup>f</sup> — definition</h2>
+<p>The residual network G<sup>f</sup> depends on the current flow f. Same vertices; edges depend on f.</p>
+<div class="card">
+  <p>For each edge v → w of the original flow network:</p>
+  <ul>
+    <li><strong>Forward edge:</strong> if there is available capacity (f<sub>vw</sub> &lt; c<sub>vw</sub>),
+    add v → w with residual capacity <strong>c<sub>vw</sub> − f<sub>vw</sub></strong>.</li>
+    <li><strong>Backward edge:</strong> if flow is positive (f<sub>vw</sub> &gt; 0),
+    add the reverse edge w → v with residual capacity <strong>f<sub>vw</sub></strong>.
+    (Sending x units w → v = decreasing v → w flow by x.)</li>
+  </ul>
+  <p>Forward and backward edges can coexist — which is why we removed anti-parallel edges up front (§5).</p>
+</div>
+<svg class="diagram" viewBox="0 0 560 300" role="img" aria-label="Residual network of toy example">
+  <defs>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="70" cy="150" r="16" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="70" y="156" fill="var(--fg)">s</text>
+    <circle cx="280" cy="60" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="280" y="66" fill="var(--fg)">a</text>
+    <circle cx="280" cy="240" r="16" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="280" y="246" fill="var(--fg)">b</text>
+    <circle cx="490" cy="150" r="16" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="490" y="156" fill="var(--fg)">t</text>
+  </g>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="88" y1="150" x2="262" y2="228" marker-end="url(#a3)"/>
+    <line x1="298" y1="60" x2="472" y2="142" marker-end="url(#a3)"/>
+  </g>
+  <g stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="7,4">
+    <line x1="262" y1="228" x2="262" y2="78" marker-end="url(#a4)"/>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="170" y="205" fill="var(--fg)">s→b : 7</text>
+    <text x="392" y="92" fill="var(--fg)">a→t : 7</text>
+    <text x="252" y="155" fill="#f59e0b" font-weight="bold">b→a : 10</text>
+  </g>
+  <g font-family="sans-serif" font-size="13" font-weight="bold">
+    <text x="150" y="262" fill="#f59e0b">- - - backward edge</text>
+    <text x="150" y="282" fill="var(--fg)">→ augment 7 units along s→b→a→t</text>
+  </g>
+</svg>
+<p class="caption">Residual network of the toy example after round 1. s→a, a→b, b→t have zero residual capacity.
+The orange dashed b→a is the backward edge (can take back up to 10 of a→b flow). c(P) = min(7, 10, 7) = 7.</p>
+<p><strong>Round 2:</strong> P = s → b → a → t, c(P) = 7.
+sb = 7, ab = 10 − 7 = 3, at = 7. Total flow = 10 + 7 = <strong>17 = maximum</strong> ✓</p>
+</section>
+
+<section id="s9">
+<h2>9. Ford-Fulkerson algorithm</h2>
+<pre>Ford-Fulkerson(G, s, t):
+    f(e) ← 0 for all edges e
+    loop:
+        build residual network G^f for current flow f
+        find an s–t path P in G^f (BFS/DFS)
+        if no such path: output f and stop
+        c(P) ← minimum residual capacity along P
+        augment c(P) units along P:
+            forward edge (u,v):  f(u,v) ← f(u,v) + c(P)
+            backward edge (u,v): f(v,u) ← f(v,u) − c(P)   # take back flow
+        (repeat)</pre>
+<p><strong>Termination:</strong> stop when the residual network has no s–t path.
+That the resulting flow is a max-flow follows from the <strong>Max-flow = Min-cut theorem</strong> (proved later).</p>
+</section>
+
+<section id="s10">
+<h2>10. Runtime analysis — O(mC)</h2>
+<div class="card warn">
+  <p><strong>⚠ Key assumption: all capacities are integers.</strong> The analysis below needs it.</p>
+</div>
+<h3>Why the integer assumption matters</h3>
+<ul>
+  <li>Each augmentation is c(P) = minimum of residual capacities; with integer capacities, c(P) is an integer.</li>
+  <li>Residual capacities stay integral, so every round increases the flow by <strong>at least 1</strong>.</li>
+</ul>
+<h3>Number of rounds ≤ C</h3>
+<p>Let C = size of the max-flow. Flow grows by ≥ 1 per round → <strong>at most C rounds</strong>.</p>
+<h3>Time per round = O(m)</h3>
+<ul>
+  <li>Updating the residual network: path P has ≤ n−1 edges → <strong>O(n)</strong>.</li>
+  <li>Finding the s–t path: BFS/DFS in <strong>O(n + m)</strong>; assuming m ≥ n−1 this is <strong>O(m)</strong>.</li>
+  <li>Augmenting along P: bounded by <strong>O(m)</strong>.</li>
+  <li>→ <strong>O(m)</strong> per round dominates.</li>
+</ul>
+<div class="ans"><strong>Total runtime: O(mC)</strong> — O(m) per round × at most C rounds.</div>
+</section>
+
+<section id="s11">
+<h2>11. Discussion — pseudo-polynomial and Edmonds-Karp</h2>
+<h3>Pseudo-polynomial</h3>
+<p>Two unpleasant aspects of O(mC):</p>
+<ul>
+  <li>It needs the integer-capacity assumption.</li>
+  <li>Runtime depends on the <strong>output</strong> (C, the magnitude of capacities).
+  Ideally it should depend on their <strong>log</strong>, or be independent of them entirely. (Same situation as Knapsack.)</li>
+</ul>
+<h3>Edmonds-Karp algorithm (1972)</h3>
+<ul>
+  <li>Same paradigm as Ford-Fulkerson, but instead of <em>any</em> s–t path, always take the
+  <strong>shortest path (fewest edges)</strong> in the residual network — found by BFS (edge weights ignored).</li>
+  <li>The number of rounds is provably at most <strong>mn</strong> → total runtime <strong>O(m²n)</strong>.</li>
+  <li>Runtime is independent of the max-flow size, and the <strong>integer assumption is gone</strong>.</li>
+</ul>
+<h3>State of the art</h3>
+<p><strong>Orlin (2013)</strong> achieves <strong>O(mn)</strong> — the current best exact max-flow algorithm
+for general graphs, ~40 years after Edmonds-Karp (1972).</p>
+<table>
+  <tr><th>Algorithm</th><th>Path choice</th><th>Runtime</th><th>Integer assumption</th></tr>
+  <tr><td>Ford-Fulkerson</td><td>Any s–t path (DFS/BFS)</td><td>O(mC)</td><td>Needed</td></tr>
+  <tr><td>Edmonds-Karp</td><td>Shortest s–t path (BFS)</td><td>O(m²n)</td><td>Not needed</td></tr>
+  <tr><td>Orlin (2013)</td><td>—</td><td>O(mn)</td><td>Not needed</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>Checklist</h2>
+<ul class="check">
+  <li>State the two constraints of a valid flow (capacity, conservation).</li>
+  <li>Flow size = out-flow of s = in-flow of t.</li>
+  <li>Explain why flow 12 is maximum in the quiz example (capacity into t sums to 12).</li>
+  <li>Explain why the naive algorithm stalls at 10 (cannot take back flow).</li>
+  <li>Write the forward/backward edge definitions of the residual network.</li>
+  <li>Backward edge intuition: "closing the faucet" = decreasing existing flow.</li>
+  <li>Write the 6 steps of Ford-Fulkerson in order.</li>
+  <li>O(mC) analysis: integer assumption → ≥1 per round → ≤C rounds × O(m).</li>
+  <li>Meaning of pseudo-polynomial: runtime depends on capacity magnitudes.</li>
+  <li>Edmonds-Karp: BFS shortest path, O(m²n), no integer assumption.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  MF1: Ford-Fulkerson Algorithm — review notes based on the lecture transcript
+</div></footer>
+</body>
+</html>
