@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF5: Max-flow Generalization — Review Notes</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>MF5: Max-flow Generalization — Review Notes</h1>
+  <p>Based on this week's lecture transcript</p>
+  <span class="tag">Demand</span><span class="tag">Feasible flow</span>
+  <span class="tag">Reduction</span><span class="tag">Saturating flow</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">Demands</a><a href="#s2">Quiz</a><a href="#s3">Reduction</a>
+  <a href="#s4">Vertices</a><a href="#s5">Old edges</a><a href="#s6">New edges</a>
+  <a href="#s7">t-to-s</a><a href="#s8">Saturating</a><a href="#s9">Forward</a>
+  <a href="#s10">Reverse</a><a href="#s11">Max feasible</a><a href="#s12">Quiz 2</a>
+  <a href="#glossary">Glossary</a><a href="#sum">Checklist</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. Max-flow with demands — feasible flow</h2>
+<p>A generalization of max-flow: every edge e carries a <strong>demand d(e) &gt;= 0</strong>.
+Goal: find a <strong>feasible flow</strong>:</p>
+<div class="card">
+  <ul>
+    <li><strong>d(e) &lt;= f(e) &lt;= c(e)</strong> — flow at least the demand, at most the capacity.</li>
+    <li><strong>Flow conservation</strong> — flow in = flow out at every internal vertex except s, t (as before).</li>
+  </ul>
+</div>
+<p>Plan: 1) decide whether a feasible flow <strong>exists</strong>; 2) if so, augment it to <strong>maximum size</strong>.</p>
+</section>
+
+<section id="s2">
+<h2>2. Quiz — feasible flow example</h2>
+<div class="card q">
+  <p><strong>Q.</strong> A directed graph shows demands (green) and capacities (red) on every edge.
+  Write a valid flow meeting demand and capacity constraints for edges
+  sa, sb, sc, ad, ae, be, cf, dc, dt, ed, fe, ft.</p>
+</div>
+<div class="ans">
+  <p><strong>How to check:</strong> every edge must satisfy <strong>d(e) &lt;= f(e) &lt;= c(e)</strong>,
+  and <strong>flow in = flow out</strong> at every vertex except s and t.
+  (E.g. if (s,a) reads "at least 2, at most 8", then f(sa) must be between 2 and 8.)</p>
+  <p>The transcript's answer slide is an image, not extractable as text — verify with the conditions above.</p>
+</div>
+</section>
+
+<section id="s3">
+<h2>3. Reduction overview — max-flow as a black box</h2>
+<p>Reduce the feasible-flow problem to the <strong>max-flow problem</strong>, using the max-flow
+algorithm as a <strong>black box</strong> (a subroutine whose insides we don't touch):</p>
+<ol>
+  <li>Transform the feasible-flow input (G, c(e), d(e)) via <strong>function g</strong> into a max-flow
+  input (G', c'(e)). Demands disappear, encoded into the graph and capacities.</li>
+  <li>Run black-box max-flow on G' to get a solution f'.</li>
+  <li>Transform f' via <strong>function h</strong> into a feasible flow f for the original problem.</li>
+</ol>
+</section>
+
+<section id="s4">
+<h2>4. Reduction — vertices (add s', t')</h2>
+<p>New directed graph G': keep the original graph G, add a new <strong>source s'</strong> and a new
+<strong>sink t'</strong>. The original s and t become <strong>internal vertices</strong>.</p>
+</section>
+
+<section id="s5">
+<h2>5. Reduction — old edges (capacity shift)</h2>
+<p>Keep G's edges in G' but <strong>shift capacities down by the demand</strong>:</p>
+<div class="ans"><strong>c'(e) = c(e) - d(e)</strong></div>
+<p><strong>Idea:</strong> flow 0 in G' corresponds to flow d(e) in G; i.e. f' is f shifted down by d.
+Non-negative flow in G' means demands met in G; respecting c'(e) in G' means respecting c(e) in G.</p>
+<p>Example (4 vertices): (s,a) with (d=3, c=10) becomes c'=7. (a,t): (7,8) -&gt; c'=1.
+(a,b): (1,5) -&gt; c'=4. (b,t): (2,6) -&gt; c'=4. (s,b): (d=4, c=9) -&gt; c'=5.</p>
+</section>
+
+<section id="s6">
+<h2>6. Reduction — new edges (offsetting the imbalance)</h2>
+<p>Shifting alone breaks validity: zero flow is valid in G', but the corresponding flow in G
+(d(e) on each edge) has, e.g. at vertex a, flow in 3 vs flow out 8 — <strong>not valid</strong>.
+Offset this imbalance with:</p>
+<div class="card">
+  <ul>
+    <li>For each vertex v, edge <strong>s' -&gt; v</strong> with capacity = <strong>total demand into v</strong>
+    (d_in(v) = sum over u of d(uv)).</li>
+    <li>For each vertex v, edge <strong>v -&gt; t'</strong> with capacity = <strong>total demand out of v</strong>
+    (d_out(v) = sum over w of d(vw)).</li>
+  </ul>
+</div>
+<p>Example: s'-&gt;a: 3, s'-&gt;t: 7+2=9, s'-&gt;b: 5, s'-&gt;s: 0; s-&gt;t': 3+4=7, a-&gt;t': 1+7=8, t-&gt;t': 0, b-&gt;t': 2.</p>
+<svg class="diagram" viewBox="0 0 620 300" role="img" aria-label="G' construction">
+  <defs>
+    <marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="236" y1="90" x2="364" y2="90" marker-end="url(#r1)"/>
+    <line x1="236" y1="210" x2="364" y2="210" marker-end="url(#r1)"/>
+    <line x1="220" y1="126" x2="220" y2="174" marker-end="url(#r1)"/>
+    <line x1="380" y1="126" x2="380" y2="174" marker-end="url(#r1)"/>
+    <line x1="236" y1="250" x2="470" y2="160" marker-end="url(#r1)" stroke-dasharray="7 5" stroke="#7c3aed" stroke-width="2.5"/>
+  </g>
+  <g stroke="#2563eb" stroke-width="2.5">
+    <line x1="96" y1="150" x2="184" y2="100" marker-end="url(#r1)"/>
+    <line x1="96" y1="150" x2="184" y2="200" marker-end="url(#r1)"/>
+  </g>
+  <g stroke="#16a34a" stroke-width="2.5">
+    <line x1="416" y1="100" x2="504" y2="150" marker-end="url(#r1)"/>
+    <line x1="416" y1="200" x2="504" y2="150" marker-end="url(#r1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="80" cy="150" r="17" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="80" y="157" fill="var(--fg)">s'</text>
+    <circle cx="200" cy="90" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="97" fill="var(--fg)">s</text>
+    <circle cx="400" cy="90" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="400" y="97" fill="var(--fg)">a</text>
+    <circle cx="200" cy="210" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="217" fill="var(--fg)">b</text>
+    <circle cx="400" cy="210" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="400" y="217" fill="var(--fg)">t</text>
+    <circle cx="520" cy="150" r="17" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="520" y="157" fill="var(--fg)">t'</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="300" y="78" fill="#6b7280">(s,a): c'=7</text>
+    <text x="300" y="200" fill="#6b7280">(b,t): c'=4</text>
+    <text x="140" y="82" fill="#2563eb">s'-&gt;v: d_in(v)</text>
+    <text x="470" y="82" fill="#16a34a">v-&gt;t': d_out(v)</text>
+    <text x="360" y="245" fill="#7c3aed">t-&gt;s: infinite (dashed)</text>
+  </g>
+</svg>
+<p class="caption">G' construction: old edges with c' = c − d, s'-&gt;v (d_in), v-&gt;t' (d_out), t-&gt;s (infinite).</p>
+</section>
+
+<section id="s7">
+<h2>7. Reduction — the t -&gt; s edge (infinite)</h2>
+<p>The original s and t are internal vertices of G', so flow in must equal flow out for both.
+In the original graph there was no flow into s and no flow out of t.
+Fix: flow out of s equals flow into t, so add edge <strong>t -&gt; s with infinite capacity</strong>,
+routing t's outflow back to s. This completes the construction of G'.</p>
+</section>
+
+<section id="s8">
+<h2>8. Saturating flows — D</h2>
+<p><strong>D</strong> = total demand of the original network = sum over e of d(e)
+= sum over v of d_in(v) = sum over v of d_out(v).</p>
+<ul>
+  <li>Total capacity out of s' = sum over v of d_in(v) = D.</li>
+  <li>Total capacity into t' = sum over v of d_out(v) = D.</li>
+  <li>Hence any flow f' in G' has |f'| &lt;= D.</li>
+</ul>
+<div class="ans"><strong>Saturating flow:</strong> a flow with |f'| = D — every edge out of s' and every edge
+into t' is fully saturated. This is a maximum flow.</div>
+<div class="card"><strong>Lemma:</strong> G has a feasible flow iff G' has a saturating flow.</div>
+</section>
+
+<section id="s9">
+<h2>9. Proof (forward) — saturating implies feasible</h2>
+<p>From a saturating flow f', build <strong>f(e) = f'(e) + d(e)</strong> (undo the shift).</p>
+<ul>
+  <li><strong>Demand:</strong> f'(e) &gt;= 0 implies f(e) &gt;= d(e). Done.</li>
+  <li><strong>Capacity:</strong> f'(e) &lt;= c'(e) = c(e) - d(e) implies f(e) &lt;= c(e). Done.</li>
+  <li><strong>Conservation:</strong> f' is valid, so f'_in(v) = f'_out(v).
+  Saturation gives f'(s'-&gt;v) = d_in(v). Algebra:
+  f'_in(v) = d_in(v) + sum over u of (f(uv) - d(uv)) = f_in(v).
+  Similarly f'_out(v) = f_out(v). Hence f_in(v) = f_out(v). Done.</li>
+</ul>
+<p>Key: setting s'-&gt;v capacity to d_in(v) exactly cancels the shift's imbalance.</p>
+</section>
+
+<section id="s10">
+<h2>10. Proof (reverse) — feasible implies saturating</h2>
+<p>From a feasible flow f, build f':</p>
+<ul>
+  <li>Old edges: <strong>f'(e) = f(e) - d(e)</strong> (shift down by demand).</li>
+  <li>s'-&gt;v: fully saturated (d_in(v)); v-&gt;t': fully saturated (d_out(v)) — aiming for saturation.</li>
+  <li><strong>t-&gt;s: flow set to |f|</strong> (the size of f).</li>
+</ul>
+<ul>
+  <li><strong>Non-negative:</strong> f(e) &gt;= d(e) gives f'(e) &gt;= 0. Done.</li>
+  <li><strong>Capacity:</strong> f(e) &lt;= c(e) gives f'(e) &lt;= c(e) - d(e) = c'(e). Done.</li>
+  <li><strong>Conservation:</strong> f'_in(v) = d_in(v) + sum over u of (f(uv) - d(uv)) = f_in(v);
+  f'_out(v) = f_out(v). Since f is valid, f' is valid at every vertex except s', t'
+  (including the original s and t). Done.</li>
+</ul>
+<p>All s'-&gt;v and v-&gt;t' edges saturated gives |f'| = D — <strong>saturating</strong>.</p>
+</section>
+
+<section id="s11">
+<h2>11. Maximum feasible flow — modified residual graph</h2>
+<p>Once a feasible flow f is found, augment it Ford-Fulkerson/Edmonds-Karp style to maximum size.
+Two differences:</p>
+<ol>
+  <li><strong>Start from the feasible flow f</strong>, not the zero flow.</li>
+  <li><strong>Reverse-edge capacities differ:</strong> flow can never drop below demand,
+  so the reducible amount is <strong>f(e) - d(e)</strong>.</li>
+</ol>
+<div class="card">
+  <p>Modified residual graph (current flow f):</p>
+  <ul>
+    <li><strong>Forward edge</strong> v-&gt;w: capacity <strong>c(e) - f(e)</strong> (leftover, as before).</li>
+    <li><strong>Reverse edge</strong> v-&gt;w (when w-&gt;v carries flow): capacity <strong>f(e) - d(e)</strong>
+    (can only decrease down to the demand). Previously this was f(e).</li>
+  </ul>
+  <p>Repeat s–t augmentations until no path remains — a <strong>maximum-size feasible flow</strong>.</p>
+</div>
+</section>
+
+<section id="s12">
+<h2>12. Quiz — reduction example</h2>
+<div class="card q">
+  <p><strong>Q.</strong> Given an input graph G for feasible flow and the reduced graph G'
+  (the purple t-&gt;s edge has infinite capacity, marked N in the figure), compute the capacities in G':
+  (s',a), (s',b), (s',c), (s',d), (s',e), (s',f), (s',t),
+  (a,t'), (b,t'), (c,t'), (d,t'), (e,t'), (f,t').
+  Then: does G' have a saturating flow? Does the original G have a feasible flow?</p>
+</div>
+<div class="ans">
+  <p><strong>Method:</strong></p>
+  <ul>
+    <li>(s',v) = <strong>d_in(v)</strong>: sum of demands on edges into v in G.</li>
+    <li>(v,t') = <strong>d_out(v)</strong>: sum of demands on edges out of v in G.</li>
+    <li>Old edge (u,v) capacity becomes <strong>c - d</strong>.</li>
+    <li>D = sum of d(e). Run max-flow; if |f'| = D it is <strong>saturating</strong>,
+    and the lemma gives a feasible flow in G.</li>
+  </ul>
+  <p>The transcript's answer slide is an image — compute directly with the formulas above.</p>
+</div>
+</section>
+
+<section id="glossary">
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Meaning</th></tr>
+  <tr><td><strong>Demand d(e)</strong></td><td>Minimum flow required on edge e. Non-negative.</td></tr>
+  <tr><td><strong>Feasible flow</strong></td><td>A valid flow with d(e) &lt;= f(e) &lt;= c(e). Existence is the first question.</td></tr>
+  <tr><td><strong>Reduction</strong></td><td>Transforming one problem into another; here feasible flow to max-flow.</td></tr>
+  <tr><td><strong>Black box</strong></td><td>A subroutine used by input/output only. How the max-flow algorithm is used.</td></tr>
+  <tr><td><strong>Shifted capacity c'(e)</strong></td><td>c(e) - d(e). Capacity of old edges in G'. Relation: f' = f - d.</td></tr>
+  <tr><td><strong>d_in(v) / d_out(v)</strong></td><td>Total demand into / out of vertex v. Capacities of s'-&gt;v and v-&gt;t'.</td></tr>
+  <tr><td><strong>Circulation edge (t -&gt; s)</strong></td><td>Infinite-capacity edge making s and t internal vertices.</td></tr>
+  <tr><td><strong>D (total demand)</strong></td><td>Sum over e of d(e). Total capacity out of s' = into t' = D.</td></tr>
+  <tr><td><strong>Saturating flow</strong></td><td>Flow with |f'| = D. All s'-outgoing and t'-incoming edges saturated.</td></tr>
+  <tr><td><strong>Residual graph (modified)</strong></td><td>Forward: c - f; reverse: f - d. Flow can never drop below demand.</td></tr>
+  <tr><td><strong>Augmenting path</strong></td><td>An s–t path in the residual graph; augmenting along it grows the flow.</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>Checklist</h2>
+<ul class="check">
+  <li>Write the feasible-flow definition (d(e) &lt;= f(e) &lt;= c(e) + conservation).</li>
+  <li>Explain the roles of g (input transform) and h (solution transform) in the reduction.</li>
+  <li>Draw the 4-step G' construction (add s'/t', c' = c - d, s'-&gt;v / v-&gt;t', t-&gt;s infinite).</li>
+  <li>Explain why s'-&gt;v capacity is d_in(v) and v-&gt;t' capacity is d_out(v).</li>
+  <li>Define saturating flow and explain |f'| &lt;= D.</li>
+  <li>Write both constructions of the lemma proof (f = f' + d; f' = f - d).</li>
+  <li>Explain max feasible flow via the modified residual graph (reverse = f - d).</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  MF5: Max-flow Generalization — review notes based on the lecture transcript
+</div></footer>
+</body></html>
