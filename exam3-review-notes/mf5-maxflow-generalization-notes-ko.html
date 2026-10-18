@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MF5: Max-flow Generalization — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:640px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>MF5: Max-flow Generalization — 복습 노트</h1>
+  <p>이번 주 강의 트랜스크립트 기반 정리 (핵심 용어는 영어로 표기)</p>
+  <span class="tag">Demand</span><span class="tag">Feasible flow</span>
+  <span class="tag">Reduction</span><span class="tag">Saturating flow</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">Demand</a><a href="#s2">퀴즈</a><a href="#s3">Reduction</a>
+  <a href="#s4">정점</a><a href="#s5">원래 edge</a><a href="#s6">새 edge</a>
+  <a href="#s7">t-to-s</a><a href="#s8">Saturating</a><a href="#s9">방향 1</a>
+  <a href="#s10">방향 2</a><a href="#s11">Max feasible</a><a href="#s12">퀴즈2</a>
+  <a href="#glossary">용어집</a><a href="#sum">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="s1">
+<h2>1. Max-flow with demands — feasible flow</h2>
+<p>Max-flow 문제의 일반화: 각 edge e에 <strong>demand(수요) d(e) &gt;= 0</strong>이 추가된다.
+목표는 <strong>feasible flow(가능 흐름)</strong>를 찾는 것:</p>
+<div class="card">
+  <ul>
+    <li><strong>d(e) &lt;= f(e) &lt;= c(e)</strong> — flow는 demand 이상, capacity 이하.</li>
+    <li><strong>Flow conservation</strong> — s, t를 제외한 모든 internal vertex에서 flow in = flow out (기존과 동일).</li>
+  </ul>
+</div>
+<p>순서: 1) feasible flow가 <strong>존재하는지</strong> 판정, 2) 존재하면 <strong>최대 크기</strong> feasible flow로 augment.</p>
+</section>
+
+<section id="s2">
+<h2>2. 퀴즈 — Feasible flow example</h2>
+<div class="card q">
+  <p><strong>Q.</strong> Directed graph의 각 edge에 demand(녹색)와 capacity(빨강)가 표시되어 있다.
+  Edge sa, sb, sc, ad, ae, be, cf, dc, dt, ed, fe, ft마다 demand와 capacity를 만족하는 valid flow 값을 써라.</p>
+</div>
+<div class="ans">
+  <p><strong>확인 방법:</strong> 각 edge마다 <strong>d(e) &lt;= f(e) &lt;= c(e)</strong>를 만족하고,
+  s, t를 제외한 모든 정점에서 <strong>flow in = flow out</strong>이면 정답.
+  (예: (s,a)가 "최소 2, 최대 8"이면 f(sa)는 2 이상 8 이하여야 한다.)</p>
+  <p>트랜스크립트의 정답 슬라이드는 그림이라 텍스트로 추출되지 않았다 — 위 조건으로 직접 검증하자.</p>
+</div>
+</section>
+
+<section id="s3">
+<h2>3. Reduction 개요 — max-flow를 black box로</h2>
+<p>Feasible flow 문제를 <strong>max-flow 문제로 reduce</strong>한다.
+Max-flow 알고리즘을 <strong>black box</strong>(내부를 건드리지 않는 서브루틴)로 쓴다:</p>
+<ol>
+  <li>Feasible flow 입력 (G, c(e), d(e))을 <strong>변환 함수 g</strong>로 max-flow 입력 (G', c'(e))으로 바꾼다.
+  (Demand는 없애고, capacity와 그래프에 인코딩.)</li>
+  <li>Black box max-flow를 G'에 돌려 해 f'를 얻는다.</li>
+  <li><strong>변환 함수 h</strong>로 f'를 원래 문제의 feasible flow f로 바꾼다.</li>
+</ol>
+</section>
+
+<section id="s4">
+<h2>4. Reduction — 정점 (s', t' 추가)</h2>
+<p>새 directed graph G': 원래 그래프 G를 그대로 두고, 새 <strong>start s'</strong>와 새 <strong>end t'</strong>를 추가.
+원래의 s, t는 이제 <strong>internal vertex</strong>가 된다.</p>
+</section>
+
+<section id="s5">
+<h2>5. Reduction — 원래 edge (capacity shift)</h2>
+<p>G의 edge는 G'에 그대로 두되, capacity를 <strong>demand만큼 shift</strong>한다:</p>
+<div class="ans"><strong>c'(e) = c(e) - d(e)</strong></div>
+<p><strong>아이디어:</strong> G'에서의 flow 0은 G에서의 flow d(e)에 대응.
+즉 f'를 f보다 d만큼 <strong>내린</strong> 것으로 본다. G'에서 flow가 0 이상이면 G에서는 demand를 만족하고,
+G'에서 c'(e)를 지키면 G에서는 c(e)를 지킨다.</p>
+<p>예 (4정점): (s,a)는 (d=3, c=10) → c'=7. (a,t): (7, 8) → c'=1. (a,b): (1, 5) → c'=4.
+(b,t): (2, 6) → c'=4. (s,b): (d=4, c=9) → c'=5.</p>
+</section>
+
+<section id="s6">
+<h2>6. Reduction — 새 edge (불균형 offset)</h2>
+<p>Shift만 하면 문제가 생긴다: G'에서 zero flow는 valid하지만, 대응되는 G의 flow(d(e)씩)는
+정점 a에서 flow in 3 ≠ flow out 8이라 <strong>valid하지 않다</strong>. 이 불균형을 offset하기 위해:</p>
+<div class="card">
+  <ul>
+    <li>각 정점 v마다 edge <strong>s' → v</strong>, capacity = <strong>v로 들어오는 총 demand</strong>
+    (d_in(v) = Σ_u d(uv)).</li>
+    <li>각 정점 v마다 edge <strong>v → t'</strong>, capacity = <strong>v에서 나가는 총 demand</strong>
+    (d_out(v) = Σ_w d(vw)).</li>
+  </ul>
+</div>
+<p>예: s'→a: 3, s'→t: 7+2=9, s'→b: 5, s'→s: 0 / s→t': 3+4=7, a→t': 1+7=8, t→t': 0, b→t': 2.</p>
+<svg class="diagram" viewBox="0 0 620 300" role="img" aria-label="G' construction">
+  <defs>
+    <marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <g stroke="#6b7280" stroke-width="2">
+    <line x1="236" y1="90" x2="364" y2="90" marker-end="url(#r1)"/>
+    <line x1="236" y1="210" x2="364" y2="210" marker-end="url(#r1)"/>
+    <line x1="220" y1="126" x2="220" y2="174" marker-end="url(#r1)"/>
+    <line x1="380" y1="126" x2="380" y2="174" marker-end="url(#r1)"/>
+    <line x1="236" y1="250" x2="470" y2="160" marker-end="url(#r1)" stroke-dasharray="7 5" stroke="#7c3aed" stroke-width="2.5"/>
+  </g>
+  <g stroke="#2563eb" stroke-width="2.5">
+    <line x1="96" y1="150" x2="184" y2="100" marker-end="url(#r1)"/>
+    <line x1="96" y1="150" x2="184" y2="200" marker-end="url(#r1)"/>
+  </g>
+  <g stroke="#16a34a" stroke-width="2.5">
+    <line x1="416" y1="100" x2="504" y2="150" marker-end="url(#r1)"/>
+    <line x1="416" y1="200" x2="504" y2="150" marker-end="url(#r1)"/>
+  </g>
+  <g font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">
+    <circle cx="80" cy="150" r="17" fill="var(--bg)" stroke="#2563eb" stroke-width="3"/><text x="80" y="157" fill="var(--fg)">s'</text>
+    <circle cx="200" cy="90" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="97" fill="var(--fg)">s</text>
+    <circle cx="400" cy="90" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="400" y="97" fill="var(--fg)">a</text>
+    <circle cx="200" cy="210" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="200" y="217" fill="var(--fg)">b</text>
+    <circle cx="400" cy="210" r="17" fill="var(--bg)" stroke="#6b7280" stroke-width="3"/><text x="400" y="217" fill="var(--fg)">t</text>
+    <circle cx="520" cy="150" r="17" fill="var(--bg)" stroke="#16a34a" stroke-width="3"/><text x="520" y="157" fill="var(--fg)">t'</text>
+  </g>
+  <g font-family="sans-serif" font-size="12" text-anchor="middle">
+    <text x="300" y="78" fill="#6b7280">(s,a): c'=7</text>
+    <text x="300" y="200" fill="#6b7280">(b,t): c'=4</text>
+    <text x="140" y="82" fill="#2563eb">s'→v: d_in(v)</text>
+    <text x="470" y="82" fill="#16a34a">v→t': d_out(v)</text>
+    <text x="360" y="245" fill="#7c3aed">t→s: ∞ (점선)</text>
+  </g>
+</svg>
+<p class="caption">G' 구성: 원래 edge는 c' = c − d, s'→v (d_in), v→t' (d_out), t→s (∞).</p>
+</section>
+
+<section id="s7">
+<h2>7. Reduction — t → s edge (무한대)</h2>
+<p>원래의 s, t는 G'에서 internal vertex라 flow in = flow out을 만족해야 한다.
+원래 그래프에서는 s로 들어오는 flow도, t에서 나가는 flow도 없었다.
+해결: s에서 나가는 flow = t로 들어오는 flow이므로, <strong>t → s edge (capacity 무한대)</strong>를 추가해
+t의 outflow를 s로 되돌린다. 이로써 G' 구성이 완성된다.</p>
+</section>
+
+<section id="s8">
+<h2>8. Saturating flow — D</h2>
+<p><strong>D</strong> = 원래 네트워크의 총 demand = Σ_e d(e)
+= Σ_v d_in(v) = Σ_v d_out(v).</p>
+<ul>
+  <li>s'에서 나가는 총 capacity = Σ_v d_in(v) = D.</li>
+  <li>t'로 들어오는 총 capacity = Σ_v d_out(v) = D.</li>
+  <li>따라서 G'의 어떤 flow f'도 |f'| ≤ D.</li>
+</ul>
+<div class="ans"><strong>Saturating flow:</strong> |f'| = D인 flow — s'의 모든 outgoing edge와 t'의 모든 incoming edge가
+완전히 포화된다. 이는 곧 maximum flow다.</div>
+<div class="card"><strong>Lemma:</strong> G에 feasible flow가 존재 ⟺ G'에 saturating flow가 존재.</div>
+</section>
+
+<section id="s9">
+<h2>9. 증명 (방향 1) — saturating → feasible</h2>
+<p>Saturating flow f'에서 <strong>f(e) = f'(e) + d(e)</strong>로 구성 (shift를 되돌림).</p>
+<ul>
+  <li><strong>Demand:</strong> f'(e) ≥ 0 → f(e) ≥ d(e). ✓</li>
+  <li><strong>Capacity:</strong> f'(e) ≤ c'(e) = c(e) − d(e) → f(e) ≤ c(e). ✓</li>
+  <li><strong>Conservation:</strong> f'는 valid하므로 f'_in(v) = f'_out(v).
+  Saturating이므로 f'(s'→v) = d_in(v). 대수 계산:
+  f'_in(v) = d_in(v) + Σ_u(f(uv) − d(uv)) = f_in(v).
+  마찬가지로 f'_out(v) = f_out(v). 따라서 f_in(v) = f_out(v). ✓</li>
+</ul>
+<p>핵심: s'→v edge의 capacity를 d_in(v)로 둔 것이 shift의 불균형을 정확히 상쇄한다.</p>
+</section>
+
+<section id="s10">
+<h2>10. 증명 (방향 2) — feasible → saturating</h2>
+<p>Feasible flow f에서 f'를 구성:</p>
+<ul>
+  <li>원래 edge: <strong>f'(e) = f(e) − d(e)</strong> (demand만큼 내림).</li>
+  <li>s'→v: capacity까지 풀로 (d_in(v)), v→t': 풀로 (d_out(v)) — saturating을 노리므로.</li>
+  <li><strong>t→s: flow를 |f| (f의 크기)로</strong> 둔다.</li>
+</ul>
+<ul>
+  <li><strong>Non-negative:</strong> f(e) ≥ d(e) → f'(e) ≥ 0. ✓</li>
+  <li><strong>Capacity:</strong> f(e) ≤ c(e) → f'(e) ≤ c(e) − d(e) = c'(e). ✓</li>
+  <li><strong>Conservation:</strong> f'_in(v) = d_in(v) + Σ_u(f(uv) − d(uv)) = f_in(v),
+  f'_out(v) = f_out(v). f가 valid이므로 f'도 valid. s', t'를 제외한 모든 정점(원래 s, t 포함)에서 성립. ✓</li>
+</ul>
+<p>모든 s'→v, v→t'가 포화 → |f'| = D → <strong>saturating</strong>.</p>
+</section>
+
+<section id="s11">
+<h2>11. Max feasible flow — residual graph 수정</h2>
+<p>Feasible flow f를 찾았으면, Ford-Fulkerson/Edmonds-Karp처럼 augment해서 최대 크기로 만든다.
+차이점 두 가지:</p>
+<ol>
+  <li><strong>Zero flow가 아니라 feasible flow f에서 시작.</strong></li>
+  <li><strong>Residual graph의 reverse edge capacity가 다르다:</strong>
+  flow를 demand 밑으로 내릴 수 없으므로, 줄일 수 있는 양은 <strong>f(e) − d(e)</strong>다.</li>
+</ol>
+<div class="card">
+  <p>수정된 residual graph (현재 flow f 기준):</p>
+  <ul>
+    <li><strong>Forward edge</strong> v→w: capacity <strong>c(e) − f(e)</strong> (남은 여유, 기존과 동일).</li>
+    <li><strong>Reverse edge</strong> v→w (원래 w→v에 flow가 있을 때): capacity <strong>f(e) − d(e)</strong>
+    (demand까지만 줄일 수 있음). 기존에는 f(e)였다.</li>
+  </ul>
+  <p>s–t augmenting path가 없을 때까지 반복 → <strong>maximum size feasible flow</strong>.</p>
+</div>
+</section>
+
+<section id="s12">
+<h2>12. 퀴즈 — Reduction example</h2>
+<div class="card q">
+  <p><strong>Q.</strong> Feasible flow 입력 그래프 G와 reduction으로 만든 G'이 그림으로 주어졌다
+  (t→s 보라색 edge의 capacity는 무한대, 그림에 N으로 표시). G'의 capacity를 구하라:
+  (s',a), (s',b), (s',c), (s',d), (s',e), (s',f), (s',t), (a,t'), (b,t'), (c,t'), (d,t'), (e,t'), (f,t').
+  그리고: G'에 saturating flow가 있는가? 원래 G에 feasible flow가 있는가?</p>
+</div>
+<div class="ans">
+  <p><strong>풀이법:</strong></p>
+  <ul>
+    <li>(s',v) = <strong>d_in(v)</strong>: G에서 v로 들어오는 모든 edge의 demand 합.</li>
+    <li>(v,t') = <strong>d_out(v)</strong>: G에서 v에서 나가는 모든 edge의 demand 합.</li>
+    <li>원래 edge (u,v)의 capacity는 <strong>c − d</strong>.</li>
+    <li>D = Σ d(e). Max-flow를 돌려 |f'| = D이면 <strong>saturating</strong> → Lemma에 의해 G에 feasible flow 존재.</li>
+  </ul>
+  <p>트랜스크립트의 정답 슬라이드는 그림이라 수치 추출이 안 됐다 — 위 공식으로 직접 계산하자.</p>
+</div>
+</section>
+
+<section id="glossary">
+<h2>용어집 (Glossary)</h2>
+<table>
+  <tr><th>용어 (영어)</th><th>의미</th></tr>
+  <tr><td><strong>Demand d(e)</strong></td><td>edge e에 흘러야 하는 최소 flow. Non-negative.</td></tr>
+  <tr><td><strong>Feasible flow</strong></td><td>d(e) ≤ f(e) ≤ c(e)를 만족하는 valid flow. 존재 판정이 첫 번째 문제.</td></tr>
+  <tr><td><strong>Reduction</strong></td><td>한 문제를 다른 문제로 바꾸는 변환. 여기서는 feasible flow → max-flow.</td></tr>
+  <tr><td><strong>Black box</strong></td><td>내부를 건드리지 않고 입출력만 쓰는 서브루틴. Max-flow 알고리즘을 이렇게 사용.</td></tr>
+  <tr><td><strong>Shifted capacity c'(e)</strong></td><td>c(e) − d(e). G'의 원래 edge capacity. f' = f − d 관계.</td></tr>
+  <tr><td><strong>d_in(v) / d_out(v)</strong></td><td>정점 v로 들어오는 / 나가는 총 demand. s'→v, v→t' edge의 capacity.</td></tr>
+  <tr><td><strong>Circulation edge (t → s)</strong></td><td>s, t를 internal vertex로 만들기 위해 추가한 무한대 capacity edge.</td></tr>
+  <tr><td><strong>D (total demand)</strong></td><td>Σ_e d(e). s' 나가는 총 capacity = t' 들어오는 총 capacity = D.</td></tr>
+  <tr><td><strong>Saturating flow</strong></td><td>|f'| = D인 flow. s' 나가는 edge와 t' 들어오는 edge가 전부 포화.</td></tr>
+  <tr><td><strong>Residual graph (modified)</strong></td><td>Forward는 c − f, reverse는 f − d. Demand 밑으로 못 내리게.</td></tr>
+  <tr><td><strong>Augmenting path</strong></td><td>Residual graph의 s–t path. 따라 augment하면 flow 크기 증가.</td></tr>
+</table>
+</section>
+
+<section id="sum">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>Feasible flow의 정의 (d(e) ≤ f(e) ≤ c(e) + conservation)를 쓸 수 있다.</li>
+  <li>Reduction의 g (입력 변환)와 h (해 변환) 역할을 설명할 수 있다.</li>
+  <li>G' 구성 4단계 (s'/t' 추가, c' = c − d, s'→v/v→t', t→s ∞)를 그릴 수 있다.</li>
+  <li>s'→v capacity = d_in(v), v→t' capacity = d_out(v)인 이유를 설명할 수 있다.</li>
+  <li>Saturating flow의 정의와 |f'| ≤ D를 설명할 수 있다.</li>
+  <li>Lemma 양방향 증명의 구성 (f = f' + d / f' = f − d)을 쓸 수 있다.</li>
+  <li>수정된 residual graph (reverse = f − d)로 max feasible flow를 구하는 과정을 설명할 수 있다.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  MF5: Max-flow Generalization — 트랜스크립트 기반 복습 노트
+</div></footer>
+</body></html>
