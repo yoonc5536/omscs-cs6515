@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Content Quiz 4: Max-Flow — 복습 노트</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --ok:#15803d; --bad:#dc2626;
+  --nav:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --ok:#4ade80; --bad:#f87171;
+    --nav:#0b0f14;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  line-height:1.75}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card.q{border-left:4px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  background:var(--codebg);color:var(--code);padding:1px 6px;border-radius:6px;font-size:.88em}
+pre{background:var(--codebg);color:var(--code);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:.88rem;line-height:1.6}
+svg.diagram{width:100%;max-width:560px;height:auto;display:block;margin:10px auto}
+.caption{font-size:.85rem;color:var(--muted);text-align:center;margin:2px 0 14px}
+.ans{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin:14px 0}
+.check li{list-style:none;margin:8px 0}
+.check li::before{content:"☐ ";color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{
+  nav.toc{display:none}
+  body{font-size:11pt}
+  .wrap{max-width:100%}
+  section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>Content Quiz 4: Max-Flow — 복습 노트</h1>
+  <p>퀴즈 문제 + 정답 + 해설 (핵심 용어는 영어로 표기)</p>
+  <span class="tag">Max-flow</span><span class="tag">Min-cut</span>
+  <span class="tag">Ford-Fulkerson</span><span class="tag">Residual graph</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#q1">Q1</a><a href="#q2">Q2</a><a href="#q3">Q3</a><a href="#q4">Q4</a><a href="#q5">Q5</a>
+  <a href="#q6">Q6</a><a href="#q7">Q7</a><a href="#q8">Q8</a><a href="#q9">Q9</a><a href="#q10">Q10</a>
+  <a href="#sum">요약</a><a href="#check">체크리스트</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="q1">
+<h2>Q1. Capacity를 전부 1씩 늘리면 max flow는 여전히 valid한가?</h2>
+<div class="card q">
+  <p>Flow network G = (V, E), source s, sink t, capacity c(e). f가 max s-t flow다.
+  모든 edge의 capacity를 1씩 증가시킨다. True or False: f는 새 네트워크에서 valid한 flow다.</p>
+  <p>(A) True &nbsp; (B) False</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (A) True.</strong></p>
+  <p>Valid flow의 두 조건을 확인:</p>
+  <ul>
+    <li><strong>Capacity constraint:</strong> 0 ≤ f(e) ≤ c(e) &lt; c(e)+1 이므로 그대로 만족.</li>
+    <li><strong>Flow conservation:</strong> f(e) 자체는 안 바뀌었으므로 그대로 만족.</li>
+  </ul>
+  <p>핵심: validity는 <strong>flow 값</strong>에 대한 조건이지 capacity에 대한 게 아니다. Capacity가 커져도 기존 flow는 그대로 valid.</p>
+</div>
+</section>
+
+<section id="q2">
+<h2>Q2. Capacity를 전부 1씩 늘리면 max flow는 여전히 max인가?</h2>
+<div class="card q">
+  <p>Q1과 같은 설정. True or False: f는 새 네트워크에서도 max s-t flow다.</p>
+  <p>(A) True &nbsp; (B) False</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (B) False.</strong></p>
+  <p><strong>반례:</strong> s → t 단일 edge, capacity 1. Max flow = 1.
+  Capacity를 2로 늘리면 새 max flow는 2인데, 기존 f의 값은 1 → 더 이상 max가 아니다.</p>
+  <svg class="diagram" viewBox="0 0 520 140" role="img" aria-label="Counterexample Q2">
+    <defs>
+      <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+      </marker>
+    </defs>
+    <g font-family="sans-serif" font-size="14" text-anchor="middle">
+      <circle cx="70" cy="70" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="70" y="76" fill="var(--fg)" font-weight="bold">s</text>
+      <circle cx="230" cy="70" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="230" y="76" fill="var(--fg)" font-weight="bold">t</text>
+      <line x1="90" y1="70" x2="210" y2="70" stroke="#6b7280" stroke-width="2.5" marker-end="url(#a1)"/>
+      <text x="150" y="55" fill="var(--muted)" font-size="12">cap 1 → max flow 1</text>
+      <circle cx="330" cy="70" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="330" y="76" fill="var(--fg)" font-weight="bold">s</text>
+      <circle cx="490" cy="70" r="18" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="490" y="76" fill="var(--fg)" font-weight="bold">t</text>
+      <line x1="350" y1="70" x2="470" y2="70" stroke="#6b7280" stroke-width="2.5" marker-end="url(#a1)"/>
+      <text x="410" y="55" fill="var(--muted)" font-size="12">cap 2 → max flow 2 ≠ 1</text>
+    </g>
+  </svg>
+  <p class="caption">Capacity +1 후 기존 flow(값 1)는 valid하지만(Q1) max는 아니다(Q2).</p>
+  <p>교훈: <strong>valid ≠ max</strong>. Q1과 Q2는 한 쌍으로 이 구분을 묻는다.</p>
+</div>
+</section>
+
+<section id="q3">
+<h2>Q3. Unit capacity에서 max flow 값과 edge-disjoint path</h2>
+<div class="card q">
+  <p>Directed flow network, 모든 edge의 capacity c(e) = 1. Max s-t flow 값이 k다. 옳은 것은?</p>
+  <p>(A) G는 s-t edge-disjoint path를 최대 k개 포함한다. &nbsp; (B) G는 s-t edge-disjoint path를 최소 k개 포함한다.<br>
+  (C) G는 s-t edge-disjoint path를 정확히 k개 포함한다. &nbsp; (D) None of the above.</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (C).</strong> <strong>Menger's theorem</strong> (edge 버전): unit capacity 네트워크에서
+  max flow 값 = edge-disjoint s-t path의 최대 개수.</p>
+  <ul>
+    <li><strong>≥ k 방향:</strong> <strong>Integral flow theorem</strong> — 정수 capacity면 정수 max flow가 존재.
+    값을 k인 정수 flow를 <strong>flow decomposition</strong>하면 1씩 흐르는 k개의 s-t path가 나오고,
+    unit capacity라 서로 edge를 공유할 수 없다.</li>
+    <li><strong>≤ k 방향:</strong> k+1개의 edge-disjoint path가 있으면 각각 1씩 흘려보내 flow k+1을 만들 수 있어 max flow = k에 모순.</li>
+  </ul>
+  <p>참고: 엄밀히는 (A)와 (B)도 참인 약한 명제다. (C)가 정리 전체를 담은 intended answer.</p>
+</div>
+</section>
+
+<section id="q4">
+<h2>Q4. Ford-Fulkerson의 최대 iteration 횟수</h2>
+<div class="card q">
+  <p>정수 capacity 네트워크에서 Ford-Fulkerson을 돌린다. Max flow 값이 C다.
+  Main loop의 최대 iteration 횟수는?</p>
+  <p>(A) O(|V|·|E|) &nbsp; (B) O(|E|·C) &nbsp; (C) C &nbsp; (D) |E|</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (C) C.</strong></p>
+  <ul>
+    <li>Capacity가 정수면 각 augmenting path의 <strong>bottleneck</strong>도 정수이므로, 한 번의 augmentation마다 flow가 <strong>최소 1</strong> 증가.</li>
+    <li>Flow 값은 C를 넘을 수 없으므로 iteration은 최대 C번.</li>
+  </ul>
+  <p>주의: (B) O(|E|·C)는 <strong>전체 런타임</strong>이다 (한 iteration당 residual graph 탐색 O(|E|)). "Iteration 횟수"를 물었으므로 (C).</p>
+</div>
+</section>
+
+<section id="q5">
+<h2>Q5. 0이 아닌 flow에서 시작한 Ford-Fulkerson</h2>
+<div class="card q">
+  <p>정수 capacity 네트워크, f는 valid한 정수 s-t flow. Ford-Fulkerson을 0이 아닌 f에서 시작한다.
+  True or False: 알고리즘은 종료하고 max s-t flow를 찾는다.</p>
+  <p>(A) True &nbsp; (B) False</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (A) True.</strong></p>
+  <ul>
+    <li>Residual graph G<sub>f</sub>는 <strong>어떤 feasible flow</strong>에서든 만들 수 있다 (0일 필요 없음).</li>
+    <li>Capacity와 f가 정수면 residual capacity도 정수 → 매 augmentation마다 flow가 최소 1 증가 → 유한 번에 종료.</li>
+    <li>정확성 (augmenting path가 없으면 max flow)은 시작 flow와 무관하게 성립.</li>
+  </ul>
+  <p>MF5의 max feasible flow도 같은 아이디어: feasible flow에서 시작해 수정된 residual graph로 augment.</p>
+</div>
+</section>
+
+<section id="q6">
+<h2>Q6. v(f) = C(A,B)이면?</h2>
+<div class="card q">
+  <p>Cut (A, B) (s ∈ A, t ∈ B), flow f에 대해 v(f) = C(A, B)다. 반드시 참인 것은?</p>
+  <p>(A) f는 maximum flow다. &nbsp; (B) (A, B)는 minimum cut이다.<br>
+  (C) Both A and B. &nbsp; (D) Neither A nor B.</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (C) Both A and B.</strong></p>
+  <p><strong>Weak duality:</strong> 임의의 flow f′와 cut (A′, B′)에 대해 v(f′) ≤ C(A′, B′).</p>
+  <ul>
+    <li>f보다 큰 flow는 존재할 수 없다 (모든 flow ≤ C(A,B) = v(f)) → <strong>f는 max flow</strong>.</li>
+    <li>(A,B)보다 작은 cut은 존재할 수 없다 (모든 cut ≥ v(f) = C(A,B)) → <strong>(A,B)는 min cut</strong>.</li>
+  </ul>
+  <p>Max-flow min-cut 정리의 증명 핵심 아이디어: 같은 값을 달성하는 flow–cut 쌍이 서로를 최적이라 증명한다.</p>
+</div>
+</section>
+
+<section id="q7">
+<h2>Q7. Capacity를 전부 k배하면 max flow는?</h2>
+<div class="card q">
+  <p>정수 capacity, max flow 값 F. 모든 edge의 capacity에 양의 정수 k를 곱하면 새 max flow 값은?</p>
+  <p>(A) F + k &nbsp; (B) k·F &nbsp; (C) F<sup>k</sup> &nbsp; (D) F</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (B) k·F.</strong></p>
+  <ul>
+    <li><strong>≥ kF:</strong> 원래 max flow f*에 k를 곱한 k·f*는 새 네트워크의 feasible flow (값 kF).</li>
+    <li><strong>≤ kF:</strong> 새 네트워크의 임의 flow g를 k로 나누면 원래 네트워크의 feasible flow (값 v(g)/k ≤ F) → v(g) ≤ kF.</li>
+  </ul>
+  <p>Capacity 제약이 선형이라 스케일이 그대로 전달된다.</p>
+</div>
+</section>
+
+<section id="q8">
+<h2>Q8. Flow가 0인 edge를 제거하면 max flow가 바뀌나?</h2>
+<div class="card q">
+  <p>f는 maximum flow, edge e = (u,v)에서 f(e) = 0이다. e를 제거하면 max flow 값이 바뀌는가?</p>
+  <p>(A) 항상 감소한다. &nbsp; (B) 절대 바뀌지 않는다.<br>
+  (C) e가 minimum cut에 속하는지에 달렸다. &nbsp; (D) None of the above.</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (B) 절대 바뀌지 않는다.</strong></p>
+  <ul>
+    <li>f(e) = 0이므로 f는 G − {e}에서도 feasible, 값 v(f) 그대로 → 새 max flow ≥ v(f).</li>
+    <li>Edge 제거는 max flow를 <strong>늘릴 수 없으므로</strong> 새 max flow ≤ v(f).</li>
+    <li>∴ 새 max flow = v(f). 그대로.</li>
+  </ul>
+  <p>함정 (C): e가 min cut에 속해도 f(e) = 0이면 그 cut의 capacity에 기여하지 않으므로 제거해도 min cut 값은 그대로다.</p>
+</div>
+</section>
+
+<section id="q9">
+<h2>Q9. Max flow의 residual graph는 DAG인가?</h2>
+<div class="card q">
+  <p>f는 maximum flow다. Residual graph G<sub>f</sub>는 반드시 DAG인가?</p>
+  <p>(A) Yes &nbsp; (B) No</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (B) No.</strong></p>
+  <p><strong>반례:</strong> 0 &lt; f(e) &lt; c(e)인 edge e = (u,v)가 있으면, residual graph에 forward edge (u,v)와
+  backward edge (v,u)가 <strong>둘 다</strong> 들어간다 → 2-cycle u → v → u. 따라서 DAG가 아니다.</p>
+  <svg class="diagram" viewBox="0 0 480 150" role="img" aria-label="Residual 2-cycle">
+    <defs>
+      <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+      </marker>
+    </defs>
+    <g font-family="sans-serif" font-size="14" text-anchor="middle">
+      <circle cx="90" cy="75" r="20" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="90" y="81" fill="var(--fg)" font-weight="bold">u</text>
+      <circle cx="390" cy="75" r="20" fill="var(--bg)" stroke="var(--fg)" stroke-width="2.5"/><text x="390" y="81" fill="var(--fg)" font-weight="bold">v</text>
+      <line x1="112" y1="65" x2="368" y2="65" stroke="#2563eb" stroke-width="2.5" marker-end="url(#a2)"/>
+      <line x1="368" y1="90" x2="112" y2="90" stroke="#dc2626" stroke-width="2.5" marker-end="url(#a2)"/>
+      <text x="240" y="55" fill="#2563eb" font-size="12">forward: c − f &gt; 0</text>
+      <text x="240" y="112" fill="#dc2626" font-size="12">backward: f &gt; 0</text>
+    </g>
+  </svg>
+  <p class="caption">0 &lt; f(e) &lt; c(e) → residual graph에 양방향 edge → cycle.</p>
+  <p>참고: max flow의 residual graph에는 s–t path가 없다는 것만 보장된다 (그게 max flow의 정의). Cycle은 얼마든지 있을 수 있다.</p>
+</div>
+</section>
+
+<section id="q10">
+<h2>Q10. Min cut은 언제 유지되는가?</h2>
+<div class="card q">
+  <p>(A, B)는 minimum cut. Edge e ∈ E의 capacity를 1 증가시킨다.
+  (A, B)가 minimum cut으로 남음이 보장되는 조건은?</p>
+  <p>(A) e ∈ A×B &nbsp; (B) e ∉ A×B &nbsp; (C) e ∈ B×A &nbsp; (D) Always</p>
+</div>
+<div class="ans">
+  <p><strong>정답: (B) e ∉ A×B.</strong></p>
+  <ul>
+    <li>Cut capacity C(A,B) = Σ<sub>e ∈ A×B</sub> c(e). e ∉ A×B이면 <strong>C(A,B) 불변</strong>.</li>
+    <li>다른 모든 cut의 capacity는 그대로거나 증가 (감소 불가).</li>
+    <li>∴ (A, B)는 여전히 minimum.</li>
+  </ul>
+  <p>참고: (C) e ∈ B×A도 충분조건이다 (B→A edge는 cut capacity에 안 들어가므로). 하지만 (B)가 이를 포함한 가장 일반적인 조건이라 intended answer.</p>
+</div>
+</section>
+
+<section id="sum">
+<h2>요약표</h2>
+<table>
+  <tr><th>#</th><th>주제</th><th>정답</th><th>핵심 포인트</th></tr>
+  <tr><td>1</td><td>Capacity +1 → valid?</td><td><strong>A (True)</strong></td><td>0 ≤ f(e) ≤ c(e) &lt; c(e)+1, conservation 불변</td></tr>
+  <tr><td>2</td><td>Capacity +1 → max?</td><td><strong>B (False)</strong></td><td>s→t 단일 edge 반례. valid ≠ max</td></tr>
+  <tr><td>3</td><td>Unit cap, max flow = k</td><td><strong>C (정확히 k)</strong></td><td>Menger + integral flow + flow decomposition</td></tr>
+  <tr><td>4</td><td>FF 최대 iteration</td><td><strong>C (C)</strong></td><td>한 번에 ≥ 1 증가. O(|E|·C)는 런타임</td></tr>
+  <tr><td>5</td><td>0이 아닌 flow에서 시작</td><td><strong>A (True)</strong></td><td>Residual graph는 어떤 feasible flow에서든 OK</td></tr>
+  <tr><td>6</td><td>v(f) = C(A,B)</td><td><strong>C (Both)</strong></td><td>Weak duality sandwich</td></tr>
+  <tr><td>7</td><td>Capacity k배</td><td><strong>B (k·F)</strong></td><td>양방향 스케일 논증</td></tr>
+  <tr><td>8</td><td>f(e)=0인 edge 제거</td><td><strong>B (불변)</strong></td><td>f가 그대로 feasible + 제거는 max를 못 늘림</td></tr>
+  <tr><td>9</td><td>Residual graph는 DAG?</td><td><strong>B (No)</strong></td><td>0 &lt; f &lt; c → 2-cycle</td></tr>
+  <tr><td>10</td><td>Min cut 유지 조건</td><td><strong>B (e ∉ A×B)</strong></td><td>C(A,B) 불변 + 다른 cut은 비감소</td></tr>
+</table>
+</section>
+
+<section id="check">
+<h2>체크리스트</h2>
+<ul class="check">
+  <li>Valid flow의 두 조건 (capacity, conservation)을 말할 수 있다.</li>
+  <li>Valid ≠ max를 반례로 설명할 수 있다 (Q1/Q2 쌍).</li>
+  <li>Menger's theorem (edge 버전)을 진술하고 양방향을 증명할 수 있다.</li>
+  <li>Ford-Fulkerson의 iteration bound C와 runtime O(mC)를 구분한다.</li>
+  <li>Residual graph가 임의의 feasible flow에서 정의됨을 안다.</li>
+  <li>Weak duality v(f) ≤ C(A,B)와 "같은 값이면 둘 다 최적"을 설명할 수 있다.</li>
+  <li>Capacity 스케일 시 max flow의 변화를 증명할 수 있다.</li>
+  <li>f(e) = 0인 edge 제거가 max flow에 영향 없음을 증명할 수 있다.</li>
+  <li>Residual graph의 2-cycle 예시를 그릴 수 있다.</li>
+  <li>Cut capacity 정의와 min cut 유지 조건을 설명할 수 있다.</li>
+</ul>
+</section>
+
+</div></main>
+<footer><div class="wrap">
+  Content Quiz 4: Max-Flow — 문제·정답·해설 복습 노트
+</div></footer>
+</body>
+</html>
