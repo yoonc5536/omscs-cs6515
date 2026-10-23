@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exam 3 — Consolidated Briefing: Deadline, Format, Black Boxes, Writing Guide</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --nav:#ffffff;
+  --ok:#15803d; --okbg:#f0fdf4; --bad:#dc2626; --badbg:#fef2f2;
+  --warn:#b45309; --warnbg:#fffbeb;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --nav:#0b0f14;
+    --ok:#4ade80; --okbg:#0a1f12; --bad:#f87171; --badbg:#2a0f0f;
+    --warn:#fbbf24; --warnbg:#241a05;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.7}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.deadline{background:var(--badbg);border:2px solid var(--bad);border-radius:14px;padding:18px 22px;margin:18px 0;text-align:center}
+.deadline .big{font-size:1.5rem;font-weight:800}
+.deadline .count{font-size:1.1rem;font-variant-numeric:tabular-nums;color:var(--bad);font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.grid2{grid-template-columns:1fr}}
+.dobox{border-radius:12px;padding:16px 18px;border:1px solid}
+.dobox.ok{background:var(--okbg);border-color:var(--ok)}
+.dobox.bad{background:var(--badbg);border-color:var(--bad)}
+.dobox h3{margin:0 0 8px;font-size:1.05rem}
+.timeline{display:flex;gap:0;margin:18px 0;flex-wrap:wrap}
+.tstep{flex:1;min-width:170px;padding:14px 16px;border:1px solid var(--line);background:var(--card)}
+.tstep:first-child{border-radius:12px 0 0 12px}
+.tstep:last-child{border-radius:0 12px 12px 0}
+.tstep .when{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tstep .what{font-weight:700;margin-top:2px}
+.tstep.hot{border-color:var(--bad);background:var(--badbg)}
+.task{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);
+  border-radius:12px;margin:8px 0;background:var(--card);cursor:pointer}
+.task input{width:20px;height:20px;margin-top:3px;accent-color:var(--accent);flex:none}
+.task.done .t{color:var(--muted);text-decoration:line-through}
+.progresswrap{background:var(--codebg);border-radius:999px;height:14px;overflow:hidden;margin:10px 0 4px}
+.progressbar{height:100%;background:var(--accent);width:0%;transition:width .3s}
+.route{border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;background:var(--card)}
+.route .q{font-weight:700}
+.route .a{margin-top:4px}
+.arrow{color:var(--accent);font-weight:800}
+details{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0;background:var(--card)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:8px 0 4px}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--codebg);color:var(--code);
+  padding:1px 6px;border-radius:6px;font-size:.88em}
+
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+tr.fam td{background:var(--accent-soft);font-weight:800;color:var(--accent)}
+.bbadge{display:inline-block;background:var(--codebg);border:1px solid var(--line);border-radius:8px;
+  padding:1px 8px;font-family:ui-monospace,Consolas,monospace;font-size:.85em;white-space:nowrap}
+.flowrow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:14px 0}
+.fstep{flex:1;min-width:140px;border:1px solid var(--line);background:var(--card);border-radius:12px;
+  padding:12px 14px;text-align:center}
+.fstep.bb{border:2px solid var(--accent);background:var(--accent-soft)}
+.fstep .ft{font-weight:800;font-size:.95rem}
+.fstep .fd{font-size:.82rem;color:var(--muted)}
+.farrow{align-self:center;font-size:1.3rem;color:var(--accent);font-weight:800}
+.partcards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:14px 0}
+@media (max-width:820px){.partcards{grid-template-columns:1fr}}
+.partcard{border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;background:var(--card);padding:14px 16px}
+.partcard h3{margin:0 0 8px;font-size:1rem}
+.nopseudo{background:var(--badbg);border:2px solid var(--bad);border-radius:14px;padding:14px 20px;margin:14px 0;text-align:center;font-weight:800;font-size:1.1rem}
+
+
+main section a{color:var(--accent);text-decoration:none}
+main section a:hover{text-decoration:underline}
+.stmt{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:14px 18px;margin:12px 0}
+.sol{border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:12px 0}
+.sol h4{margin:12px 0 4px;font-size:1rem}
+.sol h4:first-child{margin-top:0}
+.appxhead{background:var(--accent-soft);border:2px solid var(--accent);border-radius:14px;padding:16px 20px;margin:10px 0 4px;text-align:center}
+
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{nav.toc{display:none}section{break-inside:avoid}}
+
+/* --- merged from Doc 2 --- */
+:root{
+  --bg:#ffffff; --fg:#1c1c1e; --muted:#6b7280; --line:#e5e7eb;
+  --card:#f8fafc; --codebg:#f1f5f9; --code:#0f172a;
+  --accent:#2563eb; --accent-soft:#eff6ff; --nav:#ffffff;
+  --ok:#15803d; --okbg:#f0fdf4; --bad:#dc2626; --badbg:#fef2f2;
+  --warn:#b45309; --warnbg:#fffbeb;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0f14; --fg:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+    --card:#111827; --codebg:#0f172a; --code:#e2e8f0;
+    --accent:#60a5fa; --accent-soft:#0b1628; --nav:#0b0f14;
+    --ok:#4ade80; --okbg:#0a1f12; --bad:#f87171; --badbg:#2a0f0f;
+    --warn:#fbbf24; --warnbg:#241a05;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.7}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+header.hero{padding:38px 0 18px;border-bottom:1px solid var(--line)}
+header.hero h1{font-size:1.7rem;margin:0 0 8px;line-height:1.4}
+header.hero p{margin:4px 0;color:var(--muted)}
+.tag{display:inline-block;font-size:.75rem;border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;margin:2px 6px 2px 0;color:var(--muted)}
+nav.toc{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:1px solid var(--line)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 22px;white-space:nowrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:8px}
+nav.toc a:hover{background:var(--card);color:var(--fg)}
+main{padding:26px 0 60px}
+section{margin:34px 0}
+h2{font-size:1.25rem;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:6px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:16px 0}
+@media (max-width:820px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:16px;text-align:center}
+.stat .num{font-size:1.6rem;font-weight:800;color:var(--accent);line-height:1.2}
+.stat .lbl{font-size:.85rem;color:var(--muted);margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{border:1px solid var(--accent);background:var(--accent-soft);border-radius:999px;
+  padding:5px 14px;font-size:.9rem;font-weight:600;cursor:default}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.grid2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+.dobox{border-radius:12px;padding:16px 18px;border:1px solid}
+.dobox.ok{background:var(--okbg);border-color:var(--ok)}
+.dobox.bad{background:var(--badbg);border-color:var(--bad)}
+.dobox h3{margin:0 0 8px;font-size:1.05rem}
+.warnbox{background:var(--warnbg);border:2px solid var(--warn);border-radius:14px;padding:16px 20px;margin:16px 0}
+.warnbox .t{font-weight:800;font-size:1.05rem}
+.emphbox{background:var(--accent-soft);border:2px solid var(--accent);border-radius:14px;padding:18px 22px;margin:16px 0}
+.emphbox .t{font-weight:800;font-size:1.1rem;margin-bottom:6px}
+.emphbox li{font-size:1.03rem;margin:9px 0}
+.timeline{display:flex;gap:0;margin:18px 0;flex-wrap:wrap}
+.tstep{flex:1;min-width:180px;padding:14px 16px;border:1px solid var(--line);background:var(--card)}
+.tstep:first-child{border-radius:12px 0 0 12px}
+.tstep:last-child{border-radius:0 12px 12px 0}
+.tstep .when{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tstep .what{font-weight:700;margin-top:2px}
+.tstep.hot{border-color:var(--bad);background:var(--badbg)}
+.task{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);
+  border-radius:12px;margin:8px 0;background:var(--card);cursor:pointer}
+.task input{width:20px;height:20px;margin-top:3px;accent-color:var(--accent);flex:none}
+.task.done .t{color:var(--muted);text-decoration:line-through}
+.progresswrap{background:var(--codebg);border-radius:999px;height:14px;overflow:hidden;margin:10px 0 4px}
+.progressbar{height:100%;background:var(--accent);width:0%;transition:width .3s}
+details{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0;background:var(--card)}
+summary{cursor:pointer;font-weight:700}
+details p{margin:8px 0 4px}
+details .who{color:var(--muted);font-size:.85rem}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--codebg);color:var(--code);
+  padding:1px 6px;border-radius:6px;font-size:.88em}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:.85rem}
+@media print{nav.toc{display:none}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>Exam 3 — Consolidated Briefing</h1>
+  <p>Sources: Ed Discussion staff posts — "Exam 3 Window Open", "Exam 3 Details", "Graph Theory Guidance", "Usable Black Boxes for Graphs", "Common Course Runtimes", "Graphs Practice Problems", "MST &amp; Max Flow Practice Problems" (CS 6515 O01) + staff follow-up answers · Key points only, deduplicated</p>
+  <span class="tag">CS 6515 Exam 3</span><span class="tag">Deadline</span><span class="tag">Format</span><span class="tag">Black Boxes</span><span class="tag">Writing Guide</span>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#deadline">Deadline</a><a href="#glance">At a glance</a><a href="#scope">Format</a><a href="#blackbox">Black boxes</a><a href="#guide">Writing guide</a><a href="#runtimes">Runtimes</a><a href="#practice">Practice: Graphs</a><a href="#practice2">Practice: MST·Flow</a><a href="#exampractice">Past-exam problems</a><a href="#threads">Prep threads</a><a href="#appx-graphs">Appendix</a>
+</div></nav>
+<main><div class="wrap">
+
+<section id="deadline">
+<h2>⏰ Deadline</h2>
+<div class="deadline">
+  <div class="big">Submission received by 8:00 AM ET — Monday, October 26, 2026</div>
+  <div class="count" id="countdown">counting…</div>
+  <p style="margin:8px 0 0"><strong>No extensions</strong> — not for login issues, proctoring onboarding, or technical problems.
+  Staff's advice: <strong>take the exam well in advance</strong> of the cutoff (by early Sunday at the latest).</p>
+</div>
+<div class="timeline">
+  <div class="tstep"><div class="when">Thu Oct 22 · 10 AM ET</div><div class="what">Window opens</div><div>Communication blackout starts; Ed goes private-only.</div></div>
+  <div class="tstep"><div class="when">Fri – Sun</div><div class="what">Recommended window</div><div>Take it early — leave slack for surprises.</div></div>
+  <div class="tstep hot"><div class="when">Mon Oct 26 · 8:00 AM ET</div><div class="what">Hard cutoff</div><div>Attempts auto-submit at 90 min or at the cutoff, whichever comes first.</div></div>
+</div>
+<script>
+(function(){
+  var target = new Date('2026-10-26T08:00:00-04:00').getTime();
+  var el = document.getElementById('countdown');
+  function tick(){
+    var d = target - Date.now();
+    if (d <= 0){ el.textContent = 'The cutoff has passed.'; return; }
+    var days = Math.floor(d/86400000), h = Math.floor(d%86400000/3600000),
+        m = Math.floor(d%3600000/60000), s = Math.floor(d%60000/1000);
+    el.textContent = '⏳ ' + days + 'd ' + h + 'h ' + m + 'm ' + s + 's left (live)';
+    setTimeout(tick, 1000);
+  }
+  tick();
+})();
+</script>
+</section>
+
+<section id="glance">
+<h2>📌 Exam 3 at a glance</h2>
+<div class="stats">
+  <div class="stat"><div class="num">Weeks 5–8</div><div class="lbl">Scope — lectures + mapped DPV readings</div></div>
+  <div class="stat"><div class="num">2 × 20 pts</div><div class="lbl">Two graph algorithm design problems (free response)</div></div>
+  <div class="stat"><div class="num">90 min</div><div class="lbl">Duration — includes buffer for minor tech issues</div></div>
+  <div class="stat"><div class="num">Canvas + Honorlock</div><div class="lbl">Desktop app · Logistics Quiz + Proctoring Simulation required first</div></div>
+</div>
+<p>The focus is the <strong>lectures</strong>, plus the <strong>DPV readings mapped to those lectures</strong> (see the reading index).
+While the window is open, all discussion of the class with other students is prohibited — not even "that was easy/hard" —
+and Ed is restricted to private, emergency-only posts (ODS, bereavement). Existing Ed posts may still be read for prep.</p>
+</section>
+
+<section id="scope">
+<h2>🎯 Format — the essentials</h2>
+<div class="emphbox">
+  <div class="t">⭐ How the exam is graded</div>
+  <ul style="margin:0">
+    <li><strong>Format:</strong> <strong>two graph algorithm design problems</strong>, free response, <strong>20 points each</strong> — formatted like the written homework questions.</li>
+    <li><strong>Solutions must</strong> follow the published writing guidelines (see <a href="#guide">How to write solutions</a>) and use only the approved black boxes (see <a href="#blackbox">Black boxes</a>).</li>
+    <li><strong>On the exam itself</strong> you can expect this text (per Tim West): <em>"your solution must use the algorithms from class … as a black box subroutine for your algorithm."</em> No comprehensive input/output list will be provided — but the list of available algorithms will be.</li>
+  </ul>
+</div>
+</section>
+
+<section id="blackbox">
+<h2>🧰 Black boxes — your only building blocks</h2>
+<p>Solutions <strong>must</strong> be built from these 12 algorithms. Writing out a black box's implementation, or adding a twist / in-line tracking,
+counts as a <strong>modification</strong> (penalty). Algorithms from outside the course are penalized too, including variations not in the lectures, book, or staff posts.
+Unless noted, outputs are n-sized lists indexed by vertex, readable in O(1).</p>
+<div class="chips">
+  <span class="chip">DFS</span><span class="chip">BFS</span><span class="chip">Dijkstra's</span>
+  <span class="chip">Topological Sort</span><span class="chip">Bellman-Ford</span><span class="chip">Floyd-Warshall</span>
+  <span class="chip">SCC</span><span class="chip">Kruskal's</span><span class="chip">Prim's</span>
+  <span class="chip">Ford-Fulkerson</span><span class="chip">Edmonds-Karp</span><span class="chip">2-SAT</span>
+</div>
+<table>
+  <tr><th style="width:13%">Black box</th><th style="width:22%">Input</th><th style="width:33%">Outputs</th><th style="width:11%">Runtime</th><th style="width:21%">Common uses</th></tr>
+<tr class="fam"><td colspan="5">Traversal &amp; structure</td></tr>
+<tr><td><strong>Depth-First Search</strong></td><td>Simple graph (adjacency list); starting vertex <em>optional</em> (else arbitrary start)</td><td><code>ccnum[]</code> component number · <code>prev[]</code> parent (path reconstruction; nil if unreachable/start) · <code>pre[]</code>, <code>post[]</code> visit numbers</td><td><span class="bbadge">O(n+m)</span></td><td>Connected components · finding a cycle · producing a path</td></tr>
+<tr><td><strong>Topological Sort</strong></td><td>Simple <strong>directed acyclic</strong> graph</td><td><code>order[]</code> vertices in topological order (indexed numerically, not by vertex) · <em>plus all DFS outputs</em></td><td><span class="bbadge">O(n+m)</span></td><td>Topological ordering of a DAG</td></tr>
+<tr><td><strong>Strongly Connected Components</strong></td><td>Simple directed graph</td><td><code>G<sub>SCC</sub></code> metagraph (a DAG; vertices sorted <strong>sink → source</strong>, i.e. reverse topological order) · <em>plus final DFS outputs</em> (ccnum links metagraph vertices back to the original graph)</td><td><span class="bbadge">O(n+m)</span></td><td>Finding SCCs · source &amp; sink SCCs</td></tr>
+<tr><td><strong>Breadth-First Search</strong></td><td>Simple graph; starting vertex</td><td><code>dist[]</code> <strong>unweighted</strong> distance (∞ if unreachable) · <code>prev[]</code></td><td><span class="bbadge">O(n+m)</span></td><td>Reachability · unweighted shortest paths · producing a path</td></tr>
+<tr class="fam"><td colspan="5">Shortest paths</td></tr>
+<tr><td><strong>Dijkstra's</strong></td><td>Simple graph; starting vertex; <strong>non-negative</strong> edge weights</td><td><code>dist[]</code> weighted distance (∞ if unreachable) · <code>prev[]</code></td><td><span class="bbadge">O((n+m) log n)</span></td><td>Weighted shortest paths · reachability</td></tr>
+<tr><td><strong>Bellman-Ford</strong></td><td>Simple graph; starting vertex; edge weights (may be negative)</td><td><code>dist[]</code> (values from the (n−1)th iteration) · <code>prev[]</code> · <code>iter[][]</code> distance table for iterations 0…n</td><td><span class="bbadge">O(nm)</span></td><td>Weighted shortest paths · <strong>negative cycle detection</strong></td></tr>
+<tr><td><strong>Floyd-Warshall</strong></td><td>Simple graph; edge weights</td><td><code>dist[][]</code> all-pairs distances (values from the nth iteration) · <code>iter[][][]</code> table for iterations 0…n</td><td><span class="bbadge">O(n³)</span></td><td>All-pairs shortest paths · negative cycle detection</td></tr>
+<tr class="fam"><td colspan="5">Minimum spanning trees — input: connected, undirected graph + edge weights</td></tr>
+<tr><td><strong>Kruskal's</strong></td><td>Connected undirected graph; edge weights</td><td><code>edges[]</code> — the n−1 edges of an MST</td><td><span class="bbadge">O(m log n)</span></td><td>Producing an MST</td></tr>
+<tr><td><strong>Prim's</strong></td><td>Connected undirected graph; edge weights</td><td><code>prev[]</code> — parents define the MST edges (start chosen arbitrarily, parent nil)</td><td><span class="bbadge">O(m log n)</span></td><td>Producing an MST</td></tr>
+<tr class="fam"><td colspan="5">Max flow — input: connected, directed graph + source s + sink t</td></tr>
+<tr><td><strong>Ford-Fulkerson</strong></td><td>Connected directed graph; <strong>positive integer</strong> capacities</td><td><code>flow[]</code> flow per edge · <code>C</code> max-flow value</td><td><span class="bbadge">O(mC)</span></td><td>Max flow</td></tr>
+<tr><td><strong>Edmonds-Karp</strong></td><td>Connected directed graph; positive capacities</td><td><code>flow[]</code> · <code>C</code> max-flow value</td><td><span class="bbadge">O(nm²)</span></td><td>Max flow (polynomial)</td></tr>
+<tr class="fam"><td colspan="5">Logic</td></tr>
+<tr><td><strong>2-SAT</strong></td><td>Boolean formula in CNF, each clause ≤ 2 literals; n variables, m clauses</td><td><code>assignments[]</code> truth value per variable — or <code>"NO"</code> if unsatisfiable · <em>plus all SCC outputs</em></td><td><span class="bbadge">O(n+m)</span></td><td>Satisfiability via graphs · turning a task into a Boolean formula</td></tr>
+</table>
+<div class="card">
+  <p style="margin-top:0"><strong>Fine print worth remembering</strong></p>
+  <ul style="margin-bottom:0">
+    <li><strong>DFS:</strong> <code>visited[]</code> is internal — not accessible after the run. Vertices reachable from the start get ccnum = 1.</li>
+    <li><strong>SCC:</strong> the metagraph's first vertex corresponds to all v with ccnum[v] = 1 from the DFS on the original graph — that's how you map results back.</li>
+    <li><strong>Topological Sort &amp; 2-SAT</strong> also hand you <em>all outputs of their underlying DFS / SCC runs</em>.</li>
+    <li><strong>Output naming:</strong> your own notation is acceptable if clearly defined — but staff's advice is "why re-define it?" Stick to the standard names.</li>
+    <li><strong>Sorting is not a black box.</strong> There is no bucket-sort black box (it exists only inside Topological Sort), and pre[]/post[] come with <strong>no guaranteed order</strong> — the grader may assume a different one than you do. If you need sorted order, describe the approach fully in your own pre/post-processing. <span style="color:var(--muted)">(Staff follow-ups)</span></li>
+  </ul>
+</div>
+</section>
+
+<section id="guide">
+<h2>✍️ How to write solutions</h2>
+<p style="color:var(--muted)">Every graph problem in this course is a <strong>reduction</strong>:</p>
+<div class="flowrow">
+  <div class="fstep"><div class="ft">Problem input</div><div class="fd">what you're given</div></div>
+  <div class="farrow">→</div>
+  <div class="fstep"><div class="ft">Modify / build a graph</div><div class="fd">transform the input, or create a graph that represents it</div></div>
+  <div class="farrow">→</div>
+  <div class="fstep bb"><div class="ft">BLACK BOX</div><div class="fd">unmodified — run it as-is</div></div>
+  <div class="farrow">→</div>
+  <div class="fstep"><div class="ft">Modify the output</div><div class="fd">use the black box's outputs, possibly transformed</div></div>
+  <div class="farrow">→</div>
+  <div class="fstep"><div class="ft">Solution</div><div class="fd">answer to the original problem</div></div>
+</div>
+<div class="nopseudo">🚫 NO PSEUDOCODE — YOU WILL LOSE A LOT OF POINTS</div>
+<div class="card">
+  <p style="margin-top:0"><strong>The rules</strong></p>
+  <ul style="margin-bottom:0">
+    <li>Use <strong>only</strong> the approved black boxes — and you <strong>must</strong> use at least one.</li>
+    <li><strong>Never modify</strong> a black box. Re-creating one with modifications counts as modifying it.</li>
+    <li>All graphs are in <strong>adjacency list format</strong>. You may assume you always have <strong>n</strong> = |V| and <strong>m</strong> = |E| for runtime analysis.</li>
+  </ul>
+</div>
+<h3 style="margin:20px 0 4px">The 3 required parts of every solution</h3>
+<div class="partcards">
+  <div class="partcard"><h3>(a) Algorithm</h3>
+    <ul>
+      <li>Describe <em>how</em>, in <strong>words — narrative/paragraph form</strong>. Bulleted steps are fine; pseudocode is not. (Line-by-line restatement of code as words still counts as pseudocode — watch out for deeply nested bullets.)</li>
+      <li>Any <strong>modifications to the input</strong>.</li>
+      <li>The <strong>black box(es)</strong> used: what's passed in, what's used from the output.</li>
+      <li>Any <strong>modifications to the output</strong>.</li>
+      <li>The <strong>final return</strong>.</li>
+    </ul></div>
+  <div class="partcard"><h3>(b) Justification of Correctness</h3>
+    <ul>
+      <li>Describe <em>why</em> it works, in words (narrative).</li>
+      <li><strong>Not</strong> a formal inductive proof — informal justification is OK.</li>
+      <li>Explain how the black boxes solve your problem, and how your input/output changes get you what you want.</li>
+    </ul></div>
+  <div class="partcard"><h3>(c) Runtime Analysis</h3>
+    <ul>
+      <li>Analyze <strong>all</strong> steps in <strong>worst-case Big-O</strong> — always, in this course.</li>
+      <li>Known black-box runtimes may be <strong>asserted without justification</strong>; pre/post-processing <strong>must</strong> be analyzed.</li>
+      <li>Give a final, fully simplified Big-O. If a target runtime is specified, you must meet it; otherwise faster = more credit.</li>
+      <li>Use the <strong>tightest</strong> bound: an O(n+m) operation stays O(n+m) (don't inflate to O(n²) unless the graph is known dense, e.g. a clique). If the graph is a tree, m = n−1 so it collapses to O(n). Black-box runtimes themselves need not be simplified.</li>
+    </ul></div>
+</div>
+<div class="card">
+  <p style="margin-top:0"><strong>Graph defaults</strong> (unless a problem says otherwise): simple graphs (no multi-edges/self-loops), adjacency list format (DPV 3.1.1) —
+  an array of vertices pointing to linked lists of neighbors, indexable by vertex. A graph may be connected or disconnected, directed or undirected, sparse or dense —
+  <strong>assume any of these could be true</strong> (staff confirmed: you may <em>not</em> assume sparse). Exceptions: MST problems → connected &amp; undirected; flow networks → connected &amp; directed.</p>
+  <p><strong>Common actions you may state without details</strong> (each assumed O(n+m)):</p>
+  <ul style="margin-bottom:0">
+    <li>"Reverse the edges in the graph."</li>
+    <li>"Create a copy of G and call it G<sub>Copy</sub>."</li>
+    <li>"Create a copy of G called G<sub>Even</sub> that only keeps edges with even numbered weights."</li>
+    <li>"Create a copy of G called G<sub>K</sub> that only keeps vertices with a degree &gt; k."</li>
+    <li>"Create a residual graph of G called G<sub>rs</sub> that uses the flows from our run of EK."</li>
+  </ul>
+</div>
+<div class="warnbox">
+  <div class="t">⚠️ Two traps from the staff follow-ups</div>
+  <ul style="margin-bottom:0">
+    <li><strong>No instrumenting a black box while it runs.</strong> You can't count things "every time DFS encounters a red vertex," and you can't run "BFS but ignoring edges to black vertices." Your work happens <strong>before</strong> the run (inputs) and <strong>after</strong> the run (outputs) — never during.</li>
+    <li><strong>No assuming sparse graphs.</strong> Worst-case analysis must survive dense graphs (m = O(n²)) unless the problem states otherwise.</li>
+  </ul>
+</div>
+</section>
+
+
+<section id="runtimes">
+<h2>⏱️ Common graph runtimes</h2>
+<p style="color:var(--muted)">From the staff's "Common Course Runtimes" post — the <strong>Graph</strong> section only.
+Graphs are adjacency lists: an indexable list of vertices, each pointing to a linked list of neighbors. n and m are assumed known.
+All runtimes are worst-case, fully simplified Big-O; if your solution gives no special handling, these defaults prevail.</p>
+<table>
+  <tr><th style="width:34%">Operation</th><th style="width:13%">Runtime</th><th>Why / notes</th></tr>
+  <tr><td><strong>Traverse the whole graph</strong> — reverse, copy, subgraph, anything working with all vertices and edges</td><td><span class="bbadge">O(n+m)</span></td><td>The standard cost of the "common actions" in the writing guide.</td></tr>
+  <tr><td><strong>Single vertex</strong> v — find, read, remove</td><td><span class="bbadge">O(1)</span></td><td>Removal includes constant-time invalidation of its incident edges (staff convention).</td></tr>
+  <tr><td><strong>All (or a subset of) vertices</strong> — find, read, remove</td><td><span class="bbadge">O(n)</span></td><td>Iterating the top-level vertex array.</td></tr>
+  <tr><td><strong>Single edge</strong> e = (u,v) — find, read, remove</td><td><span class="bbadge">O(n)</span></td><td>You may have to scan up to n entries in u's adjacency list to find v.</td></tr>
+  <tr><td><strong>All edges</strong> — find, read, remove</td><td><span class="bbadge">O(n+m)</span></td><td>Edges live inside each vertex's list, so this is a full traversal.</td></tr>
+  <tr><td><strong>Property of a vertex/edge you already hold</strong> — weight, color, cost, capacity, flow</td><td><span class="bbadge">O(1)</span></td><td>Assumes the find cost above was already paid. (Iterating the parallel weight/flow lists themselves is O(m).)</td></tr>
+</table>
+<div class="card">
+  <p style="margin-top:0"><strong>Simplifications when connectivity is known</strong></p>
+  <ul style="margin-bottom:0">
+    <li><strong>Connected</strong> (m ≥ n−1): &nbsp;O(n+m) = O(m+m) = <strong>O(m)</strong></li>
+    <li><strong>Clique</strong> (m = n(n−1)/2): &nbsp;O(n+m) = O(n+n²) = <strong>O(n²)</strong></li>
+  </ul>
+</div>
+<div class="warnbox">
+  <div class="t">⚠️ From the staff follow-ups</div>
+  <ul style="margin-bottom:0">
+    <li><strong>Degree is not a free O(1) property.</strong> Computing a vertex's degree means scanning its adjacency list — only a check like "is out-degree zero?" can short-circuit. Computing in-degrees for <em>all</em> vertices is O(n+m) with a counter array.</li>
+    <li><strong>The single-edge O(n) surprises people.</strong> Finding one specific edge (u,v) is <em>not</em> O(1) — the linked list for u may hold up to n neighbors.</li>
+  </ul>
+</div>
+</section>
+
+
+<section id="practice">
+<h2>🏋️ Practice problems — Graphs (DPV Ch. 3 &amp; 4)</h2>
+<p style="color:var(--muted)">From the staff's "Graphs Practice Problems" post (Tim West). Per staff follow-ups, <strong>all of these — and the MST &amp; Max Flow practice set — are fair game for the exam</strong>;
+expect the exam to focus on problems requiring the full Algorithm / Justification / Runtime write-up.
+<strong>[📝 PDF]</strong> = written solution posted on Ed under Resources · <strong>[🎥 Video]</strong> = recorded video solution · solutions typically release the Thursday of the week posted.
+(Some book printings vary in numbering — the post gives an excerpt to identify the intended problem.)</p>
+<div class="grid2">
+  <div class="card">
+    <h3 style="margin-top:0">Chapter 3 — DFS, Topological Sort, SCC</h3>
+    <ul style="margin-bottom:0">
+      <li><strong>3.1</strong> — Perform DFS on the given graph</li>
+      <li><strong>3.2</strong> — Perform DFS on each of several graphs</li>
+      <li><strong>3.3</strong> 📝 — DFS-based topological ordering · <a href="#sol-33">solution ↓</a></li>
+      <li><strong>3.4</strong> 📝 — Run the SCC algorithm on directed graphs · <a href="#sol-34">solution ↓</a></li>
+      <li><strong>3.5</strong> 📝 — Linear-time algorithm: reverse of a graph in adjacency list format · <a href="#sol-35">solution ↓</a></li>
+      <li><strong>3.7 (a–c)</strong> 🎥 — Bipartite graphs</li>
+      <li><strong>3.8</strong> — Pouring Water</li>
+      <li><strong>3.11</strong> — Design a linear-time algorithm…</li>
+      <li><strong>3.15</strong> 📝 — Computopia: all streets one-way (police department) · <a href="#sol-315">solution ↓</a></li>
+      <li><strong>3.16</strong> 🎥 — CS curriculum prerequisites <span style="color:var(--muted)">(two solutions exist: a modified BFS — outside course scope — and one with a propagation step)</span></li>
+      <li><strong>3.22</strong> — Is there a vertex from which all other vertices are reachable?</li>
+      <li><strong>3.24</strong> — A linear-time algorithm for the given task</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Chapter 4 — BFS, Dijkstra's, Shortest Paths</h3>
+    <ul style="margin-bottom:0">
+      <li><strong>4.1</strong> — Run Dijkstra's algorithm…</li>
+      <li><strong>4.2</strong> — The same, with Bellman-Ford</li>
+      <li><strong>4.3</strong> — Squares</li>
+      <li><strong>4.8</strong> — Professor F. Lake suggests…</li>
+      <li><strong>4.11</strong> — Directed graph with positive edge lengths…</li>
+      <li><strong>4.12</strong> 🎥 — An O(|V|²) algorithm… <span style="color:var(--muted)">(ignore the stated target runtime — it relies on a variation outside the course scope; O((n+m) log n) is a good goal, per staff)</span></li>
+      <li><strong>4.13</strong> 🎥 — A set of cities…</li>
+      <li><strong>4.14</strong> 📝 — Shortest path through a given vertex · <a href="#sol-414">solution ↓</a></li>
+      <li><strong>4.20</strong> — A network of roads…</li>
+      <li><strong>4.21</strong> — Shortest paths applied to currency trading</li>
+    </ul>
+  </div>
+</div>
+<div class="card">
+  <p style="margin-top:0"><strong>Tips from the discussion</strong></p>
+  <ul style="margin-bottom:0">
+    <li><strong>Reachability checks are not pseudocode:</strong> writing <code>if dist[v] != inf</code> in your narrative to determine reachability from BFS output is fine (the official solutions do exactly this). <span style="color:var(--muted)">(Tim West)</span></li>
+    <li><strong>Model explicitly in the Justification:</strong> when the input isn't given as a graph, say so — e.g. "This algorithm works because by modeling the original problem as a directed graph…" Staff's standing advice: more correct explanation beats less. <span style="color:var(--muted)">(Tim West)</span></li>
+    <li><strong>Finding one vertex's component is O(1), not a scan:</strong> to locate the SCC containing a specific vertex (e.g. town hall in 3.15), just read <code>ccnum[town hall]</code> from the SCC black box's DFS outputs — don't scan all vertices.</li>
+    <li><strong>Dense graphs count:</strong> the 4.11 discussion is a reminder that worst case means m can be n² — an O(n(n+m) log n) solution becomes O(n³ log n) and misses the target.</li>
+  </ul>
+</div>
+</section>
+
+
+<section id="practice2">
+<h2>🏋️ Practice problems — MST &amp; Max Flow (DPV Ch. 5 &amp; 7)</h2>
+<p style="color:var(--muted)">From the staff's "MST &amp; Max Flow Practice Problems" post (Tim West) — same conventions as the Graphs set:
+<strong>[📝 PDF]</strong> = written solution on Ed Resources · <strong>[🎥 Video]</strong> = video solution · released the Thursday of the posting week.</p>
+<div class="grid2">
+  <div class="card">
+    <h3 style="margin-top:0">MST — Chapters 4 &amp; 5</h3>
+    <ul style="margin-bottom:0">
+      <li><strong>5.1</strong> 📝 — Run Kruskal's · <a href="#sol-51">solution ↓</a></li>
+      <li><strong>5.2</strong> 📝 — Run Prim's &amp; Kruskal's with path compression · <a href="#sol-52">solution ↓</a></li>
+      <li><strong>5.5</strong> — Undirected graph with nonnegative weights w<sub>e</sub> ≥ 0…</li>
+      <li><strong>5.6</strong> — Let G = (V,E) be an undirected graph…</li>
+      <li><strong>5.7</strong> — Maximum spanning tree</li>
+      <li><strong>5.9</strong> 📝 — Statements about MSTs (true/false style) · <a href="#sol-59">solution ↓</a></li>
+      <li><strong>5.20</strong> 🎥 — A linear-time algorithm… <span style="color:var(--muted)">(feedback edge set version not included here)</span></li>
+      <li><strong>5.22</strong> — Develop a new MST algorithm from the <strong>cycle property</strong> (the heaviest edge in any cycle can be excluded — a reverse-delete algorithm)</li>
+      <li><strong>5.23</strong> 🎥 — Given G with positive edge weights and an MST T…</li>
+      <li><strong>5.24</strong> — Light spanning trees with special properties</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Max Flow — Chapter 7</h3>
+    <ul style="margin-bottom:0">
+      <li><strong>7.10</strong> 📝 — Find the max flow <em>and a matching cut</em> for the given network · <a href="#sol-710">solution ↓</a></li>
+      <li><strong>7.17</strong> 📝 — A network with edge capacities… · <a href="#sol-717">solution ↓</a></li>
+      <li><strong>7.18 (a, b)</strong> — Common variations of the max-flow problem</li>
+      <li><strong>7.19</strong> 📝 — Verify a claimed max-flow solution · <a href="#sol-719">solution ↓</a></li>
+      <li><strong>7.21</strong> 🎥 — Critical edge</li>
+      <li><strong>7.22</strong> 🎥 — A network whose edges have integer capacities…</li>
+      <li><strong>7.24</strong> — Direct bipartite matching <span style="color:var(--muted)">(marked "extra challenge!" in the post)</span></li>
+    </ul>
+  </div>
+</div>
+<div class="card">
+  <p style="margin-top:0"><strong>Tips from the discussion</strong></p>
+  <ul style="margin-bottom:0">
+    <li><strong>Sorting by post-order is linear — no O(n log n) needed:</strong> for 5.20, staff confirm the sort is the <em>direct-indexing (counting) sort</em> from the Topological Sort lecture — post numbers fall in a known range, and DFS can emit vertices already in order as it finishes them. <span style="color:var(--muted)">(Tim West)</span></li>
+    <li><strong>Custom arrays indexed by edge are OK:</strong> a <code>match[]</code> indexed by edges with O(1) access aligns with black-box outputs like <code>flow[]</code>; a vertex-indexed array storing another vertex aligns with <code>prev[]</code>. <span style="color:var(--muted)">(Tim West)</span></li>
+    <li><strong>7.24 is deliberately hard:</strong> it's labeled an extra challenge; the thread consensus is that exam difficulty sits in the middle — but technically, anything assigned is fair game.</li>
+  </ul>
+</div>
+</section>
+
+
+<section id="exampractice">
+<h2>🎓 Past-exam practice problems — index</h2>
+<p style="color:var(--muted)">From the "CS6515 Exam 3 OMS Practice Problems" set (actual past-exam style). Full statements and solutions are in
+<a href="#appx-exam">Appendix C</a> — the official set ships without solutions, so the solutions there were written for this document in the course format.</p>
+<div class="card">
+  <ul style="margin:0">
+    <li><strong>P1.</strong> <a href="#sol-p1">Red/blue edges</a> — among s–t paths with the fewest red edges, find one with the fewest blue edges</li>
+    <li><strong>P2.</strong> <a href="#sol-p2">One more edge</a> — update a max flow after adding a single unit-capacity edge, faster than recomputing</li>
+    <li><strong>P3.</strong> <a href="#sol-p3">U as leaves</a> — a spanning tree in which every vertex of U is a leaf</li>
+    <li><strong>P4.</strong> <a href="#sol-p4">Hamiltonian path in a DAG</a> — does a path visit every vertex?</li>
+    <li><strong>P5.</strong> <a href="#sol-p5">Growing circles</a> — blue vs red paint spread; which color ends in the majority?</li>
+  </ul>
+</div>
+</section>
+
+<section id="threads">
+<h2>📚 Prep threads worth rereading</h2>
+<div class="card">
+  <ul style="margin:0">
+    <li><strong>Exam 3 Details</strong> (pinned) — the complete logistics &amp; proctoring rules</li>
+    
+    
+    
+    <li><strong>Exam 3 Prep Guidance</strong> · <strong>Exam 3 practice problems</strong> · <strong>Flow Runtimes</strong> · <strong>Improving Explanations and Justifications</strong></li>
+    <li>Dr. Brito's extra practice set — in his Office Hours thread</li>
+    <li><strong>Content Quiz 4: Max Flow</strong> (Tim West) — the quiz thread</li>
+  </ul>
+  <p style="color:var(--muted);margin-bottom:0">The Graph Theory Guidance, Usable Black Boxes, Common Course Runtimes (graph section), Graphs Practice Problems, and MST &amp; Max Flow Practice Problems posts are summarized in the sections above.</p>
+</div>
+</section>
+
+
+<div class="appxhead"><strong style="font-size:1.2rem">📎 Appendix — Problems &amp; Solutions</strong><br>
+<span style="color:var(--muted)">Full statements and solutions for the indexed practice problems. A &amp; B reproduce the official
+solution PDFs (HW3 / HW4 practice solutions, CS6515 Fall 2026); C contains solutions written for this document.</span></div>
+
+<section id="appx-graphs">
+<h2>Appendix A · Graphs problems (DPV Ch. 3–4)</h2>
+
+<h3 id="sol-33">Problem 3.3 — Topological Ordering</h3>
+<div class="stmt"><strong>Statement.</strong> Run the DFS-based topological ordering algorithm on the given graph (see DPV).
+Whenever you have a choice of vertices to explore, always pick the one that is alphabetically first.</div>
+<div class="sol">
+  <h4>(a) Pre- and post-numbers</h4>
+  <table>
+    <tr><th>Node</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th></tr>
+    <tr><td>pre</td><td>1</td><td>15</td><td>2</td><td>3</td><td>11</td><td>4</td><td>5</td><td>7</td></tr>
+    <tr><td>post</td><td>14</td><td>16</td><td>13</td><td>10</td><td>12</td><td>9</td><td>6</td><td>8</td></tr>
+  </table>
+  <h4>(b) Sources and sinks</h4>
+  <p>Two sources (A and B) and two sinks (G and H).</p>
+  <h4>(c) Topological ordering found</h4>
+  <p>Reading post-numbers in decreasing order: <strong>B, A, C, E, D, F, H, G</strong>.</p>
+  <h4>(d) How many topological orderings exist?</h4>
+  <p>Every ordering has the form [A B] C [D E] F [G H], with each bracketed pair in either order:
+  2 · 2 · 2 = <strong>8</strong> orderings.</p>
+</div>
+
+<h3 id="sol-34">Problem 3.4 — SCC Algorithm</h3>
+<div class="stmt"><strong>Statement.</strong> Run the strongly connected components algorithm on the given directed graphs G.
+When doing DFS on G<sup>R</sup>: whenever there is a choice of vertices to explore, always pick the one that is alphabetically first.</div>
+<div class="sol">
+  <h4>(a) Order in which the SCCs are found</h4>
+  <p>(i) {C, D, F, J}, {G, H, I}, {A}, {E}, {B} &nbsp;·&nbsp; (ii) {D, F, G, H, I}, {C}, {A, B, E}</p>
+  <h4>(b) Source and sink SCCs</h4>
+  <p>(i) Sources: {E}, {B}. Sink: {C, D, F, J}. &nbsp;·&nbsp; (ii) Source: {A, B, E}. Sink: {D, F, G, H, I}.</p>
+  <h4>(c) Metagraph</h4>
+  <p>Drawn in the official solution PDF (one meta-node per SCC above, edges inherited from G).</p>
+  <h4>(d) Minimum edges to add to make the graph strongly connected</h4>
+  <p>(i) <strong>Two</strong>: one from any vertex in {C, D, F, J} to B, and one from any vertex in {C, D, F, J} to E.
+  (ii) <strong>One</strong>: from any vertex in {D, F, G, H, I} to any vertex in {A, B, E}.</p>
+</div>
+
+<h3 id="sol-35">Problem 3.5 — Reverse of a Graph</h3>
+<div class="stmt"><strong>Statement.</strong> The reverse of a directed graph G = (V, E) is G<sup>R</sup> = (V, E<sup>R</sup>) with
+E<sup>R</sup> = {(v, u) : (u, v) ∈ E}. Give a linear-time algorithm for computing the reverse of a graph in adjacency list format.</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>Initialize an empty graph G<sup>R</sup> (adjacency list form) on n = |V| vertices. Then, for each u ∈ V, iterate through the
+  neighbors of u; for each neighbor v of u in G, add u as a neighbor of v in G<sup>R</sup>.</p>
+  <h4>(b) Justification of Correctness</h4>
+  <p>The reverse graph has the same vertices with every edge direction flipped. Adding the directed edge (v, u) for each edge
+  (u, v) accomplishes exactly this.</p>
+  <h4>(c) Runtime Analysis</h4>
+  <p>Creating the new adjacency list takes O(n). Traversing the original graph to reverse all m edges takes O(n+m), with O(1)
+  to add each edge. Total: O(n) + O(n+m) = <strong>O(n+m)</strong> — linear, as required.</p>
+</div>
+
+<h3 id="sol-315">Problem 3.15 — Computopia</h3>
+<div class="stmt"><strong>Statement.</strong> The police department in Computopia has made all streets one-way. The mayor contends
+there is still a way to drive legally from any intersection to any other intersection; the opposition is not convinced.
+Determine whether the mayor is right — in linear time.</div>
+<div class="sol">
+  <h4>Part (a) — Is the mayor's claim true?</h4>
+  <p><strong>Algorithm.</strong> Model the city as a directed graph G = (V, E): vertices = intersections, directed edges = one-way
+  streets. Run the SCC black box and check whether the returned metagraph has a <strong>single vertex</strong> (the whole graph is one SCC).
+  If so, report TRUE; otherwise FALSE.</p>
+  <p><strong>Justification.</strong> Inside one SCC there is a path from every vertex to every other vertex — exactly the mayor's claim.
+  If there are ≥ 2 SCCs, there is a sink SCC and a source SCC, and no path leads from the sink SCC back to the source SCC.</p>
+  <p><strong>Runtime.</strong> Building the graph is O(n+m); SCC is O(n+m); checking the metagraph's vertex count is O(1).
+  Total <strong>O(n+m)</strong> — linear, as required.</p>
+  <h4>Part (b) — The weaker claim about town hall</h4>
+  <p><strong>Claim.</strong> Starting from town hall, wherever you can reach, you can always drive back to town hall.</p>
+  <p><strong>Algorithm.</strong> Model and run SCC as in (a). The claim holds iff the SCC containing town hall is a <strong>sink SCC</strong>:
+  check the metagraph for outgoing edges from the SCC labeled ccnum[town hall]. TRUE iff there are none.</p>
+  <p><strong>Justification.</strong> If town hall's SCC S is a sink, then within S the town hall reaches every intersection and is
+  reachable back from each of them — and nothing reachable lies outside S. If S is not a sink, some edge leaves S, and the
+  intersections beyond it can be reached from town hall but cannot return.</p>
+  <p><strong>Runtime.</strong> O(n+m) for the model + SCC; the sink check via ccnum[town hall] is O(1). Total <strong>O(n+m)</strong>.</p>
+</div>
+
+<h3 id="sol-414">Problem 4.14 — Shortest Path Through a Given Vertex</h3>
+<div class="stmt"><strong>Statement.</strong> You are given a strongly connected directed graph G = (V, E) with positive edge
+weights and a particular node v<sub>0</sub> ∈ V. Give an efficient algorithm for finding shortest paths between all pairs of
+nodes, with the restriction that these paths must all pass through v<sub>0</sub>.</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>Run Dijkstra's from v<sub>0</sub> on G, giving distances from v<sub>0</sub> to all vertices. Reverse the graph (O(n+m)) and run
+  Dijkstra's from v<sub>0</sub> on G<sup>R</sup> — those distances are the distances <em>to</em> v<sub>0</sub> from every vertex in the original graph.
+  For any pair (u, w), the shortest u ⇝ w distance through v<sub>0</sub> is dist<sub>R</sub>[u] + dist[w]; an actual path
+  u ⇝ v<sub>0</sub> ⇝ w is recovered from the prev[] arrays of the two runs.</p>
+  <h4>(b) Justification of Correctness</h4>
+  <p>Strong connectivity guarantees the paths exist. Any path through v<sub>0</sub> splits into a u ⇝ v<sub>0</sub> part and a
+  v<sub>0</sub> ⇝ w part, each of which must itself be shortest (else the whole improves). Dijkstra's on G finds the best second part;
+  reversing every edge turns "distance to v<sub>0</sub>" into "distance from v<sub>0</sub>" in G<sup>R</sup>, so the second Dijkstra run finds the best first part.</p>
+  <h4>(c) Runtime Analysis</h4>
+  <p>Each Dijkstra run is O((n+m) log n), which simplifies to O(m log n) since the graph is strongly connected; reversing is O(n+m).
+  Producing the dist[]/prev[] structures: <strong>O(m log n)</strong>. (Enumerating all pairs from them costs O(n²) for distances,
+  O(n³) if every path is also reconstructed.)</p>
+</div>
+</section>
+
+<section id="appx-mstflow">
+<h2>Appendix B · MST &amp; Max Flow problems (DPV Ch. 5 &amp; 7)</h2>
+
+<h3 id="sol-51">Problem 5.1 — Run Kruskal's</h3>
+<div class="sol">
+  <h4>(a) MST cost</h4><p><strong>19</strong>.</p>
+  <h4>(b) Number of possible MSTs</h4><p><strong>2</strong>.</p>
+  <h4>(c) Edge → cut justification</h4>
+  <table>
+    <tr><th>Edge included</th><th>Cut</th></tr>
+    <tr><td>AE</td><td>{A} | {B,C,D,E,F,G,H}</td></tr>
+    <tr><td>EF</td><td>{A,E} | {B,C,D,F,G,H}</td></tr>
+    <tr><td>BE</td><td>{A,E,F} | {B,C,D,G,H}</td></tr>
+    <tr><td>FG</td><td>{A,B,E,F} | {C,D,G,H}</td></tr>
+    <tr><td>GH</td><td>{A,B,E,F,G} | {C,D,H}</td></tr>
+    <tr><td>CG</td><td>{A,B,E,F,G,H} | {C,D}</td></tr>
+    <tr><td>GD</td><td>{A,B,C,E,F,G,H} | {D}</td></tr>
+  </table>
+</div>
+
+<h3 id="sol-52">Problem 5.2 — Run Prim's &amp; Kruskal's (with path compression)</h3>
+<div class="sol">
+  <h4>(a) Prim's — vertex inclusion order</h4>
+  <table>
+    <tr><th>Step</th><th>Vertex added</th><th>Edge used</th></tr>
+    <tr><td>1</td><td>A</td><td>— (start)</td></tr>
+    <tr><td>2</td><td>B</td><td>AB</td></tr>
+    <tr><td>3</td><td>C</td><td>BC</td></tr>
+    <tr><td>4</td><td>G</td><td>CG</td></tr>
+    <tr><td>5</td><td>D</td><td>GD</td></tr>
+    <tr><td>6</td><td>F</td><td>GF</td></tr>
+    <tr><td>7</td><td>H</td><td>GH</td></tr>
+    <tr><td>8</td><td>E</td><td>AE</td></tr>
+  </table>
+  <h4>(b) Kruskal's — union-find evolution</h4>
+  <p>The official solution tracks the parent pointer π for all 8 vertices after each union, in the edge order
+  (A,B), (F,G), (D,G), (G,H), (C,G), (B,C), (A,E) — ending with all vertices in a single set (root G).
+  The full step-by-step π tables are in the official solution PDF.</p>
+</div>
+
+<h3 id="sol-59">Problem 5.9 — Statements About MSTs</h3>
+<div class="sol">
+  <p>(The four statements are in DPV 5.9; the official verdicts and reasons:)</p>
+  <ul>
+    <li><strong>(a) FALSE.</strong> Consider a graph where a vertex is adjacent to a single edge.</li>
+    <li><strong>(b) TRUE.</strong> Consider the order in which edges would be processed by Kruskal's.</li>
+    <li><strong>(c) TRUE.</strong> A minimum-weight edge would be a candidate for at least one possible MST.</li>
+    <li><strong>(d) TRUE.</strong> Assured by the Cut Property.</li>
+  </ul>
+</div>
+
+<h3 id="sol-710">Problem 7.10 — Max Flow = Min Cut Example</h3>
+<div class="sol">
+  <p>The official solution draws the max flow and its residual network (figures in the PDF). In the residual network G<sub>f</sub>,
+  the set L of vertices reachable from s is <strong>L = {s, c, f}</strong>, with cut capacity
+  <strong>13 = 6 + 1 + 2 + 4</strong> (computed from the <em>original</em> capacities — cut capacity never depends on the flow).
+  Since the cut capacity equals the flow value, f is a max flow and ({s,c,f}, rest) is a min st-cut.</p>
+</div>
+
+<h3 id="sol-717">Problem 7.17 — Bottleneck Edges</h3>
+<div class="sol">
+  <h4>Parts (a) &amp; (b) — Max flow, min cut, residual</h4>
+  <p>From the residual graph (figures in the PDF): vertices reachable from s are <strong>{s, a, b}</strong>; vertices that can
+  reach t are <strong>{c, t}</strong>. The min st-cut ({s,a,b} | rest) has capacity <strong>11 = 4 + 2 + 2 + 3</strong>, matching the max-flow value.</p>
+  <h4>Part (c) — Bottleneck edges</h4>
+  <p>A directed edge (u, v) is a <em>bottleneck edge</em> if increasing its capacity increases the max-flow value.
+  This network has exactly two: <strong>(a, c)</strong> and <strong>(b, c)</strong>.</p>
+  <h4>Part (d) — A network with no bottleneck edges</h4>
+  <p>The official solution gives a 4-vertex example (figure in the PDF). Alternatively: in this very network, reducing the
+  capacity of (c, t) from 9 to 6 leaves no bottleneck edges.</p>
+  <h4>Part (e) — Algorithm: find all bottleneck edges</h4>
+  <p><strong>Algorithm.</strong> (1) Find a max flow f with Ford-Fulkerson. (2) Build the residual graph G<sub>f</sub>.
+  (3) Build the reverse of G<sub>f</sub>, call it G<sub>r</sub>. (4) DFS on G<sub>f</sub> from s → ccnum_S[] (vertices reachable <em>from</em> s).
+  (5) DFS on G<sub>r</sub> from t → ccnum_T[] (vertices that <em>can reach</em> t in G<sub>f</sub>).
+  (6) For each directed edge (v, w) ∈ E, output it as a bottleneck edge iff ccnum_S[v] = 1 and ccnum_T[w] = 1.</p>
+  <p><strong>Correctness.</strong> Increasing c(v, w) raises the max flow iff there is a residual path s ⇝ v and a residual path
+  w ⇝ t: then extra flow can travel s ⇝ v → w ⇝ t. If the two paths share edges, the joined walk contains cycles; dropping them
+  still yields an s–t path through (v, w) — for if a dropped cycle contained (v, w) itself, the remaining walk would be an
+  augmenting path avoiding (v, w), contradicting the maximality of f.</p>
+  <p><strong>Runtime.</strong> Steps 2–6 are each O(n+m); the total is dominated by the max-flow computation:
+  O(mC) with Ford-Fulkerson, or O(nm²) if Edmonds-Karp is used in step 1.</p>
+</div>
+
+<h3 id="sol-719">Problem 7.19 — Verifying a Max Flow</h3>
+<div class="stmt"><strong>Statement.</strong> Given a flow network G = (V, E) and a flow f, verify whether f is a valid
+max flow — in linear time.</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>First check <strong>validity</strong>: (i) capacities — 0 ≤ f(e) ≤ c(e) for every edge e; (ii) conservation — for every
+  u ∉ {s, t}, total inflow equals total outflow. If either fails, return FALSE. Then check <strong>maximality</strong>: build the
+  residual graph G<sub>f</sub> and run BFS from s; if t is reachable there is an augmenting path and f is not maximum;
+  if t is unreachable, f is maximum.</p>
+  <h4>(b) Correctness</h4>
+  <p>f is a maximum flow iff there is no augmenting s–t path in the residual graph (the Ford-Fulkerson optimality condition) —
+  exactly what the BFS tests, on top of the definitional validity checks.</p>
+  <h4>(c) Runtime</h4>
+  <p>Validity checks are O(n+m); building G<sub>f</sub> is O(n+m); BFS on it is O(n+m). Total <strong>O(n+m)</strong> — linear, as required.</p>
+</div>
+</section>
+
+<section id="appx-exam">
+<h2>Appendix C · Exam 3 practice problems (past exams)</h2>
+<p style="color:var(--muted)">Statements from "CS6515 Exam 3 OMS Practice Problems". No official solutions were provided with
+the set — the solutions below were written for this document, in the course's (a) Algorithm / (b) Justification /
+(c) Runtime format, using only the approved black boxes.</p>
+
+<h3 id="sol-p1">P1 — Red/Blue Edges: Fewest Red, Then Fewest Blue</h3>
+<div class="stmt"><strong>Statement.</strong> You are given an undirected graph G = (V, E) in which every edge is colored red
+or blue, its color accessible through col() in O(1) time, and two vertices s, t ∈ V. Design an algorithm that finds, among all
+paths from s to t with the minimum number of red edges, one with the minimum number of blue edges.</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>Create a list of edge weights: for each edge e, set w(e) = <strong>m + 1</strong> if col(e) = red, and w(e) = <strong>1</strong>
+  if col(e) = blue (reading each color costs O(1)). Run Dijkstra's algorithm from s with these weights, and return the s–t path
+  reconstructed from prev[] (reporting "no path" if dist[t] = ∞).</p>
+  <h4>(b) Justification of Correctness</h4>
+  <p>For any s–t path P with r red edges and b blue edges, its total weight is (m+1)·r + b. Since any simple path has b ≤ m,
+  comparing two paths' total weights compares r first: a path with fewer red edges always wins, regardless of blue counts;
+  among equal r, the smaller b wins. So the minimum-weight path — which Dijkstra's finds, all weights being non-negative — is
+  exactly a path with the fewest red edges and, subject to that, the fewest blue edges.</p>
+  <h4>(c) Runtime Analysis</h4>
+  <p>Building the weight list is O(m) (one O(1) col() call per edge). Dijkstra's runs in O((n+m) log n). Reconstructing the path
+  from prev[] is O(n). Total: <strong>O((n+m) log n)</strong>.</p>
+</div>
+
+<h3 id="sol-p2">P2 — Max Flow After Adding One Unit-Capacity Edge</h3>
+<div class="stmt"><strong>Statement.</strong> Let {G = (V, E); s, t ∈ V; c(e), e ∈ E} be a flow network where every edge has
+capacity one. Let f* be a max flow with integer flow values. An edge e ∉ E is added to the network, also with capacity one.
+Design an algorithm to construct a max flow for the new network, faster than building the flow from scratch.</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>Keep f* — it is still a valid flow in the new network, since only an edge was added. Create the residual graph of the new
+  network with respect to f* ("Create a residual graph of G called G<sub>rs</sub> that uses the flows from f*"). Run DFS (or BFS)
+  from s on G<sub>rs</sub>. If t is reachable, take the resulting s–t path and augment f* by 1 along it (using the new edge's flow
+  and the residual edges as directed); the result is a max flow of the new network. If t is not reachable, f* is already a max flow
+  of the new network.</p>
+  <h4>(b) Justification of Correctness</h4>
+  <p>Adding one edge of capacity 1 can raise the max-flow value by <strong>at most 1</strong>: any flow in the new network, with the
+  new edge's flow (≤ 1) removed, is a flow in the old network, hence has value ≤ |f*| + 1. So if an augmenting path exists, one
+  augmentation of 1 unit (every residual capacity here is 0 or 1, so the bottleneck is 1) achieves the largest possible value;
+  if none exists, f* satisfies the no-augmenting-path optimality condition in the new network and is maximum.</p>
+  <h4>(c) Runtime Analysis</h4>
+  <p>Creating the residual graph is O(n+m); the DFS/BFS is O(n+m); augmenting along one path is O(n). Total <strong>O(n+m)</strong> —
+  versus Ω(mC) to rebuild with Ford-Fulkerson from scratch.</p>
+</div>
+
+<h3 id="sol-p3">P3 — A Spanning Tree Where Every Vertex of U Is a Leaf</h3>
+<div class="stmt"><strong>Statement.</strong> Let G = (V, E) be an undirected, connected, weighted graph, and let U ⊆ V be a
+nonempty subset of vertices. Design an algorithm that outputs a spanning tree T such that the vertices in U are leaves of T.
+(Assume such a tree exists.)</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>Let M = 1 + Σ<sub>e</sub> |w(e)|, a constant larger than the total weight variation of any spanning tree. Create a modified
+  weight list w′: for each edge e, set w′(e) = w(e) + M if e has at least one endpoint in U, and w′(e) = w(e) otherwise.
+  Run Kruskal's algorithm on G with weights w′, and output the returned edges[] as T.</p>
+  <h4>(b) Justification of Correctness</h4>
+  <p>Every vertex u ∈ U needs at least one incident edge in any spanning tree, so every spanning tree has at least |U| edges
+  incident to U — and a tree in which each u is a leaf, and no edge joins two U vertices, has exactly |U| such edges.
+  Because each U-incident edge costs an extra M — more than all ordinary weights combined — minimizing the w′-weight first
+  minimizes the <em>number</em> of U-incident edges. By assumption some spanning tree achieves |U|, so the minimum-w′ tree T also
+  has exactly |U| U-incident edges: each u ∈ U is incident to exactly one edge of T, i.e. u is a leaf (and no U–U edge is used).
+  Kruskal's returns a minimum spanning tree with respect to w′, so T has the required property.</p>
+  <h4>(c) Runtime Analysis</h4>
+  <p>Computing M and the w′ list is O(m). Kruskal's runs in O(m log n). Total: <strong>O(m log n)</strong>.</p>
+</div>
+
+<h3 id="sol-p4">P4 — Does a DAG Have a Path Visiting Every Vertex?</h3>
+<div class="stmt"><strong>Statement.</strong> Given a directed, acyclic graph G = (V, E), design an algorithm to check whether
+there exists a path that visits every vertex.</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>Run the Topological Sort black box to obtain order[] — the vertices v<sub>1</sub>, …, v<sub>n</sub> in topological order.
+  Create a list pos[] giving each vertex its position in this order (pos[v<sub>i</sub>] = i), and a boolean list covered[]
+  initialized to false. Iterate through all edges (u, w) of G: if pos[w] = pos[u] + 1, set covered[u] = true. Finally, check
+  whether covered[v<sub>i</sub>] is true for every i = 1, …, n−1. Return TRUE if all are covered, else FALSE.</p>
+  <h4>(b) Justification of Correctness</h4>
+  <p>If a Hamiltonian path exists, it lists the vertices in an order consistent with every edge, so it <em>is</em> a topological
+  ordering — and in fact the unique one: the path's own edges chain all n vertices into a total order that every topological
+  ordering must respect. Hence the black box's order[] equals that path, and every consecutive pair is joined by a path edge, so
+  all covered[] checks pass. Conversely, if all consecutive pairs (v<sub>i</sub>, v<sub>i+1</sub>) are edges of G, then
+  v<sub>1</sub> → v<sub>2</sub> → … → v<sub>n</sub> is itself a path visiting every vertex.</p>
+  <h4>(c) Runtime Analysis</h4>
+  <p>Topological Sort is O(n+m). Building pos[] is O(n), the single pass over all edges is O(n+m), and the final check is O(n).
+  Total: <strong>O(n+m)</strong>.</p>
+</div>
+
+<h3 id="sol-p5">P5 — Growing Circles: Which Color Wins?</h3>
+<div class="stmt"><strong>Statement.</strong> We are given n points in the plane. Each point is the center of a dynamically
+changing circle: at time t, each circle has radius t. When two circles touch, their centers are connected. Initially, point s
+is painted blue and point t is painted red; the rest are unpainted. When an unpainted point is connected to s or t, it gets that
+color, and remains painted forever. Design an algorithm to decide which color is in the majority once all points are painted.
+You may assume no point is connected to both s and t at the exact same time.</div>
+<div class="sol">
+  <h4>(a) Algorithm</h4>
+  <p>Create the complete graph on the n points, with edge weights equal to Euclidean distances. Run Prim's algorithm to obtain a
+  minimum spanning tree T, and build T's adjacency list from the returned prev[] (each vertex except the start contributes the edge
+  to its parent, with its weight). Then traverse T from s (a DFS over the tree), computing for every vertex v the value A[v] =
+  the maximum edge weight on the path from s to v in T, by carrying the running maximum across each tree edge. Repeat the traversal
+  from t to compute B[v]. Finally, count the vertices with A[v] &lt; B[v] (these end blue) and those with A[v] &gt; B[v] (these end
+  red), and report the larger color (or a tie).</p>
+  <h4>(b) Justification of Correctness</h4>
+  <p>Centers i and j become connected at time d(i, j)/2, so components merge over time exactly as in Kruskal's algorithm on the
+  complete graph: at any moment, the components are those of the graph of pairs with distance ≤ 2t. By the minimax property of
+  the MST, two vertices become connected at the same time in the complete graph as in T, and the time v's component first merges
+  with the component containing s is A[v]/2, with the component containing t is B[v]/2. A point's component takes the color of the
+  first <em>painted</em> component it merges with — unpainted mergers only delay, never change, which of s or t is reached first
+  in merge order. Since no point connects to both at the same instant, A[v] ≠ B[v] at every deciding comparison, so v ends blue
+  iff A[v] &lt; B[v]. Counting these gives the majority color.</p>
+  <h4>(c) Runtime Analysis</h4>
+  <p>The complete graph has m = n(n−1)/2 = O(n²) edges, so Prim's costs O(m log n) = O(n² log n) — the dominant step. Building T's
+  adjacency list is O(n); each tree traversal touches n−1 edges, O(n); the final count is O(n). Total: <strong>O(n² log n)</strong>.</p>
+</div>
+</section>
+
+
+</div></main>
+<footer><div class="wrap">
+  Exam 3 consolidated briefing — based on CS 6515 O01 Ed Discussion staff posts and follow-ups
+</div></footer>
+</body>
+</html>
