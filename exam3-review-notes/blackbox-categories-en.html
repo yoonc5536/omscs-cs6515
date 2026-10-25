@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The 12 Black Boxes — Visual &amp; Interactive Guide</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1a2332; --muted:#5b6b82; --card:#f6f8fb; --line:#d8e0ea;
+  --accent:#2563eb; --accent-soft:#e8effd; --code-bg:#eef2f7;
+  --c-trav:#2563eb; --c-short:#0891b2; --c-mst:#059669; --c-flow:#d97706; --c-logic:#7c3aed;
+  --ok:#047857; --ok-bg:#ecfdf5; --bad:#b91c1c; --bad-bg:#fef2f2;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1622; --fg:#e6edf6; --muted:#93a5bd; --card:#16202f; --line:#2a3a4f;
+    --accent:#6ea8ff; --accent-soft:#1b2c47; --code-bg:#1a2637; --ok:#34d399; --ok-bg:#0d2620; --bad:#f87171; --bad-bg:#2a1618; }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.65}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+header{border-bottom:3px solid var(--accent);padding-bottom:14px;margin-bottom:8px}
+h1{font-size:1.7rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0}
+nav{position:sticky;top:0;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);z-index:10;display:flex;flex-wrap:wrap;gap:6px}
+nav a{color:var(--accent);text-decoration:none;font-size:.86rem;border:1px solid var(--line);border-radius:999px;padding:3px 11px}
+nav a:hover{background:var(--accent-soft)}
+section{margin-top:36px;scroll-margin-top:64px}
+h2{font-size:1.35rem;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+h2 .dot{width:16px;height:16px;border-radius:50%;flex:none}
+h3 .dot{width:12px;height:12px;border-radius:50%;flex:none;display:inline-block}
+h3{font-size:1.12rem;margin:22px 0 4px}
+p{margin:8px 0}
+a{color:var(--accent)}
+code{background:var(--code-bg);padding:1px 5px;border-radius:5px;font-size:.88em}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:.86rem;line-height:1.5;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre code{background:none;padding:0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--card)}
+tbody tr:nth-child(even) td{background:var(--card)}
+ul,ol{margin:6px 0 6px 20px;padding:0}
+li{margin:4px 0}
+
+/* family cards */
+.famgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0}
+.famcard{display:block;text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--line);border-top:6px solid var(--fc);border-radius:14px;padding:14px 16px;transition:transform .15s, box-shadow .15s}
+.famcard:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.famcard .ico{font-size:1.6rem}
+.famcard h3{margin:6px 0 2px;font-size:1.02rem}
+.famcard p{margin:0;font-size:.85rem;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chip{font-size:.76rem;font-weight:600;border:1px solid var(--fc);color:var(--fc);border-radius:999px;padding:1px 8px}
+
+/* algorithm cards */
+.algo{background:var(--card);border:1px solid var(--line);border-left:7px solid var(--fc);border-radius:14px;padding:16px 20px;margin:16px 0}
+.algo h3{margin:0 0 2px;font-size:1.15rem}
+.algo .badge{display:inline-block;font-size:.72rem;font-weight:700;color:#fff;background:var(--fc);border-radius:999px;padding:1px 9px;margin-left:8px;vertical-align:middle}
+.essence{font-size:1.05rem;font-weight:600;margin:6px 0}
+.steps{counter-reset:st;list-style:none;margin:8px 0 8px 0}
+.steps li{counter-increment:st;position:relative;padding-left:34px;margin:7px 0}
+.steps li::before{content:counter(st);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--fc);color:#fff;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.keyfact{border:2px dashed var(--fc);border-radius:12px;padding:10px 14px;margin:12px 0;font-size:.94rem}
+.keyfact strong{color:var(--fc)}
+
+/* interactive demo */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:14px 0}
+.demo button{border:none;background:var(--accent);color:#fff;border-radius:999px;padding:7px 18px;font-size:.92rem;cursor:pointer;font-family:inherit;font-weight:600}
+.demo button:hover{opacity:.85}
+.demo .cap{font-size:.93rem;margin:10px 0 0;min-height:1.5em}
+svg text:not([fill]){fill:var(--fg)}
+.node{fill:var(--card);stroke:var(--line);stroke-width:2;transition:fill .3s, stroke .3s}
+.bfsnode.on .node{fill:var(--c-short);stroke:var(--c-short)}
+.bfsnode.on .nodelabel{fill:#fff}
+.nodelabel{font-size:13px;font-weight:600}
+.distlabel{font-size:11px;fill:var(--muted)}
+footer{border-top:1px solid var(--line);margin-top:44px;padding-top:12px;color:var(--muted);font-size:.85rem}
+@media (max-width:640px){
+  h1{font-size:1.35rem}
+  .wrap{padding:18px 14px 48px}
+  .algo,.demo{padding:14px 16px}
+  table{font-size:.86rem}
+  th,td{padding:5px 7px}
+}
+@media print{
+  nav{display:none}
+  .demo button{display:none}
+  .famcard,.algo{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>🧰 The 12 Black Boxes — Visual &amp; Interactive Guide</h1>
+  <p class="sub">CS 6515 Exam 3 · Tap a family card to jump in · Step through the BFS demo</p>
+</header>
+
+<nav>
+  <a href="#families">Families</a><a href="#traversal">Traversal</a><a href="#shortest">Shortest Paths</a>
+  <a href="#mst">MST</a><a href="#flow">Max Flow</a><a href="#logic">Logic</a>
+  <a href="#practice">Practice</a>
+</nav>
+
+<section id="families">
+<h2>Five families, twelve black boxes</h2>
+<p>Every exam problem wants one of these families first. Pick the family by the <em>question</em>, then the algorithm inside it.</p>
+<div class="famgrid">
+  <a class="famcard" href="#traversal" style="--fc:var(--c-trav)">
+    <div class="ico">🔍</div><h3>Traversal &amp; Structure</h3>
+    <p>Can I get there? What shape is this graph?</p>
+    <div class="chips"><span class="chip">DFS</span><span class="chip">BFS*</span><span class="chip">Topo Sort</span><span class="chip">SCC</span></div>
+  </a>
+  <a class="famcard" href="#shortest" style="--fc:var(--c-short)">
+    <div class="ico">📏</div><h3>Shortest Paths</h3>
+    <p>Cheapest / fastest route?</p>
+    <div class="chips"><span class="chip">BFS</span><span class="chip">Dijkstra</span><span class="chip">Bellman-Ford</span><span class="chip">Floyd-Warshall</span></div>
+  </a>
+  <a class="famcard" href="#mst" style="--fc:var(--c-mst)">
+    <div class="ico">🌲</div><h3>MST</h3>
+    <p>Cheapest way to connect everything?</p>
+    <div class="chips"><span class="chip">Kruskal</span><span class="chip">Prim</span></div>
+  </a>
+  <a class="famcard" href="#flow" style="--fc:var(--c-flow)">
+    <div class="ico">🌊</div><h3>Max Flow</h3>
+    <p>How much can be pushed s → t?</p>
+    <div class="chips"><span class="chip">Ford-Fulkerson</span><span class="chip">Edmonds-Karp</span></div>
+  </a>
+  <a class="famcard" href="#logic" style="--fc:var(--c-logic)">
+    <div class="ico">🧩</div><h3>Logic</h3>
+    <p>Can all 2-literal constraints hold?</p>
+    <div class="chips"><span class="chip">2-SAT</span></div>
+  </a>
+</div>
+<p style="color:var(--muted);font-size:.9rem">* BFS lives in two families: its level-by-level traversal <em>is</em> a shortest-path computation in unweighted graphs.</p>
+</section>
+
+<section id="traversal" style="--fc:var(--c-trav)">
+<h2><span class="dot" style="background:var(--c-trav)"></span>🔍 Traversal &amp; Structure</h2>
+<p><strong>The question:</strong> "Can I get there? What is the structure of this graph?" These explore and reveal shape — they do not measure distances (except BFS, which does both).</p>
+
+<div class="algo" style="--fc:var(--c-trav)">
+<h3>DFS <span class="badge">O(n+m)</span></h3>
+<p class="essence">Go deep first. The exploration tool everything else is built on.</p>
+<pre><code>DFS(G):
+  for all v in V: visited[v] = false
+  clock = 1
+  for all v in V: if not visited[v]: Explore(v)
+
+Explore(v):
+  visited[v] = true;  pre[v] = clock;  clock++
+  for each edge (v, u) in E:
+    if not visited[u]: prev[u] = v; Explore(u)
+  post[v] = clock;  clock++</code></pre>
+<svg width="100%" height="150" viewBox="0 0 520 150" role="img" aria-label="DFS tree with a back edge">
+  <circle cx="80" cy="35" r="17" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="80" y="40" text-anchor="middle" font-size="13">A</text>
+  <circle cx="190" cy="35" r="17" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="190" y="40" text-anchor="middle" font-size="13">B</text>
+  <circle cx="190" cy="115" r="17" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="190" y="120" text-anchor="middle" font-size="13">C</text>
+  <circle cx="320" cy="115" r="17" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="320" y="120" text-anchor="middle" font-size="13">D</text>
+  <line x1="97" y1="35" x2="173" y2="35" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT)"/>
+  <line x1="190" y1="52" x2="190" y2="98" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT)"/>
+  <line x1="207" y1="115" x2="303" y2="115" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT)"/>
+  <path d="M 320 98 C 320 30, 120 18, 92 24" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arwR)"/>
+  <text x="330" y="60" font-size="12" fill="var(--bad)">back edge (D→A)</text>
+  <text x="330" y="80" font-size="12">→ cycle exists!</text>
+  <defs>
+    <marker id="arwT" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="var(--fg)"/></marker>
+    <marker id="arwR" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="var(--bad)"/></marker>
+  </defs>
+</svg>
+<div class="keyfact"><strong>Cycle ⟺ back edge.</strong> A directed graph has a cycle iff its DFS tree contains a back edge (descendant → ancestor). pre/post numbers classify every edge into tree / forward / back / cross — only back edges increase postorder.</div>
+<p><strong>Outputs:</strong> ccnum[], prev[], pre[], post[]. <strong>Use for:</strong> reachability, connected components, cycle detection, and as the engine inside Topological Sort and SCC. <strong>Not for:</strong> shortest paths — the first path DFS finds is not necessarily the shortest.</p>
+<p><strong>Worked examples:</strong> <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/gr1-scc-notes-en.html">GR1 Review Notes — DFS, edge types, cycle test (lecture-based)</a></p>
+</div>
+
+<div class="algo" style="--fc:var(--c-trav)">
+<h3>Topological Sort <span class="badge">O(n+m)</span></h3>
+<p class="essence">Line up a DAG so every edge points forward.</p>
+<svg width="100%" height="110" viewBox="0 0 520 110" role="img" aria-label="Topological order of a DAG">
+  <circle cx="70" cy="55" r="20" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="70" y="60" text-anchor="middle" font-size="13">A</text>
+  <circle cx="200" cy="55" r="20" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="200" y="60" text-anchor="middle" font-size="13">B</text>
+  <circle cx="330" cy="55" r="20" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="330" y="60" text-anchor="middle" font-size="13">C</text>
+  <circle cx="460" cy="55" r="20" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/><text x="460" y="60" text-anchor="middle" font-size="13">D</text>
+  <line x1="90" y1="55" x2="180" y2="55" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT2)"/>
+  <line x1="220" y1="55" x2="310" y2="55" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT2)"/>
+  <line x1="350" y1="55" x2="440" y2="55" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT2)"/>
+  <text x="70" y="100" text-anchor="middle" font-size="12">1st</text>
+  <text x="200" y="100" text-anchor="middle" font-size="12">2nd</text>
+  <text x="330" y="100" text-anchor="middle" font-size="12">3rd</text>
+  <text x="460" y="100" text-anchor="middle" font-size="12">4th</text>
+  <defs><marker id="arwT2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="var(--fg)"/></marker></defs>
+</svg>
+<p><strong>How:</strong> run DFS and list vertices in <strong>decreasing postorder</strong> — that is the whole algorithm. Post values range over 1..2n, so the sort is a linear counting sort and the total stays O(n+m).</p>
+<p><strong>Why it works:</strong> in a DAG there are no back edges, so for every edge (u, v), post[u] &gt; post[v] — decreasing postorder puts u before v for every edge. A DAG always has a source (in-degree 0) and a sink (out-degree 0); the first vertex of any topological order is a source, the last is a sink. <strong>Output:</strong> order[] + all DFS outputs.</p>
+<p><strong>Worked examples:</strong> <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/gr1-scc-notes-en.html">GR1 Review Notes — topological sort, quiz, sources and sinks</a></p>
+</div>
+
+<div class="algo" style="--fc:var(--c-trav)">
+<h3>SCC — Strongly Connected Components <span class="badge">O(n+m)</span></h3>
+<p class="essence">Compress every mutually-reachable cluster into one node — the result is always a DAG.</p>
+<svg width="100%" height="120" viewBox="0 0 520 120" role="img" aria-label="Metagraph is a DAG">
+  <ellipse cx="90" cy="60" rx="52" ry="34" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/>
+  <text x="90" y="56" text-anchor="middle" font-size="12">SCC 1</text><text x="90" y="72" text-anchor="middle" font-size="11">{A,B,E}</text>
+  <ellipse cx="255" cy="60" rx="52" ry="34" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/>
+  <text x="255" y="56" text-anchor="middle" font-size="12">SCC 2</text><text x="255" y="72" text-anchor="middle" font-size="11">{C}</text>
+  <ellipse cx="420" cy="60" rx="58" ry="34" fill="var(--card)" stroke="var(--c-trav)" stroke-width="2"/>
+  <text x="420" y="56" text-anchor="middle" font-size="12">SCC 3 (sink)</text><text x="420" y="72" text-anchor="middle" font-size="11">{D,F,G,H,I}</text>
+  <line x1="144" y1="60" x2="201" y2="60" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT3)"/>
+  <line x1="309" y1="60" x2="360" y2="60" stroke="var(--fg)" stroke-width="2" marker-end="url(#arwT3)"/>
+  <defs><marker id="arwT3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="var(--fg)"/></marker></defs>
+</svg>
+<p><strong>Kosaraju's algorithm — two DFS runs:</strong></p>
+<ol class="steps">
+  <li>Build the reverse graph G<sup>R</sup> (flip every edge) — O(n+m).</li>
+  <li>Run DFS on G<sup>R</sup> and record postorder numbers.</li>
+  <li>Run DFS on the original G, starting from the vertex with the highest remaining postorder. Each DFS tree found is exactly one SCC.</li>
+  <li>Repeat until every vertex is assigned. Outputs: the metagraph + final DFS outputs (ccnum[], …).</li>
+</ol>
+<div class="keyfact"><strong>Key fact:</strong> the vertex with the highest postorder lies in a <strong>source SCC</strong> of G. That is why the first DFS runs on the reverse graph — processing in decreasing postorder peels off sink SCCs first. (The tempting guess "lowest postorder = sink SCC" is false.)</div>
+<p><strong>Using the output:</strong> find one vertex's SCC by reading <code>ccnum[v]</code> in O(1). Whole graph strongly connected ⟺ metagraph has a single vertex. Town hall can always return home ⟺ its SCC is a sink SCC.</p>
+<p><strong>Worked examples:</strong> <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/gr1-scc-notes-en.html">GR1 Review Notes — SCC quiz, metagraph, Kosaraju, key-fact proof</a></p>
+</div>
+</section>
+
+<section id="shortest" style="--fc:var(--c-short)">
+<h2><span class="dot" style="background:var(--c-short)"></span>📏 Shortest Paths</h2>
+<p><strong>The question:</strong> "What is the cheapest / fastest / shortest route?" Pick by the edge weights, and by whether you need one source or all pairs.</p>
+
+<h3>When to use which</h3>
+<table>
+<tr><th>Situation</th><th>Use</th><th>Runtime</th><th>Why</th></tr>
+<tr><td>Unweighted graph (all edges cost the same)</td><td><strong>BFS</strong></td><td>O(n+m)</td><td>Level-by-level order makes the first visit the shortest path; no weights to compare</td></tr>
+<tr><td>Non-negative weights, one source</td><td><strong>Dijkstra</strong></td><td>O((n+m) log n)</td><td>Greedy settling of the nearest vertex is correct only when weights cannot be negative</td></tr>
+<tr><td>Negative weights possible, one source</td><td><strong>Bellman-Ford</strong></td><td>O(nm)</td><td>Relaxing all edges V−1 times handles negative edges; Dijkstra's greedy choice breaks</td></tr>
+<tr><td>All pairs of vertices</td><td><strong>Floyd-Warshall</strong></td><td>O(n³)</td><td>One run gives every pair at once; cheaper than running a single-source algorithm n times on dense graphs</td></tr>
+<tr><td>Need to detect a negative cycle</td><td><strong>Bellman-Ford</strong></td><td>O(nm)</td><td>One extra relaxation round after V−1: any further improvement proves a negative cycle</td></tr>
+</table>
+
+<div class="demo">
+  <h3 style="margin-top:0">▶ Try it: BFS levels, step by step</h3>
+  <p style="margin:0 0 8px">Press <strong>Next level</strong> and watch the queue expand. A vertex is first reached at its shortest distance — that is why BFS computes shortest paths.</p>
+  <svg width="100%" height="200" viewBox="0 0 540 200" role="img" aria-label="BFS level demo">
+    <line x1="90" y1="100" x2="215" y2="55" stroke="var(--fg)" stroke-width="2"/>
+    <line x1="90" y1="100" x2="215" y2="145" stroke="var(--fg)" stroke-width="2"/>
+    <line x1="235" y1="55" x2="345" y2="85" stroke="var(--fg)" stroke-width="2"/>
+    <line x1="235" y1="145" x2="345" y2="85" stroke="var(--fg)" stroke-width="2"/>
+    <line x1="235" y1="145" x2="345" y2="140" stroke="var(--fg)" stroke-width="2"/>
+    <line x1="365" y1="85" x2="455" y2="110" stroke="var(--fg)" stroke-width="2"/>
+    <line x1="365" y1="140" x2="455" y2="110" stroke="var(--fg)" stroke-width="2"/>
+    <g class="bfsnode" data-level="0"><circle class="node" cx="70" cy="100" r="20"/><text class="nodelabel" x="70" y="105" text-anchor="middle">s</text><text class="distlabel" x="70" y="135" text-anchor="middle">dist 0</text></g>
+    <g class="bfsnode" data-level="1"><circle class="node" cx="235" cy="55" r="20"/><text class="nodelabel" x="235" y="60" text-anchor="middle">a</text><text class="distlabel" x="235" y="28" text-anchor="middle">dist 1</text></g>
+    <g class="bfsnode" data-level="1"><circle class="node" cx="235" cy="145" r="20"/><text class="nodelabel" x="235" y="150" text-anchor="middle">b</text><text class="distlabel" x="235" y="178" text-anchor="middle">dist 1</text></g>
+    <g class="bfsnode" data-level="2"><circle class="node" cx="365" cy="85" r="20"/><text class="nodelabel" x="365" y="90" text-anchor="middle">c</text><text class="distlabel" x="365" y="58" text-anchor="middle">dist 2</text></g>
+    <g class="bfsnode" data-level="2"><circle class="node" cx="365" cy="140" r="20"/><text class="nodelabel" x="365" y="145" text-anchor="middle">d</text><text class="distlabel" x="365" y="173" text-anchor="middle">dist 2</text></g>
+    <g class="bfsnode" data-level="3"><circle class="node" cx="475" cy="110" r="20"/><text class="nodelabel" x="475" y="115" text-anchor="middle">e</text><text class="distlabel" x="475" y="83" text-anchor="middle">dist 3</text></g>
+  </svg>
+  <button id="bfsStep">Next level</button>
+  <button id="bfsReset" style="background:var(--muted)">Reset</button>
+  <p class="cap" id="bfsCap">Level 0: only s is visited. dist[s] = 0.</p>
+</div>
+
+<div class="algo" style="--fc:var(--c-short)">
+<h3 id="bfs">BFS <span class="badge">O(n+m)</span></h3>
+<p class="essence">Level by level, with a queue — the first visit is the shortest path.</p>
+<ol class="steps">
+  <li>Mark the source as visited and put it in a queue.</li>
+  <li>Take the front vertex off the queue.</li>
+  <li>For each unvisited neighbor, mark it visited and add it to the back of the queue.</li>
+  <li>Repeat until the queue is empty.</li>
+</ol>
+<p>A <strong>visited array</strong> is essential — cycles would otherwise revisit vertices forever. Vertices leave the queue in order of distance from the source, so the black box returns <code>dist[]</code> (edge count, ∞ if unreachable) and <code>prev[]</code> for path recovery. For a disconnected graph, run BFS from every still-unvisited vertex. <strong>BFS vs DFS:</strong> BFS goes wide (queue) and guarantees shortest paths in unweighted graphs; DFS goes deep (stack) and does not.</p>
+<p><strong>Worked example:</strong> <a href="https://www.geeksforgeeks.org/dsa/breadth-first-search-or-bfs-for-a-graph/">GeeksforGeeks — BFS for a Graph (traversal order, disconnected graphs, code)</a></p>
+</div>
+
+<div class="algo" style="--fc:var(--c-short)">
+<h3>Dijkstra <span class="badge">O((n+m) log n)</span></h3>
+<p class="essence">Always settle the nearest unvisited vertex — once visited, its distance never changes.</p>
+<ol class="steps">
+  <li>Initialize distances: 0 for the source, ∞ for all others.</li>
+  <li>Pick the <strong>unvisited vertex with the shortest distance</strong> as the current vertex.</li>
+  <li><strong>Relax</strong> each unvisited neighbor: if dist[u] + w(u, v) &lt; dist[v], update dist[v].</li>
+  <li>Mark the current vertex visited — never checked again.</li>
+  <li>Repeat until all vertices are visited.</li>
+</ol>
+<p>Works for directed and undirected graphs with <strong>non-negative weights only</strong> — negative edges break the greedy choice, use Bellman-Ford instead. The basic version scans all vertices for the minimum (O(n²)); the course version uses a min-heap, O((n+m) log n). The basic version returns distances only; the course black box returns dist[] and prev[] together.</p>
+<p><strong>Worked example:</strong> <a href="https://www.w3schools.com/dsa/dsa_algo_graphs_dijkstra.php">W3Schools — Dijkstra's Algorithm (manual run-through from source D)</a></p>
+</div>
+
+<div class="algo" style="--fc:var(--c-short)">
+<h3>Bellman-Ford <span class="badge">O(nm)</span></h3>
+<p class="essence">Relax every edge, V−1 times — the patient algorithm that tolerates negative weights.</p>
+<ol class="steps">
+  <li>Initialize distances: 0 for the source, ∞ for all others.</li>
+  <li><strong>Relax every edge</strong> in the graph.</li>
+  <li>Repeat step 2 <strong>V−1 times</strong> — a shortest simple path uses at most V−1 edges.</li>
+  <li><strong>Negative cycle detection:</strong> one more round — if any distance still improves, a negative cycle exists.</li>
+</ol>
+<p>After k rounds, dist[v] is the best distance using at most k edges — in course notation, iter[k][v]. The black box returns dist[] from iteration n−1, plus iter[][]. Think of negative weights as "cheapest path": an edge of −3 can mean you earn $3 more than you spend. A negative cycle means no shortest path exists at all, since looping keeps making it shorter.</p>
+<p><strong>Worked example:</strong> <a href="https://www.w3schools.com/dsa/dsa_algo_graphs_bellmanford.php">W3Schools — Bellman-Ford Algorithm (manual run-through, negative-cycle detection)</a></p>
+</div>
+
+<div class="algo" style="--fc:var(--c-short)">
+<h3>Floyd-Warshall <span class="badge">O(n³)</span></h3>
+<p class="essence">Every pair at once — try each vertex as a possible intermediate.</p>
+<p><strong>Input:</strong> a distance matrix dist[][] — direct edge weights, INF where there is no edge, 0 on the diagonal. <strong>Update rule</strong> for each intermediate vertex k, for every pair (i, j):</p>
+<p style="text-align:center"><code>dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])</code></p>
+<p><strong>Why it works (optimal substructure):</strong> if the shortest path from i to j passes through k, then the i→k and k→j parts are themselves shortest. In course notation, iter[k][i][j] restricts intermediates to {1..k}; the black box returns dist[][] from the n-th iteration, plus iter[][][]. Negative weights are fine, negative cycles are not. O(n³) time regardless of edge count, so it shines on <strong>dense</strong> graphs.</p>
+<p><strong>Worked example:</strong> <a href="https://www.geeksforgeeks.org/dsa/floyd-warshall-algorithm-dp-16/">GeeksforGeeks — Floyd-Warshall Algorithm (5-vertex matrix, step-by-step, code)</a></p>
+</div>
+</section>
+<section id="mst" style="--fc:var(--c-mst)"><h2><span class="dot" style="background:var(--c-mst)"></span>🌲 MST — Minimum Spanning Tree</h2>
+<ul>
+  <li>Kruskal</li>
+  <li>Prim</li>
+</ul>
+
+<h3>When to use which</h3>
+<table>
+<tr><th>Situation</th><th>Use</th><th>Runtime</th><th>Why</th></tr>
+<tr><td>Need the list of MST edges (e.g. to sum weights, or to build another graph from them)</td><td><strong>Kruskal</strong></td><td>O(m log n)</td><td>Returns edges[] directly — the n−1 MST edges in weight order</td></tr>
+<tr><td>Need the tree structure (parent pointers, root-to-leaf walks, path between two vertices in the tree)</td><td><strong>Prim</strong></td><td>O(m log n)</td><td>Returns prev[] — each vertex's parent in the tree</td></tr>
+<tr><td>Dense graph (m close to n²), adjacency matrix given</td><td><strong>Prim</strong></td><td>O(n²)</td><td>The matrix version scans vertices instead of sorting edges — no O(m log n) sort cost</td></tr>
+<tr><td>Sparse graph, or edges already sorted by weight</td><td><strong>Kruskal</strong></td><td>O(m log n)</td><td>Few edges to sort, and the union-find scan is nearly free per edge</td></tr>
+</table>
+
+<div class="algo" style="--fc:var(--c-mst)">
+<h3>Kruskal <span class="badge">O(m log n)</span></h3>
+<p class="essence">Sort the edges, take the cheapest one that doesn't close a cycle.</p>
+<p><strong>What it is:</strong> a greedy algorithm for the minimum spanning tree of a weighted, connected, undirected graph. An MST is a spanning tree — it connects all vertices with no cycles — whose total edge weight is minimum. Kruskal makes a locally optimal choice at each step (always the cheapest remaining edge), and the Cut Property guarantees those choices build a globally optimal tree.</p>
+<ol class="steps">
+  <li><strong>Sort</strong> all edges by weight in non-decreasing order.</li>
+  <li>Pick the smallest edge. If it forms a cycle with the edges chosen so far, discard it; otherwise <strong>include</strong> it.</li>
+  <li>Repeat step 2 until the tree has <strong>V−1 edges</strong>.</li>
+</ol>
+<p><strong>Cycle test — disjoint sets (union-find):</strong> each vertex starts in its own set. <code>find(u)</code> returns the set's representative (with path compression); if <code>find(u) != find(v)</code>, the edge connects two different components, so it cannot form a cycle — include it and <code>union(u, v)</code>. If they are already in the same set, the edge would close a cycle, so skip it.</p>
+<pre><code>Kruskal(G):
+  sort edges by weight (increasing)
+  T = empty;  initialize union-find (each vertex its own set)
+  for each edge (u, v) in sorted order:
+    if find(u) != find(v): add (u, v) to T; union(u, v)
+  return T          // |T| = n-1 edges</code></pre>
+<p><strong>Runtime:</strong> O(m log m) = O(m log n) — dominated by sorting the edges; the union-find operations are nearly O(1) each. <strong>Output:</strong> edges[] — the n−1 MST edges. Reach for Kruskal when you need the <em>list of edges</em> (to sum weights, or to build another graph from them).</p>
+<p><strong>Worked example:</strong> <a href="https://www.geeksforgeeks.org/dsa/kruskals-minimum-spanning-tree-algorithm-greedy-algo-2/">GeeksforGeeks — Kruskal's Minimum Spanning Tree Algorithm (9-vertex illustration, DSU code)</a></p>
+</div>
+
+<div class="algo" style="--fc:var(--c-mst)">
+<h3>Prim <span class="badge">O(m log n)</span></h3>
+<p class="essence">Grow one tree, always adding the cheapest edge leaving it.</p>
+<p><strong>What it is:</strong> a greedy MST algorithm like Kruskal's, but instead of scanning all edges it grows a single tree from one starting vertex. At every step it considers all edges connecting the tree to the outside, and picks the minimum-weight one — the lightest edge crossing the cut (S, V∖S), where S is the tree so far. The Cut Property guarantees that choice is safe.</p>
+<p><strong>How it works — key values:</strong> maintain two sets: vertices already in the MST, and vertices not yet included. Each outside vertex v has a <strong>key[v]</strong> — the weight of the cheapest edge connecting v to the tree (∞ if none yet). Start with key 0 for the first vertex and ∞ for the rest. Then repeat: pick the outside vertex u with the smallest key, add it to the tree (recording parent[u] = the vertex that gave it that key), and update the keys of u's neighbors — if the edge u–v is cheaper than key[v], set key[v] = w(u, v) and parent[v] = u.</p>
+<pre><code>Prim(G, s):
+  key[v] = ∞ for all v; key[s] = 0; parent[s] = -1
+  T = empty
+  while there are vertices outside T:
+    u = outside vertex with minimum key[u]
+    add u and edge (parent[u], u) to T
+    for each neighbor v of u outside T:
+      if w(u, v) &lt; key[v]: key[v] = w(u, v); parent[v] = u
+  return T</code></pre>
+<p><strong>Runtime:</strong> O(m log n) with a min-heap holding the outside vertices by key (each edge triggers at most one key update). The simple adjacency-matrix version, which scans all vertices for the minimum key each round, is O(n²). <strong>Output:</strong> prev[] (the parent pointer of each vertex). Reach for Prim when you need the <em>tree structure</em> — to walk from a vertex to the root, or to find the path between two vertices in the tree.</p>
+<p><strong>Worked example:</strong> <a href="https://www.geeksforgeeks.org/dsa/prims-minimum-spanning-tree-mst-greedy-algo-5/">GeeksforGeeks — Prim's Algorithm for Minimum Spanning Tree (MST) (key-value walkthrough, code)</a></p>
+</div>
+</section>
+
+<section id="flow" style="--fc:var(--c-flow)"><h2><span class="dot" style="background:var(--c-flow)"></span>🌊 Max Flow</h2>
+<ul>
+  <li>Ford-Fulkerson</li>
+  <li>Edmonds-Karp</li>
+</ul>
+
+<h3>When to use which</h3>
+<table>
+<tr><th>Situation</th><th>Use</th><th>Runtime</th><th>Why</th></tr>
+<tr><td>Integer capacities, small max-flow value C</td><td><strong>Ford-Fulkerson</strong></td><td>O(mC)</td><td>Simple — any augmenting path works; rounds are bounded by C, which is small here</td></tr>
+<tr><td>Large C, real-valued capacities, or a guaranteed polynomial bound is needed</td><td><strong>Edmonds-Karp</strong></td><td>O(nm²)</td><td>Shortest-path discipline bounds the rounds to O(mn) regardless of capacities; no integer assumption</td></tr>
+<tr><td>Need the min cut as well as the max flow</td><td><strong>Either</strong></td><td>—</td><td>Both return flow[]; build the min cut as L = vertices reachable from s in the residual graph</td></tr>
+</table>
+
+<div class="algo" style="--fc:var(--c-flow)">
+<h3>Ford-Fulkerson <span class="badge">O(mC)</span></h3>
+<p class="essence">Keep finding augmenting paths in the residual graph until none remain.</p>
+<p><strong>The setup:</strong> a flow network with source s and sink t. A valid flow satisfies two constraints — capacity (0 ≤ f(e) ≤ c(e) for every edge) and conservation (inflow = outflow at every vertex except s and t). The goal is to maximize the flow value, the net flow leaving s.</p>
+<p><strong>Why the naive attempt fails:</strong> greedily pushing flow along any s–t path in the "available capacity" graph can get stuck below the maximum. The lecture's toy example stops at flow 10 while the true maximum is 17 — because once flow is sent, the naive graph offers no way to undo it.</p>
+<div class="keyfact" style="--fc:var(--c-flow)"><strong>Key idea — backward edges.</strong> Sending flow a → b "opens the faucet"; sending flow b → a "closes" it — i.e. decreases the a → b flow. So the residual network G<sub>f</sub> contains, for each original edge (u, v), a forward edge with residual capacity c − f (room to send more) and a backward edge with residual capacity f (flow that can be taken back). Augmenting along s → b → a → t can then reroute earlier flow and reach the optimum.</div>
+<pre><code>Ford-Fulkerson(G, s, t):
+  f(e) ← 0 for all edges e
+  loop:
+    build residual network G^f for current flow f
+    find an s–t path P in G^f (BFS/DFS)
+    if no such path: output f and stop
+    c(P) ← minimum residual capacity along P
+    augment c(P) units along P:
+      forward edge (u,v):  f(u,v) ← f(u,v) + c(P)
+      backward edge (u,v): f(v,u) ← f(v,u) − c(P)   # take back flow</code></pre>
+<p><strong>Termination and correctness:</strong> stop when the residual network has no s–t path. That the resulting flow is a max flow follows from the max-flow = min-cut theorem — no augmenting path means the reachable set from s in G<sub>f</sub> defines a cut whose capacity equals the flow value.</p>
+<p><strong>Runtime — O(mC):</strong> capacities must be integers. Each augmentation adds at least 1 unit of flow (bottleneck of integer residual capacities), so there are at most C rounds, where C is the max-flow value. Each round costs O(m): finding the path by BFS/DFS is O(n+m), and updating the residual network along a path of at most n−1 edges is O(n). Total: O(m) per round × at most C rounds = O(mC). This is <em>pseudo-polynomial</em> — it depends on the value C, not just the input size — which is why Edmonds-Karp (always take the shortest augmenting path, O(nm²)) exists.</p>
+<p><strong>Worked examples:</strong> <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/mf1-ford-fulkerson-notes-en.html">MF1 Review Notes — naive failure, backward edges, residual network, O(mC) analysis (lecture-based)</a></p>
+</div>
+
+<div class="algo" style="--fc:var(--c-flow)">
+<h3>Edmonds-Karp <span class="badge">O(nm²)</span></h3>
+<p class="essence">Same paradigm as Ford-Fulkerson — but always take the shortest s–t path.</p>
+<p>Instead of any s–t path, Edmonds-Karp (1972) always augments along the <strong>shortest path (fewest edges)</strong> in the residual network, found by BFS with edge weights ignored. That one discipline makes the s–t distance in the residual graph monotone non-decreasing, which bounds the number of rounds to at most O(mn) — so the total runtime is O(nm²). Unlike Ford-Fulkerson's O(mC), it is <strong>independent of the max-flow size</strong>, and the integer-capacity assumption is gone. Same outputs: flow[], C.</p>
+</div>
+</section>
+
+<section id="logic" style="--fc:var(--c-logic)"><h2><span class="dot" style="background:var(--c-logic)"></span>🧩 Logic</h2>
+<ul>
+  <li>2-SAT</li>
+</ul>
+
+<div class="algo" style="--fc:var(--c-logic)">
+<h3>2-SAT <span class="badge">O(n+m)</span></h3>
+<p class="essence">Turn clauses into implications, then let SCC decide.</p>
+<p><strong>The setup:</strong> a 2-CNF formula — a conjunction of clauses, each with exactly two literals. The k-SAT dichotomy is the context: 3-SAT and up are NP-complete, but <strong>2-SAT is solvable in linear time</strong> using the SCC black box. (Unit clauses are eliminated first: a clause (x̄<sub>1</sub>) forces x<sub>1</sub> = False, clauses containing x̄<sub>1</sub> are deleted, and x<sub>1</sub> is dropped from the clauses containing it — repeat until all clauses have size exactly 2.)</p>
+<p><strong>The implication graph:</strong> convert logic into a graph problem. Create 2n vertices (one per literal) and 2m edges (two per clause): a clause (α ∨ β) becomes ᾱ → β ("if α is false, β must be true") and β̄ → α ("if β is false, α must be true").</p>
+<div class="keyfact" style="--fc:var(--c-logic)"><strong>The SCC condition — unsatisfiability test.</strong> A path x<sub>i</sub> ⇝ x̄<sub>i</sub> means setting x<sub>i</sub> = True forces x<sub>i</sub> = False — a contradiction, so x<sub>i</sub> cannot be True. If <strong>both</strong> directions exist, i.e. x<sub>i</sub> and x̄<sub>i</sub> lie in the <strong>same SCC</strong>, the formula is unsatisfiable. Conversely, if every variable's two literals sit in different SCCs, the formula is satisfiable — and the algorithm below constructs an assignment.</div>
+<p><strong>The algorithm — peel off a sink:</strong></p>
+<ol class="steps">
+  <li>Simplify the formula (eliminate unit clauses) so every clause has size exactly 2.</li>
+  <li>Build the implication graph and find its SCCs (with topological order).</li>
+  <li>Take a <strong>sink SCC S</strong> and set all its literals to <strong>True</strong> — it has no outgoing edges, so no implications need following.</li>
+  <li>Its complement S̄ is a <strong>source SCC</strong> — set it to <strong>False</strong>.</li>
+  <li>Remove S and S̄ (each variable's two literals disappear together) and repeat. When the graph is empty, the formula is satisfied.</li>
+</ol>
+<p><strong>Key fact — complement of a sink is a source:</strong> if no variable shares an SCC with its negation, then S is a sink SCC ⟺ S̄ is a source SCC. It rests on the claim that a path α ⇝ β implies a path β̄ ⇝ ᾱ (reverse every edge of the path using the other implication of each clause). <strong>Runtime:</strong> O(n+m), dominated by the SCC computation. <strong>Output:</strong> assignments[] or "NO".</p>
+<p><strong>Worked examples:</strong> <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/gr2-2sat-notes-en.html">GR2 Review Notes — SAT quiz, unit-clause elimination, implication graph, SCC condition, key-fact proof (lecture-based)</a></p>
+</div>
+</section>
+
+
+<section id="practice">
+<h2>🏋️ Practice problems — by family</h2>
+<p>Every problem from the <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html">Exam 3 Consolidated Briefing</a> (staff practice sets + past-exam problems), regrouped by the family whose black box it reaches for. <strong>📝</strong> = written solution in the briefing's appendix · <strong>🎥</strong> = video solution on Ed. 44 problems in total.</p>
+
+<h3><span class="dot" style="background:var(--c-trav)"></span>🔍 Traversal &amp; Structure — 13 problems</h3>
+<table>
+<tr><th>Problem</th><th>What it asks</th><th>Key black box</th><th>Solution</th></tr>
+<tr><td><strong>3.1</strong></td><td>Perform DFS on the given graph</td><td>DFS</td><td></td></tr>
+<tr><td><strong>3.2</strong></td><td>Perform DFS on each of several graphs</td><td>DFS</td><td></td></tr>
+<tr><td><strong>3.3</strong></td><td>DFS-based topological ordering</td><td>Topological Sort</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-33">briefing</a></td></tr>
+<tr><td><strong>3.4</strong></td><td>Run the SCC algorithm on directed graphs</td><td>SCC</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-34">briefing</a></td></tr>
+<tr><td><strong>3.5</strong></td><td>Linear-time algorithm: reverse of a graph in adjacency list format</td><td>DFS</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-35">briefing</a></td></tr>
+<tr><td><strong>3.7 (a–c)</strong></td><td>Bipartite graphs</td><td>BFS / DFS</td><td>🎥</td></tr>
+<tr><td><strong>3.8</strong></td><td>Pouring Water</td><td>DFS / BFS (modeling)</td><td></td></tr>
+<tr><td><strong>3.11</strong></td><td>Design a linear-time algorithm…</td><td>DFS</td><td></td></tr>
+<tr><td><strong>3.15</strong></td><td>Computopia: all streets one-way (police department)</td><td>SCC</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-315">briefing</a></td></tr>
+<tr><td><strong>3.16</strong></td><td>CS curriculum prerequisites</td><td>Topological Sort</td><td>🎥</td></tr>
+<tr><td><strong>3.22</strong></td><td>Is there a vertex from which all other vertices are reachable?</td><td>SCC / DFS</td><td></td></tr>
+<tr><td><strong>3.24</strong></td><td>A linear-time algorithm for the given task</td><td>DFS</td><td></td></tr>
+<tr><td><strong>P4</strong></td><td>Hamiltonian path in a DAG — does a path visit every vertex?</td><td>Topological Sort</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-p4">briefing</a></td></tr>
+</table>
+
+<h3><span class="dot" style="background:var(--c-short)"></span>📏 Shortest Paths — 11 problems</h3>
+<table>
+<tr><th>Problem</th><th>What it asks</th><th>Key black box</th><th>Solution</th></tr>
+<tr><td><strong>4.1</strong></td><td>Run Dijkstra's algorithm…</td><td>Dijkstra</td><td></td></tr>
+<tr><td><strong>4.2</strong></td><td>The same, with Bellman-Ford</td><td>Bellman-Ford</td><td></td></tr>
+<tr><td><strong>4.3</strong></td><td>Squares</td><td>Shortest paths</td><td></td></tr>
+<tr><td><strong>4.8</strong></td><td>Professor F. Lake suggests…</td><td>Dijkstra (counterexample)</td><td></td></tr>
+<tr><td><strong>4.11</strong></td><td>Directed graph with positive edge lengths…</td><td>Dijkstra</td><td></td></tr>
+<tr><td><strong>4.12</strong></td><td>An O(|V|²) algorithm…</td><td>Dijkstra</td><td>🎥</td></tr>
+<tr><td><strong>4.13</strong></td><td>A set of cities…</td><td>Dijkstra</td><td>🎥</td></tr>
+<tr><td><strong>4.14</strong></td><td>Shortest path through a given vertex</td><td>Dijkstra × 2 (G and G<sup>R</sup>)</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-414">briefing</a></td></tr>
+<tr><td><strong>4.20</strong></td><td>A network of roads…</td><td>Shortest paths</td><td></td></tr>
+<tr><td><strong>4.21</strong></td><td>Shortest paths applied to currency trading</td><td>Bellman-Ford (negative cycles)</td><td></td></tr>
+<tr><td><strong>P1</strong></td><td>Red/blue edges — fewest red, then fewest blue</td><td>Dijkstra (weight encoding)</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-p1">briefing</a></td></tr>
+</table>
+
+<h3><span class="dot" style="background:var(--c-mst)"></span>🌲 MST — 12 problems</h3>
+<table>
+<tr><th>Problem</th><th>What it asks</th><th>Key black box</th><th>Solution</th></tr>
+<tr><td><strong>5.1</strong></td><td>Run Kruskal's</td><td>Kruskal</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-51">briefing</a></td></tr>
+<tr><td><strong>5.2</strong></td><td>Run Prim's &amp; Kruskal's with path compression</td><td>Prim + Kruskal</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-52">briefing</a></td></tr>
+<tr><td><strong>5.5</strong></td><td>Undirected graph with nonnegative weights w<sub>e</sub> ≥ 0…</td><td>MST</td><td></td></tr>
+<tr><td><strong>5.6</strong></td><td>Let G = (V, E) be an undirected graph…</td><td>MST</td><td></td></tr>
+<tr><td><strong>5.7</strong></td><td>Maximum spanning tree</td><td>Kruskal / Prim</td><td></td></tr>
+<tr><td><strong>5.9</strong></td><td>Statements about MSTs (true/false style)</td><td>Cut property</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-59">briefing</a></td></tr>
+<tr><td><strong>5.20</strong></td><td>A linear-time algorithm…</td><td>DFS + counting sort</td><td>🎥</td></tr>
+<tr><td><strong>5.22</strong></td><td>Develop a new MST algorithm from the cycle property (reverse-delete)</td><td>Cycle property</td><td></td></tr>
+<tr><td><strong>5.23</strong></td><td>Given G with positive edge weights and an MST T…</td><td>MST</td><td>🎥</td></tr>
+<tr><td><strong>5.24</strong></td><td>Light spanning trees with special properties</td><td>MST</td><td></td></tr>
+<tr><td><strong>P3</strong></td><td>U as leaves — a spanning tree in which every vertex of U is a leaf</td><td>Kruskal (big-M weights)</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-p3">briefing</a></td></tr>
+<tr><td><strong>P5</strong></td><td>Growing circles — blue vs red paint spread; which color ends in the majority?</td><td>Prim (complete graph)</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-p5">briefing</a></td></tr>
+</table>
+
+<h3><span class="dot" style="background:var(--c-flow)"></span>🌊 Max Flow — 8 problems</h3>
+<table>
+<tr><th>Problem</th><th>What it asks</th><th>Key black box</th><th>Solution</th></tr>
+<tr><td><strong>7.10</strong></td><td>Find the max flow <em>and a matching cut</em> for the given network</td><td>Ford-Fulkerson</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-710">briefing</a></td></tr>
+<tr><td><strong>7.17</strong></td><td>A network with edge capacities…</td><td>Ford-Fulkerson (bottlenecks)</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-717">briefing</a></td></tr>
+<tr><td><strong>7.18 (a, b)</strong></td><td>Common variations of the max-flow problem</td><td>Ford-Fulkerson</td><td></td></tr>
+<tr><td><strong>7.19</strong></td><td>Verify a claimed max-flow solution</td><td>Ford-Fulkerson</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-719">briefing</a></td></tr>
+<tr><td><strong>7.21</strong></td><td>Critical edge</td><td>Ford-Fulkerson</td><td>🎥</td></tr>
+<tr><td><strong>7.22</strong></td><td>A network whose edges have integer capacities…</td><td>Ford-Fulkerson</td><td>🎥</td></tr>
+<tr><td><strong>7.24</strong></td><td>Direct bipartite matching (extra challenge!)</td><td>Ford-Fulkerson</td><td></td></tr>
+<tr><td><strong>P2</strong></td><td>One more edge — update a max flow after adding a single unit-capacity edge</td><td>Residual graph (1 augmenting path)</td><td>📝 <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html#sol-p2">briefing</a></td></tr>
+</table>
+
+<h3><span class="dot" style="background:var(--c-logic)"></span>🧩 Logic — no problems in the briefing</h3>
+<p>No 2-SAT problems appear in the briefing's practice sets. For this family, use the lecture quiz and worked examples in the <a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/gr2-2sat-notes-en.html">GR2 Review Notes</a> (SAT quiz, unit-clause elimination, implication graph, SCC condition).</p>
+</section>
+
+<footer>
+Sources: Ed staff posts (Usable Black Boxes for Graphs · Graph Theory Guidance), CS 6515 lectures GR1–GR3, DP3, MF1–MF5,
+<a href="https://yoonc5536.github.io/omscs-cs6515/exam3-review-notes/exam3-consolidated-briefing.html">Exam 3 Consolidated Briefing</a>.
+</footer>
+<script>
+// --- BFS level demo ---
+(function(){
+  const nodes = document.querySelectorAll('.bfsnode');
+  const cap = document.getElementById('bfsCap');
+  const stepBtn = document.getElementById('bfsStep');
+  const resetBtn = document.getElementById('bfsReset');
+  const captions = [
+    'Level 0: only s is visited. dist[s] = 0.',
+    'Level 1: neighbors of s — a and b join the queue. dist = 1.',
+    'Level 2: neighbors of a and b — c and d join. dist = 2. (c is reached first via a or b — either way, 2 edges.)',
+    'Level 3: e joins — the last vertex. dist[e] = 3. Queue empty: BFS is done, and every vertex was first reached at its shortest distance.'
+  ];
+  let level = 0;
+  function paint(){
+    nodes.forEach(function(n){
+      const on = parseInt(n.dataset.level, 10) <= level;
+      n.classList.toggle('on', on);
+    });
+    cap.textContent = captions[level];
+    stepBtn.textContent = level >= 3 ? 'Done ✓' : 'Next level';
+  }
+  stepBtn.addEventListener('click', function(){
+    if (level < 3) { level++; paint(); }
+  });
+  resetBtn.addEventListener('click', function(){ level = 0; paint(); });
+  paint();
+})();
+</script>
+</div>
+</body>
+</html>
